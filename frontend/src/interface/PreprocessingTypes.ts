@@ -1,0 +1,20 @@
+export type CheckboxStates = {
+    removeDuplicates: boolean,
+    fillWithMean: boolean,
+    fillWithEmptyString: boolean,
+    fillWithMode: boolean,
+    lowercaseData: boolean,
+    deleteOutlier: boolean,
+    minMaxScaling: boolean,
+    zScore: boolean,
+    oneHotEncoding: boolean,
+    labelEncoding1: boolean,
+    labelEncoding2: boolean,
+    lowercasing: boolean,
+    tokenization: boolean,
+    removePunctuation: boolean,
+    pca: boolean,
+    featureSelection: boolean,
+    lda: boolean,
+}
+
