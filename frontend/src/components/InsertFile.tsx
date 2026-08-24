@@ -1,102 +1,239 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from "react";
 
-// Since the services are not created, we can define a placeholder.
-// import services from '../services/services';
+import services from "../services/services";
+import type {
+  DelimiterChoice,
+  InsertDataFileProps,
+} from "../interface/PreprocessingTypes";
+import {
+  ACCEPTED_EXTENSIONS,
+  DELIMITER_OPTIONS,
+  MAX_UPLOAD_BYTES,
+} from "../interface/PreprocessingTypes";
 
-interface InsertDataFileProps {
-  onUploadSuccess: (documentName: string) => void;
+/** Service methods reject with a normalized ApiError; render its `detail`. */
+function errorDetail(error: unknown): string {
+  if (typeof error === "object" && error !== null && "detail" in error) {
+    const detail = (error as { detail: unknown }).detail;
+    if (typeof detail === "string" && detail.length > 0) return detail;
+  }
+  if (error instanceof Error) return error.message;
+  return "The upload failed for an unknown reason.";
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Client-side gate so an obviously bad file never costs a round trip. */
+function validate(file: File): string | null {
+  const lower = file.name.toLowerCase();
+  if (!ACCEPTED_EXTENSIONS.some((extension) => lower.endsWith(extension))) {
+    return `"${file.name}" is not a delimited text file. Upload a ${ACCEPTED_EXTENSIONS.join(", ")} file.`;
+  }
+  if (file.size === 0) {
+    return `"${file.name}" is empty.`;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return `"${file.name}" is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_UPLOAD_BYTES)}.`;
+  }
+  return null;
 }
 
 const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [delimiter, setDelimiter] = useState<DelimiterChoice>("auto");
   const [uploading, setUploading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [documentName, setDocumentName] = useState<string>('data.csv'); // Default file name
+  const [progress, setProgress] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const accept = useCallback((file: File) => {
+    const problem = validate(file);
+    if (problem) {
+      setError(problem);
+      setSelectedFile(null);
+      return;
+    }
+    setError(null);
+    setProgress(0);
+    setSelectedFile(file);
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
+    const file = event.target.files?.[0];
+    if (file) accept(file);
+    // Allow re-picking the same file after a failed attempt.
+    event.target.value = "";
+  };
 
-      // Example validation for CSV files
-      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        setSelectedFile(file);
-        setError('');
-        setDocumentName(file.name);
-      } else {
-        setError('Invalid file type. Please upload a CSV file.');
-        setSelectedFile(null);
-        // Reset to default or clear the name
-        setDocumentName('data.csv'); 
-        event.target.value = ''; // Clear the input
-      }
-    }
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragging(false);
+    if (uploading) return;
+    const file = event.dataTransfer.files?.[0];
+    if (file) accept(file);
   };
 
   const handleSubmit = async () => {
     if (!selectedFile) {
-      setError('Please select a CSV file to submit.');
+      setError("Choose a file first.");
       return;
     }
 
     setUploading(true);
-    setError('');
+    setProgress(0);
+    setError(null);
 
     try {
-      // The service call is commented out as it is not yet created.
-      // await services.insertDataFile(selectedFile);
-      
-      // Simulate a successful upload for demonstration purposes
-      console.log(`Simulating upload for: ${documentName}`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-
-      onUploadSuccess(documentName);
-
-    } catch (err) {
-      setError('An error occurred during file submission. Please try again.');
-      console.error(err);
+      const dataset = await services.uploadDataset(selectedFile, {
+        name: selectedFile.name,
+        delimiter,
+        onProgress: (pct) => setProgress(pct),
+      });
+      setSelectedFile(null);
+      setProgress(100);
+      onUploadSuccess(dataset);
+    } catch (uploadError) {
+      setError(errorDetail(uploadError));
+      setProgress(0);
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="bg-white p-6 w-full">
-      <h2 className="text-xl font-bold text-secondary mb-4">Load Your Data</h2>
-      
-      <div className="mb-4">
-        <label htmlFor="file-upload" className="sr-only">
-          Choose file
-        </label>
+    <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+      <h2 className="text-xl font-semibold text-gray-800 mb-1">Load your data</h2>
+      <p className="text-sm text-ink-muted mb-4">
+        A delimited text file ({ACCEPTED_EXTENSIONS.join(", ")}), up to{" "}
+        {formatBytes(MAX_UPLOAD_BYTES)}. The first row is read as the header.
+      </p>
+
+      <div
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (!uploading) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        onClick={() => {
+          if (!uploading) inputRef.current?.click();
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          if (!uploading) inputRef.current?.click();
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Choose a data file, or drop one here"
+        className={`cursor-pointer rounded-md border-2 border-dashed p-6 text-center transition-colors ${
+          dragging
+            ? "border-primary bg-primary/10"
+            : "border-gray-300 bg-gray-200 hover:border-primary"
+        } ${uploading ? "cursor-not-allowed opacity-60" : ""}`}
+      >
+        <p className="text-gray-800 font-semibold">
+          Drag a file here, or click to browse
+        </p>
+        <p className="text-sm text-ink-muted mt-1">
+          {selectedFile
+            ? `${selectedFile.name} — ${formatBytes(selectedFile.size)}`
+            : "No file chosen yet"}
+        </p>
         <input
           id="file-upload"
+          ref={inputRef}
           type="file"
-          className="w-full text-sm text-gray-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-full file:border-0
-            file:text-sm file:font-semibold
-            file:bg-primary/20 file:text-secondary
-            hover:file:bg-primary/30"
+          className="hidden"
+          accept={ACCEPTED_EXTENSIONS.join(",")}
           onChange={handleFileChange}
-          accept=".csv, text/csv"
+          onClick={(event) => event.stopPropagation()}
+          disabled={uploading}
         />
       </div>
 
-      <div className="mb-6">
-        <p className="text-gray-700">
-          Current file: <span className="font-semibold">{documentName}</span>
-        </p>
-
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        
-        <button
-          className="w-full mt-4 bg-primary text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors disabled:bg-primary/50"
-          onClick={handleSubmit}
-          disabled={!selectedFile || uploading}
+      <div className="mt-4">
+        <label
+          htmlFor="delimiter"
+          className="block text-sm font-semibold text-gray-800 mb-1"
         >
-          {uploading ? 'Submitting...' : 'Submit'}
-        </button>
+          Column separator
+        </label>
+        <select
+          id="delimiter"
+          value={delimiter}
+          onChange={(event) =>
+            setDelimiter(event.target.value as DelimiterChoice)
+          }
+          disabled={uploading}
+          className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+        >
+          {DELIMITER_OPTIONS.map((option) => (
+            <option key={option.label} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-ink-muted mt-1">
+          Leave on auto-detect unless the preview comes back as a single column.
+        </p>
       </div>
+
+      {uploading && (
+        <div className="mt-4" aria-live="polite">
+          <div className="flex justify-between text-sm text-ink-muted mb-1">
+            <span>Uploading…</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div
+              className="h-2 rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div
+          className="mt-4 rounded-md border border-state-bad/40 bg-state-bad/10 p-3"
+          role="alert"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <p className="text-sm text-state-bad">
+              <span className="font-semibold">Upload failed — </span>
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="text-sm font-semibold text-state-bad hover:underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="w-full mt-6 bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+        onClick={() => void handleSubmit()}
+        disabled={!selectedFile || uploading}
+      >
+        {uploading ? "Uploading…" : "Upload dataset"}
+      </button>
     </div>
-    )
-}
+  );
+};
+
 export default InsertDataFile;

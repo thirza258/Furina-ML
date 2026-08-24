@@ -11,3 +11,8 @@ __pycache__/
 .env.development.local
 .env.test.local
 .env.production.local
+# Django runtime artifacts
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+*.joblib

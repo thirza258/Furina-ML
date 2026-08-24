@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "daphne",
     "corsheaders",
+    "core",
 ]
 
 SPECTACULAR_SETTINGS = {
@@ -60,6 +61,9 @@ SPECTACULAR_SETTINGS = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://localhost",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -84,12 +88,19 @@ CORS_ALLOW_HEADERS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS':'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "core.exceptions.api_exception_handler",
+    # `?format=` is a report/preview option in this API, not a DRF renderer
+    # override, so content negotiation must ignore it.
+    "URL_FORMAT_OVERRIDE": None,
 }
 
 MIDDLEWARE = [
+    # Listed first so it sees the finished response last, after CommonMiddleware
+    # has had its chance to turn a 404 into an APPEND_SLASH redirect.
+    "core.middleware.JsonApiNotFoundMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -188,3 +199,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Uploaded CSVs are read straight into pandas, so allow a reasonably large body.
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
+FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
