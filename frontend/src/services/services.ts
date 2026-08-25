@@ -23,9 +23,31 @@ import type {
   TrainingRunSummary,
 } from "../interface/MlTypes";
 
-export const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-  "http://localhost:8000/api";
+declare global {
+  interface Window {
+    /** Set by the container's generated `/config.js`; absent in `npm run dev`. */
+    __FURINA_API_BASE_URL__?: string;
+  }
+}
+
+/**
+ * Where the API lives, resolved in the order the deployment needs:
+ *
+ * 1. `window.__FURINA_API_BASE_URL__` -- written into `/config.js` when the
+ *    nginx container boots, so the built bundle can be pointed at a different
+ *    backend without being rebuilt.
+ * 2. `VITE_API_BASE_URL` -- baked in at build time, for a split deployment.
+ * 3. `/api` on the same origin -- what the container defaults to (nginx proxies
+ *    it to Django) and what the Vite dev proxy forwards to `localhost:8000`.
+ */
+function resolveApiBaseUrl(): string {
+  const runtime =
+    typeof window !== "undefined" ? window.__FURINA_API_BASE_URL__ : undefined;
+  const buildTime = import.meta.env.VITE_API_BASE_URL as string | undefined;
+  return runtime?.trim() || buildTime?.trim() || "/api";
+}
+
+export const API_BASE_URL: string = resolveApiBaseUrl();
 
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

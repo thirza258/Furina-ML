@@ -5,6 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Furina ML</title>
+    <!-- Runtime configuration. A classic script in <head> runs before the
+         deferred module below, so window.__FURINA_API_BASE_URL__ is set by
+         the time services.ts reads it. In a container this file is written
+         at start-up from $API_BASE_URL. -->
+    <script src="/config.js"></script>
   </head>
   <body>
     <div id="root"></div>

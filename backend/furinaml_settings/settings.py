@@ -8,18 +8,60 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
+
+Everything that differs between a laptop and a container is read from the
+environment, so the same image can be run anywhere. The defaults are the
+laptop ones: no environment at all still gives you the SQLite dev setup the
+README describes.
 """
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
 import sys
+
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# --------------------------------------------------------------------------
+# environment helpers
+# --------------------------------------------------------------------------
+
+
+def env_bool(name: str, default: bool) -> bool:
+    """Read a truthy/falsy environment variable.
+
+    Accepts the spellings people actually type in a compose file or a `.env`
+    (`True`, `true`, `1`, `yes`, `on`) rather than only Python's `True`.
+    """
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name: str, default: list[str]) -> list[str]:
+    """Read a comma-separated environment variable into a list of strings."""
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return list(default)
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+#: The management command being run, if any -- `""` under gunicorn/daphne,
+#: where `sys.argv` is the server's own command line and has no subcommand.
+MANAGEMENT_COMMAND = sys.argv[1] if len(sys.argv) > 1 else ""
+
+#: Commands that must be able to run without a database. `collectstatic` is
+#: the one that matters: it runs while the Docker image is being built, long
+#: before any Postgres exists.
+DB_OPTIONAL_COMMANDS = {"collectstatic", "makemigrations", "help", "version", "diffsettings"}
 
 
 # Quick-start development settings - unsuitable for production
@@ -29,11 +71,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "SecretKey")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool("DEBUG", True)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["*"])
 
-DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "True") == "True"
+# Needed once the app is served over https behind a reverse proxy: Django has
+# to be told which Origins to trust for unsafe methods on the admin/session
+# side. Comma-separated, each entry with its scheme.
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", [])
+
+DEVELOPMENT_MODE = env_bool("DEVELOPMENT_MODE", True)
+
+# When a proxy terminates TLS, this is what stops Django from thinking every
+# request arrived over plain http.
+if env_bool("USE_X_FORWARDED_PROTO", False):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition
@@ -47,6 +99,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_spectacular",
+    "drf_spectacular_sidecar",
     "daphne",
     "corsheaders",
     "core",
@@ -57,14 +110,25 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Furinaml API Documentation',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    # Serve the Swagger UI bundle from our own /static/ rather than jsdelivr,
+    # so the docs page works on a deployment with no outbound internet.
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://localhost",
-]
+# The container deployment puts the SPA and the API on one origin behind nginx,
+# so CORS never comes into play there. These are the dev-server origins, plus
+# whatever CORS_ALLOWED_ORIGINS adds for a split deployment.
+CORS_ALLOWED_ORIGINS = env_list(
+    "CORS_ALLOWED_ORIGINS",
+    [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://localhost",
+    ],
+)
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
@@ -130,26 +194,42 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "furinaml_settings.wsgi.application"
+ASGI_APPLICATION = "furinaml_settings.asgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+#
+# DEVELOPMENT_MODE=True (the default) is the README's SQLite setup. Turning it
+# off -- which is what the container does -- requires DATABASE_URL, except for
+# the handful of commands that never open a connection.
 
-if DEVELOPMENT_MODE is True:
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
+if DEVELOPMENT_MODE:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+            "NAME": os.getenv("SQLITE_PATH", str(BASE_DIR / "db.sqlite3")),
         }
     }
-else :
-    if len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-        if os.getenv("DATABASE_URL", None) is None:
-            raise Exception("DATABASE_URL environment variable not defined")
-        DATABASES = {
-            "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+elif DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
+            conn_health_checks=True,
+        )
     }
-
+elif MANAGEMENT_COMMAND in DB_OPTIONAL_COMMANDS:
+    # Django fills a missing "default" in with its dummy backend, which is
+    # exactly right: these commands must not touch a database.
+    DATABASES = {}
+else:
+    raise ImproperlyConfigured(
+        "DATABASE_URL environment variable not defined. Set it, or set "
+        "DEVELOPMENT_MODE=True to fall back to the local SQLite database."
+    )
 
 
 # Password validation
@@ -176,7 +256,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = os.getenv("TIME_ZONE", "UTC")
 
 USE_I18N = True
 
@@ -187,20 +267,35 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
-STATICFILES_DIRS = [
-     os.path.join(BASE_DIR, "static"),
-]
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# The project has no checked-in static directory of its own; listing one that
+# does not exist only earns a staticfiles.W004 warning at every `check`.
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").is_dir() else []
+STATIC_ROOT = Path(os.getenv("STATIC_ROOT", str(BASE_DIR / "staticfiles")))
+
+# STATICFILES_STORAGE was removed in Django 5.1; STORAGES is the live setting.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / "media"
+# Uploaded CSVs and fitted .joblib pipelines live here. In the container this
+# is a named volume, so it survives `docker compose down`.
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
 
 # Uploaded CSVs are read straight into pandas, so allow a reasonably large body.
-MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+# `core.ml.io` reads the same variable -- that is where the limit is actually
+# enforced -- and nginx's client_max_body_size (MAX_UPLOAD_SIZE) has to be
+# raised with it, or the proxy answers 413 before Django ever sees the request.
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES") or 50 * 1024 * 1024)
 DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
 FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES

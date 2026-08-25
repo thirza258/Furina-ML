@@ -1,0 +1,29 @@
+# Runtime state -- must never be baked into the image. `media/` alone is ~30
+# fitted .joblib pipelines and the CSVs they were trained on, and it is a named
+# volume in the container anyway.
+media/
+staticfiles/
+db.sqlite3
+*.joblib
+*.sqlite3
+
+# Local virtualenvs and caches
+env/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secrets and editor state
+.env
+.env.*
+.vscode/
+.idea/
+.DS_Store
+
+# Scratch
+helper.ipynb
+.ipynb_checkpoints/

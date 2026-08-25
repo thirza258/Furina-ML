@@ -1,0 +1,15 @@
+# Installed inside the build stage by `npm ci`, from the lockfile.
+node_modules/
+# Rebuilt in the image; the checked-in copy would only shadow it.
+dist/
+
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+npm-debug.log*
+*.log

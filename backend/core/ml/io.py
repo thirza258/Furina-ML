@@ -22,7 +22,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024
+#: The real ceiling on an uploaded file. Read from the environment rather than
+#: from `django.conf.settings` so this module stays importable without Django;
+#: `settings.MAX_UPLOAD_BYTES` reads the same variable, and nginx's
+#: `client_max_body_size` (MAX_UPLOAD_SIZE) has to be raised alongside it.
+MAX_UPLOAD_BYTES: int = int(os.environ.get("MAX_UPLOAD_BYTES") or 50 * 1024 * 1024)
 MAX_PREVIEW_ROWS: int = 200
 
 #: Delimiters we are willing to detect automatically.

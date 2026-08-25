@@ -61,6 +61,63 @@ to preprocess raw input rows.
 
 ## Getting Started
 
+### Docker (the whole app in one command)
+
+Requires Docker with Compose v2.
+
+```bash
+cp .env.example .env      # optional for a local run, required before deploying
+docker compose up -d --build
+```
+
+The app is then at **http://localhost:8080** — the SPA, the API under `/api/`,
+the interactive docs at `/api/docs/` and the Django admin at `/admin/`, all on
+one origin.
+
+Three containers come up: `db` (PostgreSQL 17), `backend` (Django on gunicorn)
+and `frontend` (the built SPA on nginx, which also reverse-proxies `/api` to
+the backend — which is why there is no CORS configuration to get wrong).
+Migrations run automatically on every boot.
+
+```bash
+docker compose logs -f backend        # follow the API log
+docker compose exec backend python manage.py test core   # run the test suite
+docker compose down                   # stop; datasets, models and the DB survive
+docker compose down -v                # stop and erase all of it
+```
+
+Uploaded CSVs and fitted `.joblib` models live in the `media_data` volume and
+the database in `db_data`, so both survive `down`/`up`.
+
+Everything worth changing is an environment variable in `.env` — the host port,
+the Postgres password, `SECRET_KEY`, `ALLOWED_HOSTS`, the gunicorn worker count
+and the request timeout. Two of them ship with insecure defaults on purpose and
+must be set before this is exposed to a network you do not control:
+
+| Variable | Why |
+|----------|-----|
+| `SECRET_KEY` | Signs sessions and the admin login |
+| `POSTGRES_PASSWORD` | The database password |
+
+Set `DJANGO_SUPERUSER_USERNAME` and `DJANGO_SUPERUSER_PASSWORD` to have an
+`/admin/` login created on first boot.
+
+To point the SPA at a backend somewhere else, set `API_BASE_URL` — the frontend
+image reads it at start-up and writes it into `/config.js`, so no rebuild is
+needed.
+
+#### Behind HTTPS
+
+The `frontend` container speaks plain http on purpose, so you can put it behind
+whatever already terminates TLS for you (Caddy, Traefik, a cloud load balancer).
+Point that at `${APP_PORT}` and tell Django it is there:
+
+```bash
+ALLOWED_HOSTS=furina.example.com
+CSRF_TRUSTED_ORIGINS=https://furina.example.com
+USE_X_FORWARDED_PROTO=True
+```
+
 ### Backend (Django + scikit-learn)
 
 Requires Python 3.11+ (verified on 3.14).
@@ -121,8 +178,13 @@ List endpoints return bare JSON arrays.
 
 - Uploaded CSVs and fitted models are written under `backend/media/`. The
   development setup uses SQLite; set `DEVELOPMENT_MODE=False` and `DATABASE_URL`
-  to use PostgreSQL.
+  to use PostgreSQL (which is what `docker compose` does).
 - The neural-network option is scikit-learn's `MLPClassifier` / `MLPRegressor`
   rather than TensorFlow, so the whole backend stays on one ML library.
-- There is no `docker-compose.yml` in this repository yet; use the local setup
-  above.
+- Training is a long, synchronous, CPU-bound request. The timeouts are lined up
+  end to end — axios 300s, nginx `proxy_read_timeout` 300s, gunicorn `--timeout`
+  300s — so a slow fit finishes instead of dying halfway. Raise all three
+  together (`PROXY_TIMEOUT`, `GUNICORN_TIMEOUT`) if you train something bigger.
+- The 50MB upload ceiling is enforced in `core/ml/io.py` and again by nginx's
+  `client_max_body_size`. Both read one `MAX_UPLOAD_BYTES` value, so raising it
+  in `.env` moves the whole chain at once.

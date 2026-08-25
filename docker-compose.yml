@@ -1,0 +1,92 @@
+# Furina ML -- the whole application in three containers.
+#
+#   docker compose up -d --build      then open http://localhost:8080
+#
+# Every value below has a working default, so a bare `docker compose up` runs
+# without a `.env` file. Copy `.env.example` to `.env` before exposing this to
+# anything but your own machine -- SECRET_KEY and POSTGRES_PASSWORD in
+# particular.
+
+name: furina-ml
+
+services:
+  # ---------------------------------------------------------------- database
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-furinaml}
+      POSTGRES_USER: ${POSTGRES_USER:-furinaml}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-furinaml}
+      # Postgres refuses to initialise into a non-empty directory; giving it a
+      # subdirectory of the volume keeps `lost+found` and friends out of the way.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-furinaml} -d ${POSTGRES_DB:-furinaml}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------- the API
+  backend:
+    build:
+      context: ./backend
+    environment:
+      # Production posture: Postgres instead of SQLite, no debug pages.
+      DEVELOPMENT_MODE: "False"
+      DEBUG: ${DJANGO_DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-insecure-compose-default-change-me}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      DATABASE_URL: postgres://${POSTGRES_USER:-furinaml}:${POSTGRES_PASSWORD:-furinaml}@db:5432/${POSTGRES_DB:-furinaml}
+      TIME_ZONE: ${TIME_ZONE:-UTC}
+      # The upload ceiling, enforced in core/ml/io.py. nginx below is given the
+      # same number, so the two cannot drift apart.
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-52428800}
+
+      # Training is a long, CPU-bound, synchronous request; see
+      # backend/gunicorn.conf.py for why these are not the stock values.
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-300}
+
+      # Optional: create an /admin/ login on first boot.
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
+    volumes:
+      # Uploaded CSVs and fitted .joblib pipelines. This is application state
+      # that the database rows point at -- losing it leaves rows referencing
+      # files that no longer exist, so it has to outlive the container.
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ------------------------------------------------- the SPA and the front door
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      # Where nginx forwards /api, /admin and /static.
+      BACKEND_ORIGIN: ${BACKEND_ORIGIN:-backend:8000}
+      # What the browser bundle calls. Same origin by default, so no CORS.
+      API_BASE_URL: ${API_BASE_URL:-/api}
+      # client_max_body_size. nginx takes a plain byte count, so this is the
+      # very same value the backend is given -- one number, no drift.
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_BYTES:-52428800}
+      PROXY_TIMEOUT: ${PROXY_TIMEOUT:-300s}
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  media_data:
