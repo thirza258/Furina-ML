@@ -91,6 +91,11 @@ if env_bool("USE_X_FORWARDED_PROTO", False):
 # Application definition
 
 INSTALLED_APPS = [
+    # Daphne has to come before django.contrib.staticfiles -- it replaces the
+    # `runserver` command, and staticfiles supplies its own. Listed the other
+    # way round, daphne.E001 fails every management command, `collectstatic`
+    # during the Docker build included.
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -100,7 +105,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "drf_spectacular_sidecar",
-    "daphne",
     "corsheaders",
     "core",
 ]
@@ -159,6 +163,15 @@ REST_FRAMEWORK = {
     # `?format=` is a report/preview option in this API, not a DRF renderer
     # override, so content negotiation must ignore it.
     "URL_FORMAT_OVERRIDE": None,
+    # Only the assistant is throttled, by the `assistant` scope below. It is
+    # the one endpoint that spends the operator's money on every call, and the
+    # app has no login, so without a ceiling a public deployment is an open
+    # metered proxy that a shell loop can drain. Nothing else changes: an
+    # endpoint with no throttle_scope is not rate limited.
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {
+        "assistant": os.getenv("ASSISTANT_RATE_LIMIT", "20/hour"),
+    },
 }
 
 MIDDLEWARE = [
@@ -291,6 +304,47 @@ MEDIA_URL = '/media/'
 # Uploaded CSVs and fitted .joblib pipelines live here. In the container this
 # is a named volume, so it survives `docker compose down`.
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
+
+# Cache
+#
+# Django's default LocMemCache is per-process, and gunicorn runs several. The
+# assistant throttle counts requests through this cache, so on the default
+# backend the documented "20/hour" would really be 20 per worker per hour --
+# a limit that quietly scales with the worker count is not a limit. Postgres is
+# already here, so the counter goes there and the number means what it says.
+# Falls back to local memory for the SQLite dev setup, where there is one
+# process anyway.
+
+if DEVELOPMENT_MODE or not DATABASE_URL:
+    CACHES = {
+        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "furina_cache",
+        }
+    }
+
+
+# --------------------------------------------------------------------------
+# The in-app assistant (OpenRouter)
+#
+# The key lives here and never reaches the browser: the frontend calls
+# /api/assistant/ and this server calls OpenRouter. With no key set the feature
+# reports itself as unconfigured and the UI says so, rather than erroring.
+# --------------------------------------------------------------------------
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen3.7-flash").strip()
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").strip()
+OPENROUTER_TIMEOUT = int(os.getenv("OPENROUTER_TIMEOUT", "60"))
+OPENROUTER_MAX_TOKENS = int(os.getenv("OPENROUTER_MAX_TOKENS", "700"))
+
+# Sent to OpenRouter as the HTTP-Referer attribution header, and used for the
+# canonical URL in the frontend's SEO tags.
+SITE_URL = os.getenv("SITE_URL", "https://furina.nevatal.id").rstrip("/")
 
 # Uploaded CSVs are read straight into pandas, so allow a reasonably large body.
 # `core.ml.io` reads the same variable -- that is where the limit is actually

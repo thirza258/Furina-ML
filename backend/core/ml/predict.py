@@ -204,9 +204,13 @@ def predict(artifact: "ModelArtifact", rows: list[dict]) -> list[dict]:
     probabilities: np.ndarray | None = None
     codes: np.ndarray | None = None
     if is_classification:
+        # Best-effort: an estimator with no usable probabilities degrades to
+        # predictions only. The catch is broad because a library exception need
+        # not derive from a builtin -- LightGBMError subclasses Exception
+        # directly, so a narrow tuple would let it escape as a 500.
         try:
             probabilities = np.asarray(pipeline.predict_proba(frame), dtype=float)
-        except (AttributeError, ValueError, NotImplementedError):
+        except Exception:  # noqa: BLE001 - absence of probabilities is not an error
             probabilities = None
         if probabilities is not None and probabilities.ndim == 2:
             model = getattr(pipeline, "named_steps", {}).get("model")

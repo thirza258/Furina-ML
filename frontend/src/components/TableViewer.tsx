@@ -12,7 +12,7 @@ function MutedChip({ label, title }: { label: string; title: string }) {
   return (
     <span
       title={title}
-      className="inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase tracking-wide bg-gray-200 text-ink-muted"
+      className="inline-block rounded-control px-2 py-0.5 text-xs font-semibold uppercase tracking-wide bg-paper-sunken text-ink-muted"
     >
       {label}
     </span>
@@ -65,7 +65,7 @@ export default function TableViewer({
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        <h2 className="text-xl font-semibold text-ink">{title}</h2>
         <p className="text-sm text-ink-muted">
           {subtitle ??
             (totalRows !== undefined
@@ -75,8 +75,8 @@ export default function TableViewer({
       </div>
 
       {headers.length === 0 || shownRows === 0 ? (
-        <div className="rounded-md border border-gray-300 bg-gray-100 p-6 text-center">
-          <p className="font-semibold text-gray-800">Nothing to show</p>
+        <div className="rounded-control border border-rule bg-paper p-6 text-center">
+          <p className="font-semibold text-ink">Nothing to show</p>
           <p className="text-sm text-ink-muted mt-1">
             {headers.length === 0
               ? "This file parsed to zero columns. Try a different column separator."

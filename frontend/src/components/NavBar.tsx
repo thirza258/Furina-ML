@@ -9,6 +9,7 @@
  * with the reason and the API base URL, in a bar nobody can miss.
  */
 import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import services, { API_BASE_URL } from "../services/services";
 import type { ApiError, HealthResponse } from "../interface/MlTypes";
@@ -93,77 +94,86 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
 
   return (
     <header className="flex-shrink-0 z-10">
-      <nav className="w-full min-h-16 bg-gray-800 text-white flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b-2 border-white">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-blue-300">Furina ML</h1>
-          <span className="font-bold text-blue-400">{selectedTool}</span>
+      {/* The masthead is paper, like everything under it. A dark bar would
+          read as an application chrome; this reads as the head of a page. */}
+      <nav className="w-full bg-paper-raised border-b border-rule px-5 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div className="flex items-baseline gap-3 min-w-0">
+          <Link
+            to="/"
+            className="font-serif text-h3 font-semibold text-ink no-underline hover:text-primary transition-colors"
+          >
+            Furina&nbsp;ML
+          </Link>
+          <span aria-hidden="true" className="text-rule-strong">
+            /
+          </span>
+          <span className="field-label truncate">{selectedTool}</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Workspace status. Light pills keep the status tokens on the
-              background contrast they were validated against. */}
+        {/* Status readouts. Label over value, separated by rules rather than
+            floated in pills — a masthead states facts, it does not badge them. */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-small">
           <span
-            className="flex items-center gap-2 bg-white rounded-md px-3 py-1 text-sm"
+            className="flex items-baseline gap-2 tabular"
             title={
               dataset
                 ? `Active dataset: ${dataset.name} (${dataset.source})`
                 : "Upload a CSV on the Data Preprocessing page to get started."
             }
           >
-            <span className="text-ink-muted text-xs uppercase tracking-wide">
-              Dataset
-            </span>
-            <span
-              className={`font-semibold ${dataset ? "text-ink" : "text-ink-muted"}`}
-            >
+            <span className="field-label">Dataset</span>
+            <span className={dataset ? "text-ink" : "text-ink-muted"}>
               {datasetLabel}
             </span>
           </span>
 
+          <span aria-hidden="true" className="h-4 w-px bg-rule" />
+
           <span
-            className="flex items-center gap-2 bg-white rounded-md px-3 py-1 text-sm"
+            className="flex items-baseline gap-2 tabular"
             title={
               run
                 ? `Run "${run.name || run.id}" on target "${run.target_column}"`
                 : "Train a model on the Data Training page."
             }
           >
-            <span className="text-ink-muted text-xs uppercase tracking-wide">
-              Model
-            </span>
+            <span className="field-label">Model</span>
             <span
-              className={`font-semibold ${
+              className={
                 !run
                   ? "text-ink-muted"
                   : run.status === "failed"
-                    ? "text-state-bad"
+                    ? "text-state-bad font-medium"
                     : "text-ink"
-              }`}
+              }
             >
               {runLabel}
             </span>
           </span>
 
-          {/* Backend connectivity. */}
+          <span aria-hidden="true" className="h-4 w-px bg-rule" />
+
+          {/* Backend connectivity. Never colour alone: each state carries a
+              mark and a word. */}
           {health.status === "checking" && (
-            <span className="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1 text-sm font-semibold text-ink-muted">
+            <span className="flex items-baseline gap-2 text-ink-muted">
               <span aria-hidden="true">◌</span> Checking backend…
             </span>
           )}
           {health.status === "online" && (
             <span
-              className="flex items-center gap-2 bg-white rounded-md px-3 py-1 text-sm font-semibold text-state-good"
+              className="flex items-baseline gap-2 text-state-good"
               title={`scikit-learn ${health.info.sklearn} · pandas ${health.info.pandas} · numpy ${health.info.numpy} · ${API_BASE_URL}`}
             >
-              <span aria-hidden="true">●</span> Backend connected
-              <span className="font-normal text-ink-muted">
+              <span aria-hidden="true">●</span> Connected
+              <span className="text-ink-muted tabular">
                 scikit-learn {health.info.sklearn}
               </span>
             </span>
           )}
           {health.status === "offline" && (
-            <span className="flex items-center gap-2 bg-white rounded-md px-3 py-1 text-sm font-semibold text-state-bad">
-              <span aria-hidden="true">▲</span> Backend disconnected
+            <span className="flex items-baseline gap-2 text-state-bad font-medium">
+              <span aria-hidden="true">▲</span> Disconnected
             </span>
           )}
         </div>
@@ -173,28 +183,31 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
       {health.status === "offline" && (
         <div
           role="alert"
-          className="w-full bg-state-bad text-white px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+          className="w-full bg-state-bad text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3"
         >
-          <div className="text-sm">
-            <p className="font-semibold">
+          <div className="text-small max-w-measure">
+            <p className="font-medium">
               ▲ Backend disconnected — {health.reason}
             </p>
-            <p className="opacity-90">
-              Nothing can be uploaded, trained or evaluated until the Django
-              server answers at{" "}
-              <code className="bg-white/20 px-1 rounded">{API_BASE_URL}</code>.
-              Start it with{" "}
-              <code className="bg-white/20 px-1 rounded">
+            <p className="opacity-90 mt-0.5">
+              Nothing can be uploaded, trained or evaluated until the API
+              answers at{" "}
+              <code className="bg-white/20 px-1 rounded-control">
+                {API_BASE_URL}
+              </code>
+              . Check that the backend container is running, or start the
+              development server with{" "}
+              <code className="bg-white/20 px-1 rounded-control">
                 python manage.py runserver
-              </code>{" "}
-              in the backend folder.
+              </code>
+              .
             </p>
           </div>
           <button
             type="button"
             onClick={() => void handleRecheck()}
             disabled={rechecking}
-            className="bg-white text-state-bad py-2 px-4 rounded-md text-sm font-semibold hover:bg-gray-200 transition-colors disabled:bg-white/60 disabled:cursor-not-allowed"
+            className="bg-white text-state-bad py-2 px-4 rounded-control text-small font-medium cursor-pointer hover:bg-paper-sunken transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {rechecking ? "Checking…" : "Retry connection"}
           </button>
@@ -204,7 +217,7 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
       {restoreError !== null && (
         <div
           role="alert"
-          className="w-full bg-state-warn text-white px-4 py-2 text-sm"
+          className="w-full bg-state-warn text-white px-5 py-2 text-small"
         >
           ▲ Could not restore your previous workspace — {restoreError}
         </div>

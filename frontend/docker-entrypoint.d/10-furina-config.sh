@@ -16,6 +16,14 @@ BACKEND_ORIGIN="${BACKEND_ORIGIN:-backend:8000}"
 MAX_UPLOAD_SIZE="${MAX_UPLOAD_SIZE:-50m}"
 PROXY_TIMEOUT="${PROXY_TIMEOUT:-300s}"
 
+# The public origin, used for the canonical link, the Open Graph URLs, the
+# sitemap entries and the Sitemap: line in robots.txt. Baked into the bundle at
+# build time; rewritten here so the same image can be deployed on another host
+# without shipping someone else's domain in its <link rel="canonical">.
+SITE_URL="${SITE_URL:-https://furina.nevatal.id}"
+SITE_URL="${SITE_URL%/}"
+BUILT_SITE_URL="https://furina.nevatal.id"
+
 # nginx needs an explicit resolver to look the backend up per request rather
 # than once at start-up. Inside Docker that is the embedded DNS server at
 # 127.0.0.11, which is exactly what /etc/resolv.conf already points at -- so
@@ -54,3 +62,16 @@ cat > /usr/share/nginx/html/config.js <<CONFIG
 // Generated at container start by 10-furina-config.sh -- do not edit.
 window.__FURINA_API_BASE_URL__ = "${API_BASE_URL}";
 CONFIG
+
+if [ "$SITE_URL" != "$BUILT_SITE_URL" ]; then
+    echo "[furina] rewriting canonical origin to ${SITE_URL}"
+    for f in /usr/share/nginx/html/index.html \
+             /usr/share/nginx/html/robots.txt \
+             /usr/share/nginx/html/sitemap.xml; do
+        [ -f "$f" ] || continue
+        # `|` as the delimiter: the values are URLs, full of slashes.
+        sed -i "s|${BUILT_SITE_URL}|${SITE_URL}|g" "$f"
+    done
+else
+    echo "[furina] canonical origin: ${SITE_URL}"
+fi

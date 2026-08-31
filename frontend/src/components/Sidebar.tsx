@@ -18,7 +18,23 @@ interface SidebarProps {
 }
 
 /** Must match the strings App.tsx switches on — a typo here is a dead link. */
-const APPLICATION_TOOLS = ["Landing Page", "About Us"] as const;
+const APPLICATION_TOOLS = ["Landing Page", "Dashboard", "About Us"] as const;
+
+/**
+ * What the sidebar prints, where that differs from the routing key.
+ *
+ * "Landing Page" is the key App.tsx and every `goToTool` call already agree
+ * on, so it stays; but the page it opens is titled "Overview", and the front
+ * page proper now lives outside the workbench at `/`. Showing the key here
+ * would name one screen two different things.
+ */
+const TOOL_LABELS: Record<string, string> = {
+  "Landing Page": "Overview",
+};
+
+function toolLabel(tool: string): string {
+  return TOOL_LABELS[tool] ?? tool;
+}
 
 type StepState = "done" | "ready" | "locked";
 
@@ -66,31 +82,41 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
     const isSelected = selectedTool === tool;
 
     return (
-      <li key={tool} className="mb-2">
+      // A rule in the left margin marks the current tool, the way a change
+      // bar marks a revised paragraph. No fill, no pill.
+      <li key={tool}>
         <button
           type="button"
           onClick={() => setSelectedTool(tool)}
           aria-current={isSelected ? "page" : undefined}
-          className={`w-full text-left p-2 rounded border-b border-gray-300 hover:bg-gray-300 transition-colors ${
-            isSelected ? "font-bold bg-gray-300" : ""
+          className={`w-full text-left py-2 pl-3 pr-2 border-l-2 cursor-pointer transition-colors ${
+            isSelected
+              ? "border-primary bg-paper-raised"
+              : "border-transparent hover:border-rule-strong hover:bg-paper-raised"
           }`}
         >
-          <span className="flex items-center gap-2">
+          <span className="flex items-baseline gap-2.5">
             {step && (
               <span
                 aria-hidden="true"
-                className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                className={`flex-shrink-0 w-5 h-5 flex items-center justify-center font-sans text-caption font-semibold border ${
                   step.state === "done"
-                    ? "bg-state-good text-white"
+                    ? "bg-state-good border-state-good text-white"
                     : step.state === "ready"
-                      ? "bg-white text-secondary border border-secondary"
-                      : "bg-gray-300 text-ink-muted"
+                      ? "bg-paper-raised border-rule-strong text-ink"
+                      : "bg-paper-sunken border-rule text-ink-muted"
                 }`}
               >
                 {step.state === "done" ? "✓" : index}
               </span>
             )}
-            <span className="flex-grow">{tool}</span>
+            <span
+              className={`flex-grow font-sans text-small ${
+                isSelected ? "text-ink font-semibold" : "text-ink"
+              }`}
+            >
+              {toolLabel(tool)}
+            </span>
             {step && (
               <span className="sr-only">
                 {step.state === "done"
@@ -102,11 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
             )}
           </span>
           {step && (
-            <span
-              className={`block pl-7 text-xs ${
-                step.state === "locked" ? "text-ink-muted" : "text-gray-600"
-              }`}
-            >
+            <span className="block pl-[1.9rem] mt-0.5 font-sans text-caption text-ink-muted">
               {restoring ? "Restoring…" : step.hint}
             </span>
           )}
@@ -116,19 +138,19 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
   };
 
   return (
-    <div className="w-1/4 bg-gray-200 h-full p-4 border-r-2 border-white z-10 shadow-lg flex-shrink-0 flex flex-col">
-      <div className="flex-shrink-0">
-        <h2 className="mb-4 text-xl font-semibold text-secondary">Tools</h2>
+    <div className="w-64 lg:w-72 bg-paper h-full border-r border-rule z-10 flex-shrink-0 flex flex-col overflow-y-auto">
+      <div className="flex-shrink-0 px-4 py-5">
+        <h2 className="field-label mb-4">Tools</h2>
         <div className="overflow-y-auto">
           <div className="mb-4">
             <details className="group" open>
-              <summary className="flex justify-between items-center cursor-pointer font-medium text-secondary mb-2 hover:bg-gray-300 p-2 rounded border-b border-gray-300">
+              <summary className="flex justify-between items-center cursor-pointer font-serif text-body text-ink mb-2 pb-1.5 border-b border-rule list-none [&::-webkit-details-marker]:hidden">
                 Applications
                 <span aria-hidden="true" className="transition group-open:rotate-180">
                   ▼
                 </span>
               </summary>
-              <ul className="pl-4 text-sm text-secondary">
+              <ul className="text-small">
                 {APPLICATION_TOOLS.map((tool) => renderToolButton(tool))}
               </ul>
             </details>
@@ -136,18 +158,18 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
 
           <div className="mb-4">
             <details className="group" open>
-              <summary className="flex justify-between items-center cursor-pointer font-medium text-secondary mb-2 hover:bg-gray-300 p-2 rounded border-b border-gray-300">
+              <summary className="flex justify-between items-center cursor-pointer font-serif text-body text-ink mb-2 pb-1.5 border-b border-rule list-none [&::-webkit-details-marker]:hidden">
                 Traditional Machine Learning
                 <span aria-hidden="true" className="transition group-open:rotate-180">
                   ▼
                 </span>
               </summary>
-              <ol className="pl-4 text-sm text-secondary">
+              <ol className="text-small">
                 {steps.map((step, i) =>
                   renderToolButton(step.tool, { index: i + 1, step })
                 )}
               </ol>
-              <p className="pl-4 pr-2 pt-1 text-xs text-ink-muted">
+              <p className="pl-3 pr-2 pt-3 font-sans text-caption text-ink-muted">
                 Each step feeds the next. A locked step still opens — it will
                 tell you what it needs.
               </p>

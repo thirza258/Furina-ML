@@ -2,3 +2,125 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/*                                                                     */
+/* Tailwind's preflight strips headings back to plain text, so setting  */
+/* the family here is what gives every page its serif voice without     */
+/* touching a single component. Utilities still win over these rules,   */
+/* so nothing that already sets its own size or weight changes.         */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    /* 16px base keeps iOS from auto-zooming inputs. Zoom is never disabled. */
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-ink;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    @apply text-primary;
+    text-decoration-line: underline;
+    text-underline-offset: 0.15em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: #8C857A;
+    transition: text-decoration-color 150ms ease-out;
+  }
+  a:hover {
+    text-decoration-color: #5A1D2E;
+  }
+
+  /* A visible focus ring is not optional -- the whole training flow is
+     reachable by keyboard. */
+  :focus-visible {
+    outline: 2px solid #5A1D2E;
+    outline-offset: 2px;
+  }
+
+  /* Figures only line up if their digits do. */
+  table, .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  hr {
+    @apply border-0 border-t border-rule;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Components                                                          */
+/*                                                                     */
+/* The shapes this app actually repeats. Panels are drawn with a        */
+/* hairline rather than a drop shadow: paper does not float.            */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .panel {
+    @apply bg-paper-raised border border-rule;
+  }
+
+  /* A heading with the rule under it that a journal would set. */
+  .panel-title {
+    @apply font-serif text-h3 text-ink border-b border-rule pb-2 mb-4;
+  }
+
+  /* Small letter-spaced label over a value. Sans, because it labels an
+     instrument rather than speaking to the reader. */
+  .field-label {
+    @apply font-sans text-caption uppercase tracking-[0.08em] text-ink-muted;
+  }
+
+  /* min-h-11 is 44px: the touch-target floor. Without it a 13px label on
+     py-2 lands around 37px, which is too small to hit reliably. inline-flex
+     keeps the label centred once the box is taller than the text. */
+  .btn {
+    @apply inline-flex items-center justify-center min-h-11
+           font-sans text-small font-medium px-4 py-2 rounded-control border
+           text-center no-underline transition-colors duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn:not(:disabled) {
+    @apply cursor-pointer;
+  }
+  .btn-primary {
+    @apply bg-primary border-primary text-white hover:bg-[#471724] hover:border-[#471724];
+  }
+  .btn-secondary {
+    @apply bg-paper-raised border-rule-strong text-ink hover:bg-paper-sunken;
+  }
+
+  /* Running prose, set at a readable measure. */
+  .prose-page {
+    @apply font-serif text-body text-ink max-w-measure;
+  }
+  .prose-page p + p {
+    @apply mt-4;
+  }
+}
+
+/* Honour the system setting rather than animating regardless. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

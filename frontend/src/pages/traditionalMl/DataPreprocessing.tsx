@@ -6,6 +6,7 @@ import PreprocessingCheckbox from "../../components/PreprocessingCheckbox";
 import TableViewer from "../../components/TableViewer";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
+import { WARNING_MARK } from "../../explainer/marks";
 import type {
   DatasetDetail,
   DatasetPreviewResult,
@@ -48,7 +49,7 @@ interface StatTileProps {
 
 function StatTile({ label, value, sublabel }: StatTileProps) {
   return (
-    <div className="rounded-md border border-gray-200 bg-gray-100 px-4 py-3">
+    <div className="rounded-control border border-rule bg-paper px-4 py-3">
       <div className="text-xs uppercase tracking-wide text-ink-muted">
         {label}
       </div>
@@ -67,7 +68,7 @@ function ErrorBox({ message, onDismiss }: ErrorBoxProps) {
   return (
     <div
       role="alert"
-      className="mb-6 rounded-md border border-state-bad/40 bg-state-bad/10 p-4"
+      className="mb-6 rounded-control border border-state-bad/40 bg-state-bad/10 p-4"
     >
       <div className="flex items-start justify-between gap-4">
         <p className="text-sm text-state-bad">
@@ -120,7 +121,7 @@ function ReportPanel({ report }: { report: PreprocessReport }) {
 
       {skipped.length > 0 && (
         <p className="mb-3 text-sm font-semibold text-state-warn">
-          <span aria-hidden="true">⚠</span> {skipped.length} of{" "}
+          <span aria-hidden="true">{WARNING_MARK}</span> {skipped.length} of{" "}
           {report.steps.length} steps were skipped — see the list below.
         </p>
       )}
@@ -129,10 +130,10 @@ function ReportPanel({ report }: { report: PreprocessReport }) {
         {report.steps.map((step, index) => (
           <li
             key={`${step.op}-${index}`}
-            className={`rounded-md border p-3 ${
+            className={`rounded-control border p-3 ${
               step.skipped
                 ? "border-state-warn/40 bg-state-warn/10"
-                : "border-gray-200 bg-white"
+                : "border-rule bg-paper-raised"
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
@@ -141,8 +142,8 @@ function ReportPanel({ report }: { report: PreprocessReport }) {
               </span>
               <span className="font-semibold text-ink">{opLabel(step.op)}</span>
               {step.skipped && (
-                <span className="rounded px-2 py-0.5 text-xs font-semibold text-state-warn border border-state-warn/40">
-                  <span aria-hidden="true">⚠</span> Skipped
+                <span className="rounded-control px-2 py-0.5 text-xs font-semibold text-state-warn border border-state-warn/40">
+                  <span aria-hidden="true">{WARNING_MARK}</span> Skipped
                 </span>
               )}
               <span className="ml-auto text-xs text-ink-muted">
@@ -164,7 +165,7 @@ function ReportPanel({ report }: { report: PreprocessReport }) {
         <ul className="mt-4 space-y-1">
           {report.warnings.map((warning) => (
             <li key={warning} className="text-sm font-semibold text-state-warn">
-              <span aria-hidden="true">⚠</span> {warning}
+              <span aria-hidden="true">{WARNING_MARK}</span> {warning}
             </li>
           ))}
         </ul>
@@ -339,10 +340,10 @@ function DataPreprocessing() {
   };
 
   const previousDatasets = (
-    <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+    <div className="w-full panel p-8">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">
+          <h2 className="text-xl font-semibold text-ink">
             Load a previous dataset
           </h2>
           <p className="text-sm text-ink-muted">
@@ -353,7 +354,7 @@ function DataPreprocessing() {
           type="button"
           onClick={() => void refreshList()}
           disabled={listLoading}
-          className="whitespace-nowrap rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="whitespace-nowrap rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {listLoading ? "Refreshing…" : "Refresh"}
         </button>
@@ -375,8 +376,8 @@ function DataPreprocessing() {
             return (
               <li
                 key={summary.id}
-                className={`rounded-md border p-3 ${
-                  active ? "border-primary bg-primary/5" : "border-gray-200"
+                className={`rounded-control border p-3 ${
+                  active ? "border-primary bg-primary/5" : "border-rule"
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-3">
@@ -384,7 +385,7 @@ function DataPreprocessing() {
                     <div className="font-semibold text-ink break-words">
                       {summary.name}
                       {active && (
-                        <span className="ml-2 rounded bg-primary px-2 py-0.5 text-xs font-semibold text-white">
+                        <span className="ml-2 rounded-control bg-primary px-2 py-0.5 text-xs font-semibold text-white">
                           Active
                         </span>
                       )}
@@ -403,7 +404,7 @@ function DataPreprocessing() {
                     type="button"
                     onClick={() => void loadDataset(summary.id)}
                     disabled={active || pending}
-                    className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-opacity-90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+                    className="rounded-control bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
                   >
                     {pending ? "Working…" : active ? "In use" : "Load"}
                   </button>
@@ -417,14 +418,14 @@ function DataPreprocessing() {
                         type="button"
                         onClick={() => void removeDataset(summary.id)}
                         disabled={pending}
-                        className="rounded-md border border-state-bad px-3 py-2 text-sm font-semibold text-state-bad hover:bg-state-bad/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="rounded-control border border-state-bad px-3 py-2 text-sm font-semibold text-state-bad hover:bg-state-bad/10 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {pending ? "Deleting…" : "Yes, delete"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-200"
+                        className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken"
                       >
                         Keep
                       </button>
@@ -434,7 +435,7 @@ function DataPreprocessing() {
                       type="button"
                       onClick={() => setConfirmDeleteId(summary.id)}
                       disabled={pending}
-                      className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Delete
                     </button>
@@ -450,11 +451,11 @@ function DataPreprocessing() {
 
   if (restoring) {
     return (
-      <div className="bg-gray-100 min-h-screen p-8">
-        <h1 className="text-4xl font-bold text-secondary mb-8">
+      <div className="bg-paper min-h-full p-8">
+        <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
           Data Preprocessing
         </h1>
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+        <div className="w-full panel p-8">
           <p className="text-ink-muted">Restoring your last dataset…</p>
         </div>
       </div>
@@ -462,11 +463,11 @@ function DataPreprocessing() {
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8">
-      <h1 className="text-4xl font-bold text-secondary mb-2">
+    <div className="bg-paper min-h-full p-8">
+      <h1 className="font-serif text-h1 font-semibold text-ink mb-2">
         Data Preprocessing
       </h1>
-      <p className="text-ink-muted mb-8">
+      <p className="font-serif text-body text-ink-muted max-w-measure mb-8">
         Step 1 of 3 — upload a CSV, look at what is actually in it, then build a
         cleaning recipe. Training and evaluation both run on whichever dataset
         is active here.
@@ -482,10 +483,10 @@ function DataPreprocessing() {
         </div>
       ) : (
         <div className="space-y-8">
-          <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+          <div className="w-full panel p-8">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-xl font-semibold text-gray-800 break-words">
+                <h2 className="text-xl font-semibold text-ink break-words">
                   {dataset.name}
                 </h2>
                 <p className="text-sm text-ink-muted">
@@ -503,7 +504,7 @@ function DataPreprocessing() {
                   setAppliedFrom(null);
                   resetResults();
                 }}
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-200"
+                className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken"
               >
                 Upload a different file
               </button>
@@ -526,7 +527,7 @@ function DataPreprocessing() {
             </div>
 
             {appliedFrom && (
-              <div className="mt-4 rounded-md border border-state-good/40 bg-state-good/10 p-4">
+              <div className="mt-4 rounded-control border border-state-good/40 bg-state-good/10 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-state-good">
                     <span aria-hidden="true">✓</span>{" "}
@@ -541,14 +542,14 @@ function DataPreprocessing() {
                       type="button"
                       onClick={() => void undoApply()}
                       disabled={undoing}
-                      className="rounded-md border border-state-good px-3 py-2 text-sm font-semibold text-state-good hover:bg-state-good/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-control border border-state-good px-3 py-2 text-sm font-semibold text-state-good hover:bg-state-good/10 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {undoing ? "Switching back…" : "Undo — go back"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setAppliedFrom(null)}
-                      className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-200"
+                      className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken"
                     >
                       Keep it
                     </button>
@@ -558,7 +559,7 @@ function DataPreprocessing() {
             )}
           </div>
 
-          <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+          <div className="w-full panel p-8">
             <TableViewer
               preview={dataset.preview}
               title="Preview"
@@ -566,11 +567,11 @@ function DataPreprocessing() {
             />
           </div>
 
-          <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+          <div className="w-full panel p-8">
             <DatasetProfile columns={dataset.columns} />
           </div>
 
-          <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+          <div className="w-full panel p-8">
             <PreprocessingCheckbox
               columns={dataset.columns}
               steps={steps}
@@ -578,7 +579,7 @@ function DataPreprocessing() {
               disabled={busy !== null}
             />
 
-            <hr className="my-6 border-t border-gray-300" />
+            <hr className="my-6 border-t border-rule" />
 
             {problems.length > 0 && (
               <ul className="mb-4 space-y-1">
@@ -587,7 +588,7 @@ function DataPreprocessing() {
                     key={problem}
                     className="text-sm font-semibold text-state-warn"
                   >
-                    <span aria-hidden="true">⚠</span> {problem}
+                    <span aria-hidden="true">{WARNING_MARK}</span> {problem}
                   </li>
                 ))}
               </ul>
@@ -598,7 +599,7 @@ function DataPreprocessing() {
                 type="button"
                 onClick={() => void runPreprocess(true)}
                 disabled={!canRun}
-                className="w-full bg-gray-300 text-gray-800 py-3 px-4 rounded-md text-lg font-semibold hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-rule text-ink py-3 px-4 rounded-control text-lg font-semibold hover:bg-rule-strong transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {busy === "preview" ? "Previewing…" : "Preview changes"}
               </button>
@@ -606,7 +607,7 @@ function DataPreprocessing() {
                 type="button"
                 onClick={() => void runPreprocess(false)}
                 disabled={!canRun}
-                className="w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+                className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
               >
                 {busy === "apply" ? "Applying…" : "Apply preprocessing"}
               </button>
@@ -618,9 +619,9 @@ function DataPreprocessing() {
           </div>
 
           {report && (
-            <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+            <div className="w-full panel p-8">
               <div className="mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
+                <h2 className="text-xl font-semibold text-ink">
                   {previewResult ? "Preview report" : "What was applied"}
                 </h2>
                 <p className="text-sm text-ink-muted">
@@ -634,33 +635,33 @@ function DataPreprocessing() {
           )}
 
           {previewResult && (
-            <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+            <div className="w-full panel p-8">
               <TableViewer
                 preview={previewResult.preview}
                 title="Preview of the cleaned data"
                 totalRows={previewResult.n_rows}
               />
-              <hr className="my-6 border-t border-gray-300" />
+              <hr className="my-6 border-t border-rule" />
               <DatasetProfile columns={previewResult.columns} />
             </div>
           )}
 
-          <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <div className="w-full panel p-8">
+            <h2 className="text-xl font-semibold text-ink mb-4">
               Next steps
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a
                 href={services.datasetDownloadUrl(dataset.id)}
                 download
-                className="block w-full text-center bg-gray-300 text-gray-800 py-3 px-4 rounded-md text-lg font-semibold hover:bg-gray-400 transition-colors"
+                className="block w-full text-center bg-rule text-ink py-3 px-4 rounded-control text-lg font-semibold hover:bg-rule-strong transition-colors"
               >
                 Download data
               </a>
               <button
                 type="button"
                 onClick={() => goToTool("Data Training")}
-                className="w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+                className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
               >
                 Continue to Training
               </button>

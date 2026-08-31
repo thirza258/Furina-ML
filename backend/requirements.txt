@@ -29,3 +29,11 @@ pandas==3.0.5
 scipy==1.18.1
 scikit-learn==1.9.0
 joblib==1.5.3
+
+# --- gradient boosting outside scikit-learn ---
+# Both ship `py3-none-manylinux` wheels for x86_64 and aarch64, so neither is
+# compiled during the image build. They expose scikit-learn compatible
+# estimators, which is what lets them share this app's Pipeline, cross
+# validation and joblib serialisation unchanged.
+xgboost==3.4.1
+lightgbm==4.7.0

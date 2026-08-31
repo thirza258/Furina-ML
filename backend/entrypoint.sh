@@ -45,6 +45,12 @@ fi
 # Optional, and skipped silently when the variables are absent. `createsuperuser
 # --noinput` exits non-zero when the user already exists, which is fine on the
 # second boot.
+# The throttle counter lives in this table when the cache backend is the
+# database one. Creating it is idempotent and a no-op on local-memory setups.
+if [ "${RUN_MIGRATIONS:-True}" = "True" ]; then
+    python manage.py createcachetable 2>/dev/null || log "cache table not needed"
+fi
+
 if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
     log "ensuring superuser '${DJANGO_SUPERUSER_USERNAME}' exists"
     python manage.py createsuperuser --noinput \

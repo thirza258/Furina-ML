@@ -36,10 +36,10 @@ export default function FeatureImportanceChart({
   if (importance === null || importance.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        <h2 className="text-xl font-semibold text-ink mb-4">
           Feature importance
         </h2>
-        <p className="rounded-md border border-gray-300 bg-gray-100 p-4 text-sm text-ink-muted">
+        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
           {algorithmLabel} does not expose feature importances, so there is
           nothing to rank here. Tree-based models (random forest, gradient
           boosting, decision tree) and linear models do expose them — retrain
@@ -61,7 +61,7 @@ export default function FeatureImportanceChart({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">
+      <h2 className="text-xl font-semibold text-ink mb-2">
         Feature importance
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -87,7 +87,7 @@ export default function FeatureImportanceChart({
               >
                 {entry.feature}
               </span>
-              <span className="h-3 flex-1 rounded-[4px] bg-gray-200">
+              <span className="h-3 flex-1 rounded-[4px] bg-paper-sunken">
                 <span
                   className="block h-3 rounded-[4px] bg-series-1 transition-opacity hover:opacity-80"
                   style={{ width: `${width}%` }}
@@ -106,7 +106,7 @@ export default function FeatureImportanceChart({
         <button
           type="button"
           onClick={() => setShowAll((previous) => !previous)}
-          className="mt-4 rounded-md bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400"
+          className="mt-4 rounded-control bg-rule px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong"
         >
           {showAll
             ? `Show top ${TOP_N} only`

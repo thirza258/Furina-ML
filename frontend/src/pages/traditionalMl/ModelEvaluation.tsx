@@ -14,6 +14,7 @@ import PredictionForm from "../../components/PredictionForm";
 import ResidualPlot from "../../components/ResidualPlot";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
+import { WARNING_MARK } from "../../explainer/marks";
 import type {
   TrainingRunDetail,
   TrainingRunSummary,
@@ -77,7 +78,7 @@ interface ErrorBoxProps {
 
 function ErrorBox({ title, message, onDismiss }: ErrorBoxProps) {
   return (
-    <div className="mb-6 flex items-start justify-between gap-4 rounded-md border border-state-bad/40 bg-state-bad/10 p-4">
+    <div className="mb-6 flex items-start justify-between gap-4 rounded-control border border-state-bad/40 bg-state-bad/10 p-4">
       <p className="text-sm text-state-bad">
         <span className="font-semibold">✕ {title} </span>
         {message}
@@ -103,7 +104,7 @@ interface FactProps {
 
 function Fact({ label, value, hint }: FactProps) {
   return (
-    <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+    <div className="rounded-control border border-rule bg-paper-sunken p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
         {label}
       </p>
@@ -127,7 +128,7 @@ function CrossValidationBlock({ run }: { run: TrainingRunDetail }) {
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">
+      <h2 className="text-xl font-semibold text-ink mb-2">
         Cross-validation
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -147,7 +148,7 @@ function CrossValidationBlock({ run }: { run: TrainingRunDetail }) {
               <span className="w-20 shrink-0 text-sm text-ink">
                 Fold {index + 1}
               </span>
-              <span className="h-3 flex-1 rounded-[4px] bg-gray-200">
+              <span className="h-3 flex-1 rounded-[4px] bg-paper-sunken">
                 <span
                   className="block h-3 rounded-[4px] bg-series-1 transition-opacity hover:opacity-80"
                   style={{ width: `${width}%` }}
@@ -213,8 +214,8 @@ export default function EvaluationReport() {
   };
 
   const runPicker = (
-    <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
-      <h3 className="mb-2 text-sm font-semibold text-gray-800">
+    <div className="rounded-control border border-rule bg-paper-sunken p-4">
+      <h3 className="mb-2 text-sm font-semibold text-ink">
         Open a previous training run
       </h3>
       {listError && (
@@ -236,7 +237,7 @@ export default function EvaluationReport() {
             value={selectedRunId}
             onChange={(event) => setSelectedRunId(event.target.value)}
             aria-label="Previous training run"
-            className="w-full rounded-md border border-gray-300 bg-gray-200 p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-control border border-rule bg-paper-sunken p-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Choose a run…</option>
             {pastRuns.map((summary) => (
@@ -253,7 +254,7 @@ export default function EvaluationReport() {
             type="button"
             onClick={() => void handleLoadRun()}
             disabled={selectedRunId === "" || loadingRun}
-            className="shrink-0 rounded-md bg-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-opacity-90 disabled:cursor-not-allowed disabled:bg-primary/50"
+            className="shrink-0 rounded-control bg-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-[#471724] disabled:cursor-not-allowed disabled:bg-primary/50"
           >
             {loadingRun ? "Loading…" : "Load run"}
           </button>
@@ -273,9 +274,9 @@ export default function EvaluationReport() {
 
   if (restoring) {
     return (
-      <div className="bg-gray-100 min-h-screen p-8">
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold text-secondary mb-8">
+      <div className="bg-paper min-h-full p-8">
+        <div className="w-full panel p-8">
+          <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
             Evaluation Report
           </h1>
           <p className="text-sm text-ink-muted">
@@ -288,9 +289,9 @@ export default function EvaluationReport() {
 
   if (!run) {
     return (
-      <div className="bg-gray-100 min-h-screen p-8">
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold text-secondary mb-8">
+      <div className="bg-paper min-h-full p-8">
+        <div className="w-full panel p-8">
+          <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
             Evaluation Report
           </h1>
           {restoreError && (
@@ -305,11 +306,11 @@ export default function EvaluationReport() {
           <button
             type="button"
             onClick={() => goToTool("Data Training")}
-            className="w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+            className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
           >
             Go to Data Training
           </button>
-          <hr className="my-6 border-t border-gray-300" />
+          <hr className="my-6 border-t border-rule" />
           {runPicker}
         </div>
       </div>
@@ -327,17 +328,17 @@ export default function EvaluationReport() {
     dataset !== null && run.dataset_id !== dataset.id;
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8">
-      <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold text-secondary mb-2">
+    <div className="bg-paper min-h-full p-8">
+      <div className="w-full panel p-8">
+        <h1 className="font-serif text-h1 font-semibold text-ink mb-2">
           Evaluation Report
         </h1>
         <p className="mb-8 text-lg text-ink">{runLabel(run)}</p>
 
         {trainedOnOtherDataset && dataset !== null && (
-          <div className="mb-6 rounded-md border border-state-warn/40 bg-state-warn/10 p-4">
+          <div className="mb-6 rounded-control border border-state-warn/40 bg-state-warn/10 p-4">
             <p className="text-sm font-semibold text-state-warn">
-              ⚠ This report is not about your active dataset
+              {WARNING_MARK} This report is not about your active dataset
             </p>
             <p className="mt-1 text-sm text-ink">
               These results come from{" "}
@@ -349,7 +350,7 @@ export default function EvaluationReport() {
             <button
               type="button"
               onClick={() => goToTool("Data Training")}
-              className="mt-3 rounded-md bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400"
+              className="mt-3 rounded-control bg-rule px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong"
             >
               Go to Data Training
             </button>
@@ -368,9 +369,9 @@ export default function EvaluationReport() {
         )}
 
         {run.warnings.length > 0 && (
-          <div className="mb-6 rounded-md border border-state-warn/40 bg-state-warn/10 p-4">
+          <div className="mb-6 rounded-control border border-state-warn/40 bg-state-warn/10 p-4">
             <p className="mb-2 text-sm font-semibold text-state-warn">
-              ⚠ {run.warnings.length} warning
+              {WARNING_MARK} {run.warnings.length} warning
               {run.warnings.length === 1 ? "" : "s"} from training
             </p>
             <ul className="list-disc space-y-1 pl-5 text-sm text-state-warn">
@@ -382,7 +383,7 @@ export default function EvaluationReport() {
         )}
 
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             About this run
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -452,7 +453,7 @@ export default function EvaluationReport() {
 
           {Object.keys(run.effective_hyperparameters).length > 0 && (
             <div className="mt-4">
-              <h3 className="mb-2 text-sm font-semibold text-gray-800">
+              <h3 className="mb-2 text-sm font-semibold text-ink">
                 Hyperparameters actually used
               </h3>
               <div className="overflow-x-auto">
@@ -460,7 +461,7 @@ export default function EvaluationReport() {
                   <tbody>
                     {Object.entries(run.effective_hyperparameters).map(
                       ([name, value]) => (
-                        <tr key={name} className="border-b border-gray-200">
+                        <tr key={name} className="border-b border-rule">
                           <td className="py-1 pr-6 text-ink-muted">{name}</td>
                           <td className="py-1 font-mono text-ink">
                             {stringifyParam(value)}
@@ -485,11 +486,11 @@ export default function EvaluationReport() {
             <button
               type="button"
               onClick={() => goToTool("Data Training")}
-              className="w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors"
+              className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
             >
               Back to Data Training
             </button>
-            <hr className="my-6 border-t border-gray-300" />
+            <hr className="my-6 border-t border-rule" />
             {runPicker}
           </>
         ) : (
@@ -502,12 +503,12 @@ export default function EvaluationReport() {
 
             {run.cv && (
               <>
-                <hr className="my-8 border-t border-gray-300" />
+                <hr className="my-8 border-t border-rule" />
                 <CrossValidationBlock run={run} />
               </>
             )}
 
-            <hr className="my-8 border-t border-gray-300" />
+            <hr className="my-8 border-t border-rule" />
 
             {isClassification ? (
               run.confusion_matrix ? (
@@ -517,10 +518,10 @@ export default function EvaluationReport() {
                 />
               ) : (
                 <section>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                  <h2 className="text-xl font-semibold text-ink mb-4">
                     Confusion matrix
                   </h2>
-                  <p className="rounded-md border border-gray-300 bg-gray-100 p-4 text-sm text-ink-muted">
+                  <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
                     This run did not return a confusion matrix.
                   </p>
                 </section>
@@ -538,7 +539,7 @@ export default function EvaluationReport() {
                 : "A confusion matrix is not shown because it counts predicted classes against actual classes, which only makes sense for classification."}
             </p>
 
-            <hr className="my-8 border-t border-gray-300" />
+            <hr className="my-8 border-t border-rule" />
 
             <FeatureImportanceChart
               key={run.id}
@@ -546,24 +547,24 @@ export default function EvaluationReport() {
               algorithmLabel={run.algorithm_label}
             />
 
-            <hr className="my-8 border-t border-gray-300" />
+            <hr className="my-8 border-t border-rule" />
 
             <section>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              <h2 className="text-xl font-semibold text-ink mb-4">
                 Take it with you
               </h2>
               <div className="space-y-4">
                 <a
                   href={services.reportDownloadUrl(run.id, "md")}
                   download
-                  className="block w-full rounded-md bg-primary px-4 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-opacity-90"
+                  className="block w-full rounded-control bg-primary px-4 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-[#471724]"
                 >
                   Download the evaluation report (Markdown)
                 </a>
                 <a
                   href={services.modelDownloadUrl(run.id)}
                   download
-                  className="block w-full rounded-md bg-gray-300 px-4 py-3 text-center text-lg font-semibold text-gray-800 transition-colors hover:bg-gray-400"
+                  className="block w-full rounded-control bg-rule px-4 py-3 text-center text-lg font-semibold text-ink transition-colors hover:bg-rule-strong"
                 >
                   Download the trained model (.joblib)
                 </a>
@@ -575,7 +576,7 @@ export default function EvaluationReport() {
               </p>
             </section>
 
-            <hr className="my-8 border-t border-gray-300" />
+            <hr className="my-8 border-t border-rule" />
 
             {/* Keyed by run id so switching runs cannot leave the previous
                 run's prediction sitting under the new run's target name. */}
@@ -587,7 +588,7 @@ export default function EvaluationReport() {
               targetColumn={run.target_column}
             />
 
-            <hr className="my-8 border-t border-gray-300" />
+            <hr className="my-8 border-t border-rule" />
 
             {runPicker}
           </>

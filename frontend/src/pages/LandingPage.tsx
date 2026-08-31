@@ -9,10 +9,15 @@
  * take them back to it.
  */
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import services from "../services/services";
 import type { AlgorithmSpec, ApiError } from "../interface/MlTypes";
 import { useWorkspace } from "../context/workspaceContext";
+import {
+  DOCUMENTED_FAMILIES,
+  groupByFamily,
+} from "../data/algorithmCatalogue";
 
 /** Must match the strings App.tsx switches on. */
 const TOOL_PREPROCESSING = "Data Preprocessing";
@@ -80,56 +85,6 @@ const STEPS: StepCard[] = [
   },
 ];
 
-/**
- * Shown only when the algorithms endpoint cannot be reached, and labelled as
- * such in the UI. This is the documented catalogue from the API contract, not
- * stand-in data: the live list always wins when the server answers.
- */
-const OFFLINE_FAMILIES: { family: string; labels: string[] }[] = [
-  {
-    family: "Linear models",
-    labels: [
-      "Logistic Regression",
-      "Ridge Classifier",
-      "Linear Regression",
-      "Ridge Regression",
-      "Lasso Regression",
-      "Elastic Net",
-      "Stochastic Gradient Descent",
-    ],
-  },
-  {
-    family: "Support vector machines",
-    labels: ["Support Vector Machine (SVC / SVR)"],
-  },
-  {
-    family: "Trees and ensembles",
-    labels: [
-      "Decision Tree",
-      "Random Forest",
-      "Extra Trees",
-      "Gradient Boosting",
-      "Histogram Gradient Boosting",
-      "AdaBoost",
-    ],
-  },
-  { family: "Nearest neighbours", labels: ["K-Nearest Neighbours"] },
-  { family: "Naive Bayes", labels: ["Gaussian Naive Bayes"] },
-  { family: "Neural networks", labels: ["Neural Network (MLP)"] },
-];
-
-function groupByFamily(
-  algorithms: AlgorithmSpec[]
-): { family: string; labels: string[] }[] {
-  const families = new Map<string, string[]>();
-  for (const algorithm of algorithms) {
-    const bucket = families.get(algorithm.family);
-    if (bucket) bucket.push(algorithm.label);
-    else families.set(algorithm.family, [algorithm.label]);
-  }
-  return Array.from(families, ([family, labels]) => ({ family, labels }));
-}
-
 const LandingPage = () => {
   const { dataset, run, restoring, goToTool } = useWorkspace();
 
@@ -166,35 +121,35 @@ const LandingPage = () => {
   const liveFamilies =
     algorithms && algorithms.length > 0 ? groupByFamily(algorithms) : null;
   const serverReturnedNone = algorithms !== null && algorithms.length === 0;
-  const families = liveFamilies ?? OFFLINE_FAMILIES;
+  const families = liveFamilies ?? DOCUMENTED_FAMILIES;
   const usingOfflineList = liveFamilies === null && !serverReturnedNone;
   const hasWork = dataset !== null || run !== null;
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8">
-      <h1 className="text-4xl font-bold text-secondary mb-8">Furina ML</h1>
+    <div className="bg-paper min-h-full p-8">
+      <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Overview</h1>
 
       {/* --------------------------------------------------------------- */}
       {/* Intro, or a way back into work already in progress.              */}
       {/* --------------------------------------------------------------- */}
       {restoring ? (
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg mb-6">
+        <div className="w-full panel p-8 mb-6">
           <p className="text-ink-muted">Restoring your last workspace…</p>
         </div>
       ) : hasWork ? (
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        <div className="w-full panel p-8 mb-6">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Resume where you left off
           </h2>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="border border-gray-300 rounded-md p-4">
+            <div className="border border-rule rounded-control p-4">
               <p className="text-xs uppercase tracking-wide text-ink-muted mb-1">
                 Active dataset
               </p>
               {dataset ? (
                 <>
-                  <p className="text-lg font-semibold text-ink">
+                  <p className="font-serif text-h3 text-ink">
                     {dataset.name}
                   </p>
                   <p className="text-sm text-ink-muted">
@@ -209,13 +164,13 @@ const LandingPage = () => {
               )}
             </div>
 
-            <div className="border border-gray-300 rounded-md p-4">
+            <div className="border border-rule rounded-control p-4">
               <p className="text-xs uppercase tracking-wide text-ink-muted mb-1">
                 Last training run
               </p>
               {run ? (
                 <>
-                  <p className="text-lg font-semibold text-ink">
+                  <p className="font-serif text-h3 text-ink">
                     {run.algorithm_label}
                   </p>
                   {run.status === "failed" ? (
@@ -240,13 +195,13 @@ const LandingPage = () => {
             </div>
           </div>
 
-          <hr className="my-6 border-t border-gray-300" />
+          <hr className="my-6 border-t border-rule" />
 
           <div className="grid gap-4 md:grid-cols-3">
             <button
               type="button"
               onClick={() => goToTool(TOOL_PREPROCESSING)}
-              className="w-full bg-gray-300 text-gray-800 py-3 px-4 rounded-md text-lg font-semibold hover:bg-gray-400 transition-colors"
+              className="btn btn-secondary w-full"
             >
               Back to the data
             </button>
@@ -255,8 +210,8 @@ const LandingPage = () => {
               onClick={() => goToTool(TOOL_TRAINING)}
               className={
                 run
-                  ? "w-full bg-gray-300 text-gray-800 py-3 px-4 rounded-md text-lg font-semibold hover:bg-gray-400 transition-colors"
-                  : "w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors"
+                  ? "w-full bg-rule text-ink py-3 px-4 rounded-control text-lg font-semibold hover:bg-rule-strong transition-colors"
+                  : "w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
               }
             >
               {run ? "Train another model" : "Train a model"}
@@ -266,8 +221,8 @@ const LandingPage = () => {
               onClick={() => goToTool(TOOL_EVALUATION)}
               className={
                 run
-                  ? "w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors"
-                  : "w-full bg-gray-300 text-gray-800 py-3 px-4 rounded-md text-lg font-semibold hover:bg-gray-400 transition-colors"
+                  ? "w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
+                  : "w-full bg-rule text-ink py-3 px-4 rounded-control text-lg font-semibold hover:bg-rule-strong transition-colors"
               }
             >
               See the evaluation
@@ -275,31 +230,21 @@ const LandingPage = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Train a real scikit-learn model on your own CSV
-          </h2>
-          <p className="text-ink mb-3">
-            Furina ML turns a spreadsheet into a working machine learning model
-            without you writing any Python. You upload a CSV, look at what is
-            actually in it, clean up what needs cleaning, pick the column you
-            want to predict and an algorithm to predict it with, and get back
-            an honest evaluation of how well that model does on data it has
-            never seen.
-          </p>
-          <p className="text-ink mb-6">
-            Everything here runs against a real Django and scikit-learn backend.
-            The profiles, the metrics, the confusion matrix and the predictions
-            are all computed from your data — nothing on these pages is a
-            sample or a simulation.
+        <div className="w-full panel p-8 mb-6">
+          <h2 className="panel-title">Nothing loaded yet</h2>
+          <p className="prose-page mb-6">
+            The workbench needs a dataset before it can do anything. Upload a
+            CSV on the preprocessing page and the rest of the pipeline opens up
+            behind it. There is a fuller description of what each step does on
+            the <Link to="/">front page</Link>.
           </p>
 
           <button
             type="button"
             onClick={() => goToTool(TOOL_PREPROCESSING)}
-            className="w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors"
+            className="btn btn-primary text-body px-6 py-3"
           >
-            Start by uploading a CSV
+            Upload a CSV
           </button>
         </div>
       )}
@@ -307,23 +252,23 @@ const LandingPage = () => {
       {/* --------------------------------------------------------------- */}
       {/* The three-step flow.                                             */}
       {/* --------------------------------------------------------------- */}
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <h2 className="font-serif text-h3 text-ink mb-4">
         Three steps, in order
       </h2>
       <div className="grid gap-6 lg:grid-cols-3 mb-6">
         {STEPS.map((step) => (
           <div
             key={step.tool}
-            className="w-full bg-white p-8 rounded-lg shadow-lg flex flex-col"
+            className="w-full panel p-8 flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
               <span
                 aria-hidden="true"
-                className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center font-bold"
+                className="flex-shrink-0 w-7 h-7 border border-rule-strong bg-paper-sunken text-ink flex items-center justify-center font-serif text-small font-semibold"
               >
                 {step.index}
               </span>
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="font-serif text-h3 text-ink">
                 {step.title}
               </h3>
             </div>
@@ -331,7 +276,7 @@ const LandingPage = () => {
             <button
               type="button"
               onClick={() => goToTool(step.tool)}
-              className="w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors"
+              className="btn btn-primary w-full"
             >
               {step.action}
             </button>
@@ -342,13 +287,13 @@ const LandingPage = () => {
       {/* --------------------------------------------------------------- */}
       {/* What the backend actually does.                                  */}
       {/* --------------------------------------------------------------- */}
-      <div className="w-full bg-white p-8 rounded-lg shadow-lg mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="w-full panel p-8 mb-6">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           What happens under the hood
         </h2>
         <p className="text-ink mb-3">
           When you press Train, the backend assembles a single scikit-learn{" "}
-          <code className="bg-gray-200 px-1 rounded">Pipeline</code>. Numeric
+          <code className="bg-paper-sunken px-1 rounded-control">Pipeline</code>. Numeric
           columns get their gaps filled with the column median and, if you leave
           scaling on, are standardised. Categorical, text, boolean and date
           columns get their gaps filled with the most frequent value and are
@@ -363,11 +308,11 @@ const LandingPage = () => {
           about the test set leaks into the model that is about to be scored on
           it.
         </p>
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
         <button
           type="button"
           onClick={() => goToTool(TOOL_ABOUT)}
-          className="w-full bg-gray-300 text-gray-800 py-3 px-4 rounded-md text-lg font-semibold hover:bg-gray-400 transition-colors"
+          className="btn btn-secondary w-full"
         >
           Read the full pipeline and API reference
         </button>
@@ -376,8 +321,8 @@ const LandingPage = () => {
       {/* --------------------------------------------------------------- */}
       {/* Algorithm families.                                              */}
       {/* --------------------------------------------------------------- */}
-      <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="w-full panel p-8">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           Algorithms you can train
         </h2>
 
@@ -388,7 +333,7 @@ const LandingPage = () => {
         {algorithmError !== null && !errorDismissed && (
           <div
             role="alert"
-            className="mb-4 border-l-4 border-state-warn bg-gray-100 p-4 rounded-md"
+            className="mb-4 border-l-4 border-state-warn bg-paper p-4 rounded-control"
           >
             <div className="flex items-start justify-between gap-4">
               <p className="font-semibold text-state-warn">
@@ -431,7 +376,7 @@ const LandingPage = () => {
               {families.map((group) => (
                 <div
                   key={group.family}
-                  className="border border-gray-300 rounded-md p-4"
+                  className="border border-rule rounded-control p-4"
                 >
                   <h3 className="font-semibold text-ink mb-2">
                     {group.family}

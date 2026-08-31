@@ -610,9 +610,28 @@ class RunEndpointTests(ApiTestCase):
                 "status",
                 "primary_metric_name",
                 "primary_metric",
+                # The whole metric blob rides along, not just the headline
+                # number, so the dashboard can rank and compare every run from
+                # one request instead of one request per row.
+                "metrics",
+                "train_metrics",
+                "n_train",
+                "n_test",
+                "duration_ms",
+                "cv_folds",
                 "created_at",
             },
         )
+
+    def test_run_list_carries_full_metrics(self) -> None:
+        """The dashboard reads every metric off the list endpoint."""
+        payload = self.client.get("/api/runs/").json()
+        row = payload[0]
+        self.assertIn("accuracy", row["metrics"])
+        self.assertIn("accuracy", row["train_metrics"])
+        self.assertEqual(row["cv_folds"], 3)
+        self.assertGreater(row["n_train"], 0)
+        self.assertGreater(row["n_test"], 0)
 
     def test_run_list_filters_by_dataset(self) -> None:
         other = self.upload(regression_csv())

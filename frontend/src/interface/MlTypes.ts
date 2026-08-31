@@ -154,6 +154,14 @@ export interface TrainingRunSummary {
   status: "success" | "failed";
   primary_metric_name: string;
   primary_metric: number | null;
+  /** The full test-split metric blob, flat `{name: value}`. */
+  metrics: Record<string, number | null>;
+  /** The same keys measured on the training split — the overfitting signal. */
+  train_metrics: Record<string, number | null>;
+  n_train: number;
+  n_test: number;
+  duration_ms: number;
+  cv_folds: number | null;
   created_at: string;
 }
 
@@ -275,6 +283,29 @@ export interface HealthResponse {
   sklearn: string;
   pandas: string;
   numpy: string;
+}
+
+/** One turn of the assistant conversation. */
+export interface AssistantMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** What the assistant is told the user is looking at. */
+export interface AssistantContext {
+  tool?: string;
+  dataset_id?: string | null;
+  run_id?: string | null;
+}
+
+export interface AssistantStatus {
+  enabled: boolean;
+  model: string | null;
+}
+
+export interface AssistantReply {
+  reply: string;
+  model: string;
 }
 
 /** Normalized error surfaced by the service layer. */

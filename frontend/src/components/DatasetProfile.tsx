@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { ColumnProfile } from "../interface/MlTypes";
+import { WARNING_MARK } from "../explainer/marks";
 import type {
   DatasetProfileProps,
   ProfileSortKey,
@@ -9,7 +10,7 @@ import type {
 
 /** Sequential ramp step for a 0..100 magnitude. Never a rainbow. */
 function missingRampClass(pct: number): string {
-  if (pct <= 0) return "bg-gray-300";
+  if (pct <= 0) return "bg-rule";
   if (pct < 5) return "bg-ramp-1";
   if (pct < 15) return "bg-ramp-2";
   if (pct < 30) return "bg-ramp-3";
@@ -116,8 +117,8 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
 
   if (columns.length === 0) {
     return (
-      <div className="rounded-md border border-gray-300 bg-gray-100 p-6 text-center">
-        <p className="font-semibold text-gray-800">No column profile yet</p>
+      <div className="rounded-control border border-rule bg-paper p-6 text-center">
+        <p className="font-semibold text-ink">No column profile yet</p>
         <p className="text-sm text-ink-muted mt-1">
           The profile appears as soon as a dataset is loaded.
         </p>
@@ -128,19 +129,19 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Column profile</h2>
+        <h2 className="text-xl font-semibold text-ink">Column profile</h2>
         <p className="text-sm text-ink-muted">
           {columns.length} columns · {withMissing} with missing values ·{" "}
           {targetable} usable as a prediction target. Click a heading to sort.
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-gray-200">
+      <div className="overflow-x-auto rounded-control border border-rule">
         <table className="min-w-full text-sm">
           <caption className="sr-only">
             Per-column profile of the active dataset.
           </caption>
-          <thead className="bg-gray-100 border-b border-gray-200 text-xs uppercase tracking-wide">
+          <thead className="bg-paper border-b border-rule text-xs uppercase tracking-wide">
             <tr>
               <SortHeader
                 label="Column"
@@ -186,7 +187,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
               return (
                 <tr
                   key={column.name}
-                  className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 align-top"
+                  className="border-b border-rule last:border-b-0 hover:bg-paper-sunken align-top"
                 >
                   <td className="px-3 py-3">
                     <div className="font-semibold text-ink break-words">
@@ -197,7 +198,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
                         className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-state-warn"
                         title="Every row is the same value, every row is unique, or the column is entirely empty — nothing to learn from."
                       >
-                        <span aria-hidden="true">⚠</span>
+                        <span aria-hidden="true">{WARNING_MARK}</span>
                         Not usable as a target
                       </div>
                     )}
@@ -209,7 +210,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
                   </td>
 
                   <td className="px-3 py-3">
-                    <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-gray-200 text-ink">
+                    <span className="inline-block rounded-control px-2 py-0.5 text-xs font-semibold bg-paper-sunken text-ink">
                       {column.kind}
                     </span>
                   </td>
@@ -221,7 +222,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
                   <td className="px-3 py-3 min-w-[10rem]">
                     <div className="flex items-center gap-2">
                       <div
-                        className="h-2 w-24 rounded-full bg-gray-200 overflow-hidden flex-shrink-0"
+                        className="h-2 w-24 rounded-full bg-paper-sunken overflow-hidden flex-shrink-0"
                         title={`${column.missing} missing (${column.missing_pct}%)`}
                       >
                         <div
@@ -268,7 +269,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
                           <span
                             key={`${column.name}-${entry.value}`}
                             title={`${entry.value} — ${entry.count.toLocaleString()} rows`}
-                            className="inline-block max-w-[14rem] truncate rounded bg-gray-100 border border-gray-200 px-2 py-0.5 text-xs text-ink"
+                            className="inline-block max-w-[14rem] truncate rounded-control bg-paper border border-rule px-2 py-0.5 text-xs text-ink"
                           >
                             {entry.value === "" ? "(empty)" : entry.value}
                             <span className="text-ink-muted"> ×{entry.count}</span>
@@ -280,7 +281,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
                         {samples.map((sample, index) => (
                           <span
                             key={`${column.name}-sample-${index}`}
-                            className="inline-block max-w-[14rem] truncate rounded bg-gray-100 border border-gray-200 px-2 py-0.5 text-xs text-ink"
+                            className="inline-block max-w-[14rem] truncate rounded-control bg-paper border border-rule px-2 py-0.5 text-xs text-ink"
                           >
                             {sample === "" ? "(empty)" : sample}
                           </span>

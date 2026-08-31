@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { PreprocessOp, PreprocessStep } from "../interface/MlTypes";
+import { WARNING_MARK } from "../explainer/marks";
 import type {
   OpParamSpec,
   PreprocessingCheckboxProps,
@@ -150,7 +151,7 @@ export default function PreprocessingCheckbox({
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">
+        <h2 className="text-xl font-semibold text-ink">
           Build a cleaning recipe
         </h2>
         <p className="text-sm text-ink-muted">
@@ -161,16 +162,16 @@ export default function PreprocessingCheckbox({
       </div>
 
       {steps.length === 0 ? (
-        <div className="mb-6 rounded-md border border-gray-300 bg-gray-100 p-4">
+        <div className="mb-6 rounded-control border border-rule bg-paper p-4">
           <p className="text-sm text-ink-muted">
             No steps selected yet. Your recipe and its running order will appear
             here.
           </p>
         </div>
       ) : (
-        <div className="mb-6 rounded-md border border-gray-300 bg-gray-100 p-4">
+        <div className="mb-6 rounded-control border border-rule bg-paper p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-800">
+            <h3 className="font-semibold text-ink">
               Recipe order ({steps.length}{" "}
               {steps.length === 1 ? "step" : "steps"})
             </h3>
@@ -181,7 +182,7 @@ export default function PreprocessingCheckbox({
                 setRawNumbers({});
               }}
               disabled={disabled}
-              className="text-sm font-semibold text-secondary hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+              className="text-sm font-semibold text-secondary hover:underline disabled:text-rule-strong disabled:no-underline disabled:cursor-not-allowed"
             >
               Clear all
             </button>
@@ -190,7 +191,7 @@ export default function PreprocessingCheckbox({
             {steps.map((step, index) => (
               <li
                 key={step.op}
-                className="flex items-center gap-3 rounded-md bg-white border border-gray-200 px-3 py-2"
+                className="flex items-center gap-3 rounded-control bg-paper-raised border border-rule px-3 py-2"
               >
                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">
                   {index + 1}
@@ -210,7 +211,7 @@ export default function PreprocessingCheckbox({
                   onClick={() => moveStep(step.op, -1)}
                   disabled={disabled || index === 0}
                   title="Run this step earlier"
-                  className="px-2 py-1 rounded border border-gray-300 text-sm text-gray-800 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-2 py-1 rounded-control border border-rule text-sm text-ink hover:bg-paper-sunken disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ↑
                 </button>
@@ -219,7 +220,7 @@ export default function PreprocessingCheckbox({
                   onClick={() => moveStep(step.op, 1)}
                   disabled={disabled || index === steps.length - 1}
                   title="Run this step later"
-                  className="px-2 py-1 rounded border border-gray-300 text-sm text-gray-800 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-2 py-1 rounded-control border border-rule text-sm text-ink hover:bg-paper-sunken disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ↓
                 </button>
@@ -228,7 +229,7 @@ export default function PreprocessingCheckbox({
                   onClick={() => toggleOp(step.op, false)}
                   disabled={disabled}
                   title="Remove this step"
-                  className="px-2 py-1 rounded border border-gray-300 text-sm font-semibold text-state-bad hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-2 py-1 rounded-control border border-rule text-sm font-semibold text-state-bad hover:bg-paper-sunken disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Remove
                 </button>
@@ -259,10 +260,10 @@ export default function PreprocessingCheckbox({
                 return (
                   <div
                     key={op}
-                    className={`rounded-md border p-4 transition-colors ${
+                    className={`rounded-control border p-4 transition-colors ${
                       enabled
                         ? "border-primary bg-primary/5"
-                        : "border-gray-200 bg-white"
+                        : "border-rule bg-paper-raised"
                     }`}
                   >
                     <div className="flex items-start">
@@ -273,19 +274,19 @@ export default function PreprocessingCheckbox({
                         checked={enabled}
                         disabled={disabled}
                         onChange={(event) => toggleOp(op, event.target.checked)}
-                        className="mt-1 h-5 w-5 flex-shrink-0 rounded border-gray-300 text-accent focus:ring-accent disabled:cursor-not-allowed"
+                        className="mt-1 h-5 w-5 flex-shrink-0 rounded-control border-rule text-accent focus:ring-accent disabled:cursor-not-allowed"
                       />
                       <div className="ml-3 flex-grow">
                         <label
                           htmlFor={`op-${op}`}
-                          className="font-semibold text-gray-800 cursor-pointer"
+                          className="font-semibold text-ink cursor-pointer"
                         >
                           {meta.label}
                         </label>
                         <p className="text-sm text-ink-muted">{meta.help}</p>
                         {available.length === 0 && (
                           <p className="mt-1 text-xs font-semibold text-state-warn">
-                            <span aria-hidden="true">⚠</span> No column in this
+                            <span aria-hidden="true">{WARNING_MARK}</span> No column in this
                             dataset matches this operation — it will be skipped.
                           </p>
                         )}
@@ -294,8 +295,8 @@ export default function PreprocessingCheckbox({
 
                     {enabled && step && (
                       <div className="mt-4 ml-8 space-y-4">
-                        <details className="rounded-md border border-gray-300 bg-white">
-                          <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-800">
+                        <details className="rounded-control border border-rule bg-paper-raised">
+                          <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-ink">
                             Columns:{" "}
                             <span className="font-normal text-ink-muted">
                               {selected === null
@@ -303,7 +304,7 @@ export default function PreprocessingCheckbox({
                                 : `${selected.length} selected`}
                             </span>
                           </summary>
-                          <div className="border-t border-gray-200 p-3">
+                          <div className="border-t border-rule p-3">
                             <div className="mb-2 flex gap-3">
                               <button
                                 type="button"
@@ -314,7 +315,7 @@ export default function PreprocessingCheckbox({
                                     available.map((column) => column.name)
                                   )
                                 }
-                                className="text-xs font-semibold text-secondary hover:underline disabled:text-gray-400"
+                                className="text-xs font-semibold text-secondary hover:underline disabled:text-rule-strong"
                               >
                                 Select every applicable column
                               </button>
@@ -327,7 +328,7 @@ export default function PreprocessingCheckbox({
                                     meta.requiresColumns ? [] : null
                                   )
                                 }
-                                className="text-xs font-semibold text-secondary hover:underline disabled:text-gray-400"
+                                className="text-xs font-semibold text-secondary hover:underline disabled:text-rule-strong"
                               >
                                 {meta.requiresColumns
                                   ? "Clear selection"
@@ -348,7 +349,7 @@ export default function PreprocessingCheckbox({
                                   return (
                                     <label
                                       key={column.name}
-                                      className="flex items-center gap-2 text-sm text-ink rounded px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                                      className="flex items-center gap-2 text-sm text-ink rounded-control px-2 py-1 hover:bg-paper cursor-pointer"
                                       title={`${column.kind} · ${column.missing_pct}% missing`}
                                     >
                                       <input
@@ -362,7 +363,7 @@ export default function PreprocessingCheckbox({
                                             event.target.checked
                                           )
                                         }
-                                        className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
+                                        className="h-4 w-4 rounded-control border-rule text-accent focus:ring-accent"
                                       />
                                       <span className="truncate">
                                         {column.name}
@@ -380,7 +381,7 @@ export default function PreprocessingCheckbox({
 
                         {needsColumns && (
                           <p className="text-sm font-semibold text-state-warn">
-                            <span aria-hidden="true">⚠</span> Choose at least one
+                            <span aria-hidden="true">{WARNING_MARK}</span> Choose at least one
                             column — this operation has no safe default.
                           </p>
                         )}
@@ -394,7 +395,7 @@ export default function PreprocessingCheckbox({
                                 <div key={spec.name}>
                                   <label
                                     htmlFor={inputId}
-                                    className="block text-sm font-semibold text-gray-800 mb-1"
+                                    className="block text-sm font-semibold text-ink mb-1"
                                   >
                                     {spec.label}
                                   </label>
@@ -406,7 +407,7 @@ export default function PreprocessingCheckbox({
                                       onChange={(event) =>
                                         setParam(op, spec, event.target.value)
                                       }
-                                      className="w-full p-2 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+                                      className="w-full p-2 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
                                     >
                                       <option value="">Choose a column…</option>
                                       {columnNames.map((name) => (
@@ -427,7 +428,7 @@ export default function PreprocessingCheckbox({
                                       onChange={(event) =>
                                         setParam(op, spec, event.target.value)
                                       }
-                                      className="w-full p-2 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+                                      className="w-full p-2 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
                                     />
                                   )}
                                   <p className="text-xs text-ink-muted mt-1">

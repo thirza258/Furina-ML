@@ -115,7 +115,7 @@ const HyperparameterForm = ({
     return (
       <div key={spec.name}>
         <div className="mb-1 flex flex-wrap items-baseline gap-x-2">
-          <label htmlFor={fieldId} className="text-sm font-medium text-gray-700">
+          <label htmlFor={fieldId} className="text-sm font-medium text-ink">
             {spec.label}
           </label>
           <code className="text-xs text-ink-muted">{spec.name}</code>
@@ -139,7 +139,7 @@ const HyperparameterForm = ({
         {spec.type === "bool" ? (
           <label
             htmlFor={fieldId}
-            className="flex cursor-pointer items-center gap-3 rounded-md border border-gray-300 bg-gray-200 p-3"
+            className="flex cursor-pointer items-center gap-3 rounded-control border border-rule bg-paper-sunken p-3"
           >
             <input
               id={fieldId}
@@ -149,9 +149,9 @@ const HyperparameterForm = ({
               onChange={(event) =>
                 onChange(withField(value, spec.name, event.target.checked))
               }
-              className="h-5 w-5 rounded border-gray-300 text-accent focus:ring-accent"
+              className="h-5 w-5 rounded-control border-rule text-accent focus:ring-accent"
             />
-            <span className="text-sm text-gray-800">
+            <span className="text-sm text-ink">
               {touched
                 ? value[spec.name] === true
                   ? "On"
@@ -169,7 +169,7 @@ const HyperparameterForm = ({
               if (raw === "") onChange(withoutField(value, spec.name));
               else onChange(withField(value, spec.name, raw));
             }}
-            className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             <option value="">Default — {defaultText(spec)}</option>
             {(spec.options ?? []).map((option) => (
@@ -216,7 +216,7 @@ const HyperparameterForm = ({
                 bumpToken(spec.name);
               }
             }}
-            className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
           />
         )}
 
@@ -232,7 +232,7 @@ const HyperparameterForm = ({
 
   if (specs.length === 0) {
     return (
-      <p className="rounded-md border border-gray-300 bg-gray-50 p-4 text-sm text-ink-muted">
+      <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
         This algorithm exposes no tunable settings — it runs with scikit-learn's
         defaults.
       </p>
@@ -265,7 +265,7 @@ const HyperparameterForm = ({
           type="button"
           disabled={disabled || touchedCount === 0}
           onClick={resetAll}
-          className="ml-auto rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="ml-auto rounded-control bg-rule px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong disabled:cursor-not-allowed disabled:opacity-50"
         >
           Reset to defaults
         </button>
@@ -274,8 +274,8 @@ const HyperparameterForm = ({
       {basic.length > 0 && <div className="space-y-4">{basic.map(renderField)}</div>}
 
       {advanced.length > 0 && (
-        <details className="mt-4 rounded-md border border-gray-300 bg-gray-50 p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-gray-800">
+        <details className="mt-4 rounded-control border border-rule bg-paper-sunken p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-ink">
             Advanced ({advanced.length})
             {advancedTouched > 0 && (
               <span className="ml-2 font-medium text-state-warn">

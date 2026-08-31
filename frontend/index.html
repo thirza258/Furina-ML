@@ -4,7 +4,31 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Furina ML</title>
+    <title>Furina ML — train scikit-learn models on your own CSV</title>
+
+    <!-- Search and sharing. The canonical origin is the deployed one; the
+         nginx entrypoint rewrites it when SITE_URL names a different host. -->
+    <meta
+      name="description"
+      content="Upload a CSV, profile and clean it, choose a target column and an algorithm, and train a real scikit-learn, XGBoost or LightGBM model in the browser. Every metric is computed on data the model never saw."
+    />
+    <link rel="canonical" href="https://furina.nevatal.id/" />
+    <meta name="theme-color" content="#5A1D2E" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Furina ML" />
+    <meta property="og:title" content="Furina ML — train scikit-learn models on your own CSV" />
+    <meta
+      property="og:description"
+      content="Upload a CSV, clean it, pick a target and an algorithm, and read an honest evaluation measured on rows the model never saw."
+    />
+    <meta property="og:url" content="https://furina.nevatal.id/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Furina ML" />
+    <meta
+      name="twitter:description"
+      content="Train real scikit-learn, XGBoost and LightGBM models on your own CSV, without writing any Python."
+    />
     <!-- Runtime configuration. A classic script in <head> runs before the
          deferred module below, so window.__FURINA_API_BASE_URL__ is set by
          the time services.ts reads it. In a container this file is written

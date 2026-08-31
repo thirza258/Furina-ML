@@ -511,10 +511,17 @@ def _residual_sample(y_true: Any, y_pred: Any) -> list[dict]:
 
 
 def _safe_proba(pipe: Any, X: pd.DataFrame) -> np.ndarray | None:
-    """Return predict_proba output, or None when the estimator has none."""
+    """Return predict_proba output, or None when the estimator has none.
+
+    The catch is deliberately broad. A library exception need not derive from a
+    builtin: `LightGBMError` subclasses `Exception` directly, so the narrower
+    `(AttributeError, ValueError, NotImplementedError)` let it escape and turn a
+    missing-probabilities case into a 500. Every caller already treats `None` as
+    "no probabilities", and ROC AUC and log loss are reported as null.
+    """
     try:
         return np.asarray(pipe.predict_proba(X), dtype=float)
-    except (AttributeError, ValueError, NotImplementedError):
+    except Exception:  # noqa: BLE001 - absence of probabilities is not an error
         return None
 
 

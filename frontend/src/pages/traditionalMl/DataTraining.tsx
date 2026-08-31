@@ -15,6 +15,7 @@ import {
 import HyperparameterForm from "../../components/HyperparameterForm";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
+import { WARNING_MARK } from "../../explainer/marks";
 import type {
   AlgorithmSpec,
   ApiError,
@@ -418,9 +419,9 @@ const DataTraining = () => {
   /* ---------------- restoring / empty states ---------------- */
   if (restoring) {
     return (
-      <div className="bg-gray-100 min-h-screen p-8 w-full">
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold text-secondary mb-8">Data Training</h1>
+      <div className="bg-paper min-h-full p-8 w-full">
+        <div className="w-full panel p-8">
+          <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
           <p className="text-ink-muted">Loading your workspace…</p>
         </div>
       </div>
@@ -429,12 +430,12 @@ const DataTraining = () => {
 
   if (!dataset) {
     return (
-      <div className="bg-gray-100 min-h-screen p-8 w-full">
-        <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold text-secondary mb-8">Data Training</h1>
+      <div className="bg-paper min-h-full p-8 w-full">
+        <div className="w-full panel p-8">
+          <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
 
           {restoreError && (
-            <div className="mb-6 rounded-md border-l-4 border-state-bad bg-red-50 p-4">
+            <div className="mb-6 rounded-control border-l-4 border-state-bad bg-red-50 p-4">
               <p className="font-semibold text-state-bad">
                 ✕ Could not restore your last dataset
               </p>
@@ -442,8 +443,8 @@ const DataTraining = () => {
             </div>
           )}
 
-          <div className="rounded-md border border-gray-300 bg-gray-50 p-8 text-center">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <div className="rounded-control border border-rule bg-paper-sunken p-8 text-center">
+            <h2 className="text-xl font-semibold text-ink mb-4">
               No dataset loaded yet
             </h2>
             <p className="mx-auto mb-6 max-w-xl text-ink-muted">
@@ -455,7 +456,7 @@ const DataTraining = () => {
             <button
               type="button"
               onClick={() => goToTool("Data Preprocessing")}
-              className="mx-auto block w-full max-w-sm bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors"
+              className="mx-auto block w-full max-w-sm bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
             >
               Go to Data Preprocessing
             </button>
@@ -468,13 +469,13 @@ const DataTraining = () => {
   const formDisabled = training;
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8 w-full">
-      <div className="w-full bg-white p-8 rounded-lg shadow-lg">
+    <div className="bg-paper min-h-full p-8 w-full">
+      <div className="w-full panel p-8">
         <style>{INDETERMINATE_CSS}</style>
 
-        <h1 className="text-4xl font-bold text-secondary mb-8">Data Training</h1>
+        <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
 
-        <div className="mb-8 rounded-md border border-gray-300 bg-gray-50 p-4">
+        <div className="mb-8 rounded-control border border-rule bg-paper-sunken p-4">
           <p className="text-sm text-ink-muted">Training on</p>
           <p className="text-lg font-semibold text-ink">{dataset.name}</p>
           <p className="text-sm text-ink-muted">
@@ -485,7 +486,7 @@ const DataTraining = () => {
 
         {/* ---------------- split ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             Split the data
           </h2>
           <div className="relative flex items-center">
@@ -500,7 +501,7 @@ const DataTraining = () => {
                 setTrainPct(clampPct(Number(event.target.value)));
                 setSplitDraft(null);
               }}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary disabled:cursor-not-allowed"
+              className="w-full h-2 bg-paper-sunken rounded-control appearance-none cursor-pointer accent-primary disabled:cursor-not-allowed"
             />
           </div>
           <div className="flex justify-between items-center mt-4">
@@ -523,9 +524,9 @@ const DataTraining = () => {
                 onKeyDown={(event) => {
                   if (event.key === "Enter") commitSplitDraft();
                 }}
-                className="w-20 p-2 border border-gray-300 rounded-md text-center bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-20 p-2 border border-rule rounded-control text-center bg-paper-sunken disabled:cursor-not-allowed disabled:opacity-60"
               />
-              <span className="font-medium text-gray-700">% Training</span>
+              <span className="font-medium text-ink">% Training</span>
             </div>
             <div className="flex items-center space-x-2">
               <input
@@ -546,9 +547,9 @@ const DataTraining = () => {
                 onKeyDown={(event) => {
                   if (event.key === "Enter") commitSplitDraft();
                 }}
-                className="w-20 p-2 border border-gray-300 rounded-md text-center bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-20 p-2 border border-rule rounded-control text-center bg-paper-sunken disabled:cursor-not-allowed disabled:opacity-60"
               />
-              <span className="font-medium text-gray-700">% Testing</span>
+              <span className="font-medium text-ink">% Testing</span>
             </div>
           </div>
           <p className="mt-2 text-sm text-ink-muted">
@@ -564,11 +565,11 @@ const DataTraining = () => {
           </p>
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- target ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             Choose the target column
           </h2>
           <TargetColumnSelector
@@ -580,11 +581,11 @@ const DataTraining = () => {
           />
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- features ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             Choose the features
           </h2>
           <FeatureColumnSelector
@@ -597,11 +598,11 @@ const DataTraining = () => {
           />
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- task type ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Task type</h2>
+          <h2 className="text-xl font-semibold text-ink mb-4">Task type</h2>
           <div className="flex flex-wrap gap-2">
             {TASK_CHOICES.map((choice) => (
               <button
@@ -609,10 +610,10 @@ const DataTraining = () => {
                 type="button"
                 disabled={formDisabled}
                 onClick={() => setRequestedTask(choice.value)}
-                className={`rounded-md px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`rounded-control px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                   requestedTask === choice.value
                     ? "bg-primary text-white"
-                    : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+                    : "bg-rule text-ink hover:bg-rule-strong"
                 }`}
               >
                 {choice.label}
@@ -648,11 +649,11 @@ const DataTraining = () => {
           </p>
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- seed ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             Set random seed
           </h2>
           <div className="flex items-center space-x-4">
@@ -663,12 +664,12 @@ const DataTraining = () => {
               disabled={formDisabled}
               placeholder="Leave empty for a different split every run"
               onChange={(event) => setSeed(event.target.value)}
-              className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button
               type="button"
               disabled={formDisabled}
-              className="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-md text-gray-800 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              className="px-4 py-3 bg-rule hover:bg-rule-strong rounded-control text-ink font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() =>
                 setSeed(String(Math.floor(Math.random() * 100000)))
               }
@@ -676,20 +677,20 @@ const DataTraining = () => {
               Random
             </button>
           </div>
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-sm text-ink-muted mt-2">
             {seed.trim() === ""
               ? "No seed — the split and any randomised estimator will differ on every run."
               : `Seed ${Math.trunc(Number(seed)) || 0} — the same seed reproduces exactly the same run.`}
           </p>
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- algorithm ---------------- */}
         <div className="mb-10">
           <label
             htmlFor="model-select"
-            className="block text-xl font-semibold text-gray-800 mb-4"
+            className="block text-xl font-semibold text-ink mb-4"
           >
             Choose model
           </label>
@@ -699,7 +700,7 @@ const DataTraining = () => {
           )}
 
           {algorithmsError !== null && (
-            <div className="rounded-md border-l-4 border-state-bad bg-red-50 p-4">
+            <div className="rounded-control border-l-4 border-state-bad bg-red-50 p-4">
               <p className="font-semibold text-state-bad">
                 ✕ Could not load the algorithms
               </p>
@@ -714,7 +715,7 @@ const DataTraining = () => {
                 value={availableAlgorithms.length === 0 ? "" : algorithm}
                 disabled={formDisabled || availableAlgorithms.length === 0}
                 onChange={(event) => handleAlgorithmChange(event.target.value)}
-                className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {availableAlgorithms.length === 0 && (
                   <option value="">No algorithm fits this task</option>
@@ -746,7 +747,7 @@ const DataTraining = () => {
               </p>
 
               {selectedSpec !== null && (
-                <div className="mt-3 rounded-md border border-gray-300 bg-gray-50 p-4">
+                <div className="mt-3 rounded-control border border-rule bg-paper-sunken p-4">
                   <p className="text-sm text-ink">{selectedSpec.description}</p>
                   <p className="mt-2 text-sm text-ink-muted">
                     {selectedSpec.supports_feature_importance
@@ -765,11 +766,11 @@ const DataTraining = () => {
 
         {/* ---------------- hyperparameters ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             Hyperparameters
           </h2>
           {selectedSpec === null ? (
-            <p className="rounded-md border border-gray-300 bg-gray-50 p-4 text-sm text-ink-muted">
+            <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
               Choose an algorithm to see the settings it accepts.
             </p>
           ) : (
@@ -784,17 +785,17 @@ const DataTraining = () => {
           )}
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- options ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             Training options
           </h2>
 
           <div className="space-y-4">
             <label
-              className={`flex items-start gap-3 rounded-md border border-gray-300 bg-gray-50 p-4 ${
+              className={`flex items-start gap-3 rounded-control border border-rule bg-paper-sunken p-4 ${
                 resolvedTask === "classification" && !formDisabled
                   ? "cursor-pointer"
                   : "cursor-not-allowed opacity-70"
@@ -805,10 +806,10 @@ const DataTraining = () => {
                 checked={stratify}
                 disabled={formDisabled || resolvedTask !== "classification"}
                 onChange={(event) => setStratify(event.target.checked)}
-                className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-gray-300 text-accent focus:ring-accent"
+                className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-control border-rule text-accent focus:ring-accent"
               />
               <span>
-                <span className="block font-medium text-gray-800">
+                <span className="block font-medium text-ink">
                   Stratify the split
                 </span>
                 <span className="block text-sm text-ink-muted">
@@ -820,7 +821,7 @@ const DataTraining = () => {
             </label>
 
             <label
-              className={`flex items-start gap-3 rounded-md border border-gray-300 bg-gray-50 p-4 ${
+              className={`flex items-start gap-3 rounded-control border border-rule bg-paper-sunken p-4 ${
                 formDisabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"
               }`}
             >
@@ -829,10 +830,10 @@ const DataTraining = () => {
                 checked={scaleFeatures}
                 disabled={formDisabled}
                 onChange={(event) => setScaleFeatures(event.target.checked)}
-                className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-gray-300 text-accent focus:ring-accent"
+                className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-control border-rule text-accent focus:ring-accent"
               />
               <span>
-                <span className="block font-medium text-gray-800">
+                <span className="block font-medium text-ink">
                   Standardise numeric features
                 </span>
                 <span className="block text-sm text-ink-muted">
@@ -846,7 +847,7 @@ const DataTraining = () => {
             <div>
               <label
                 htmlFor="cv-folds"
-                className="block font-medium text-gray-800 mb-1"
+                className="block font-medium text-ink mb-1"
               >
                 Cross-validation
               </label>
@@ -859,7 +860,7 @@ const DataTraining = () => {
                     event.target.value === "" ? null : Number(event.target.value)
                   )
                 }
-                className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <option value="">Off — a single train/test split</option>
                 {CV_FOLD_CHOICES.map((folds) => (
@@ -878,7 +879,7 @@ const DataTraining = () => {
             <div>
               <label
                 htmlFor="run-name"
-                className="block font-medium text-gray-800 mb-1"
+                className="block font-medium text-ink mb-1"
               >
                 Run name <span className="text-ink-muted">(optional)</span>
               </label>
@@ -889,7 +890,7 @@ const DataTraining = () => {
                 disabled={formDisabled}
                 placeholder="e.g. forest, 300 trees, no ID columns"
                 onChange={(event) => setRunName(event.target.value)}
-                className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
               />
               <p className="mt-1 text-sm text-ink-muted">
                 Names make the Recent runs list below readable when you compare
@@ -899,13 +900,13 @@ const DataTraining = () => {
           </div>
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- train ---------------- */}
         <div className="space-y-4">
           {validationError !== null && !training && (
             <p className="text-sm font-medium text-state-warn">
-              ⚠ {validationError}
+              {WARNING_MARK} {validationError}
             </p>
           )}
 
@@ -913,7 +914,7 @@ const DataTraining = () => {
             type="button"
             onClick={() => void handleTrain()}
             disabled={training || validationError !== null}
-            className="w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+            className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
           >
             {training ? "Training…" : "Train the model"}
           </button>
@@ -921,7 +922,7 @@ const DataTraining = () => {
           {training && (
             <div>
               <div
-                className="w-full bg-gray-200 rounded-full h-8 overflow-hidden"
+                className="w-full bg-paper-sunken rounded-full h-8 overflow-hidden"
                 role="progressbar"
                 aria-label="Training in progress"
               >
@@ -940,7 +941,7 @@ const DataTraining = () => {
           )}
 
           {trainError !== null && (
-            <div className="rounded-md border-l-4 border-state-bad bg-red-50 p-4">
+            <div className="rounded-control border-l-4 border-state-bad bg-red-50 p-4">
               <div className="flex items-start justify-between gap-4">
                 <p className="font-semibold text-state-bad">✕ Training failed</p>
                 <button
@@ -969,9 +970,9 @@ const DataTraining = () => {
           )}
 
           {result !== null && (
-            <div className="rounded-md border border-gray-300 bg-gray-50 p-6">
+            <div className="rounded-control border border-rule bg-paper-sunken p-6">
               {result.status === "failed" ? (
-                <div className="rounded-md border-l-4 border-state-bad bg-red-50 p-4">
+                <div className="rounded-control border-l-4 border-state-bad bg-red-50 p-4">
                   <p className="font-semibold text-state-bad">
                     ✕ The run finished with an error
                   </p>
@@ -986,7 +987,7 @@ const DataTraining = () => {
                   </p>
 
                   <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <div className="rounded-md bg-white p-4">
+                    <div className="rounded-control bg-paper-raised p-4">
                       <p className="text-3xl font-bold text-ink">
                         {formatMetric(result.primary_metric)}
                       </p>
@@ -994,19 +995,19 @@ const DataTraining = () => {
                         {metricLabel(result.primary_metric_name)} (test)
                       </p>
                     </div>
-                    <div className="rounded-md bg-white p-4">
+                    <div className="rounded-control bg-paper-raised p-4">
                       <p className="text-3xl font-bold text-ink">
                         {formatDuration(result.duration_ms)}
                       </p>
                       <p className="text-sm text-ink-muted">fit + evaluate</p>
                     </div>
-                    <div className="rounded-md bg-white p-4">
+                    <div className="rounded-control bg-paper-raised p-4">
                       <p className="text-3xl font-bold text-ink">
                         {result.n_train.toLocaleString()}
                       </p>
                       <p className="text-sm text-ink-muted">rows trained on</p>
                     </div>
-                    <div className="rounded-md bg-white p-4">
+                    <div className="rounded-control bg-paper-raised p-4">
                       <p className="text-3xl font-bold text-ink">
                         {result.n_test.toLocaleString()}
                       </p>
@@ -1027,9 +1028,9 @@ const DataTraining = () => {
                   )}
 
                   {result.warnings.length > 0 && (
-                    <div className="mt-4 rounded-md border-l-4 border-state-warn bg-amber-50 p-4">
+                    <div className="mt-4 rounded-control border-l-4 border-state-warn bg-amber-50 p-4">
                       <p className="font-semibold text-state-warn">
-                        ⚠ {result.warnings.length === 1 ? "Warning" : "Warnings"}
+                        {WARNING_MARK} {result.warnings.length === 1 ? "Warning" : "Warnings"}
                       </p>
                       <ul className="mt-1 list-disc space-y-1 pl-5">
                         {result.warnings.map((warning) => (
@@ -1044,7 +1045,7 @@ const DataTraining = () => {
                   <button
                     type="button"
                     onClick={() => goToTool("Model Evaluation")}
-                    className="mt-6 w-full bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors"
+                    className="mt-6 w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
                   >
                     View full evaluation
                   </button>
@@ -1054,16 +1055,16 @@ const DataTraining = () => {
           )}
         </div>
 
-        <hr className="my-6 border-t border-gray-300" />
+        <hr className="my-6 border-t border-rule" />
 
         {/* ---------------- recent runs ---------------- */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-ink mb-4">
             Recent runs on this dataset
           </h2>
 
           {runsError !== null && (
-            <div className="mb-4 rounded-md border-l-4 border-state-bad bg-red-50 p-4">
+            <div className="mb-4 rounded-control border-l-4 border-state-bad bg-red-50 p-4">
               <div className="flex items-start justify-between gap-4">
                 <p className="font-semibold text-state-bad">
                   ✕ Could not load the run history
@@ -1083,7 +1084,7 @@ const DataTraining = () => {
           {runsLoading && runs.length === 0 ? (
             <p className="text-sm text-ink-muted">Loading previous runs…</p>
           ) : runs.length === 0 ? (
-            <p className="rounded-md border border-gray-300 bg-gray-50 p-4 text-sm text-ink-muted">
+            <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
               No models have been trained on {dataset.name} yet. Train one above
               and it will appear here, so you can compare algorithms on the same
               data.
@@ -1096,7 +1097,7 @@ const DataTraining = () => {
                     type="button"
                     disabled={openingRunId !== null || training}
                     onClick={() => void handleOpenRun(summary.id)}
-                    className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 rounded-md border border-gray-300 bg-gray-50 p-4 text-left transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 rounded-control border border-rule bg-paper-sunken p-4 text-left transition-colors hover:bg-paper-sunken disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span className="font-semibold text-ink">
                       {summary.name.trim() === ""

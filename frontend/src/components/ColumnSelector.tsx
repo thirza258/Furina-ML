@@ -9,6 +9,7 @@
  *   <FeatureColumnSelector /> — multi select for the columns to predict it from.
  */
 import type { ColumnProfile } from "../interface/MlTypes";
+import { WARNING_MARK } from "../explainer/marks";
 
 /* ------------------------------------------------------------------ */
 /* Shared helpers                                                      */
@@ -64,7 +65,7 @@ function isIdLike(column: ColumnProfile, nRows: number): boolean {
 
 function KindBadge({ column }: { column: ColumnProfile }) {
   return (
-    <span className="inline-block rounded bg-gray-200 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-ink-muted">
+    <span className="inline-block rounded-control bg-paper-sunken px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-ink-muted">
       {column.kind}
     </span>
   );
@@ -111,7 +112,7 @@ export function TargetColumnSelector({
           if (next && !next.suitable_as_target) return;
           onChange(event.target.value);
         }}
-        className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
       >
         <option value="">Choose the column to predict…</option>
         {columns.map((column) => (
@@ -120,7 +121,7 @@ export function TargetColumnSelector({
             value={column.name}
             disabled={!column.suitable_as_target}
           >
-            {column.suitable_as_target ? "" : "⚠ "}
+            {column.suitable_as_target ? "" : `${WARNING_MARK} `}
             {column.name} — {column.kind}, {column.unique}{" "}
             {plural(column.unique, "unique value", "unique values")}
             {column.suitable_as_target ? "" : " — not usable"}
@@ -130,13 +131,13 @@ export function TargetColumnSelector({
 
       {usable.length === 0 && columns.length > 0 && (
         <p className="mt-2 text-sm font-medium text-state-bad">
-          ⚠ No column in this dataset can be used as a target. Every column is
+          {WARNING_MARK} No column in this dataset can be used as a target. Every column is
           either constant, empty, or a unique identifier.
         </p>
       )}
 
       {selected && (
-        <div className="mt-3 rounded-md border border-gray-300 bg-gray-50 p-4">
+        <div className="mt-3 rounded-control border border-rule bg-paper-sunken p-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="font-semibold text-ink">{selected.name}</span>
             <KindBadge column={selected} />
@@ -195,7 +196,7 @@ export function TargetColumnSelector({
 
           {selected.missing > 0 && (
             <p className="mt-2 text-sm font-medium text-state-warn">
-              ⚠ {selected.missing} {plural(selected.missing, "row has", "rows have")}{" "}
+              {WARNING_MARK} {selected.missing} {plural(selected.missing, "row has", "rows have")}{" "}
               no value for this column. Those rows are dropped before training.
             </p>
           )}
@@ -203,7 +204,7 @@ export function TargetColumnSelector({
       )}
 
       {blocked.length > 0 && (
-        <details className="mt-3 rounded-md border border-gray-300 bg-gray-50 p-3">
+        <details className="mt-3 rounded-control border border-rule bg-paper-sunken p-3">
           <summary className="cursor-pointer text-sm font-medium text-ink">
             {blocked.length} {plural(blocked.length, "column", "columns")} cannot
             be a target — why?
@@ -272,7 +273,7 @@ export function FeatureColumnSelector({
           type="button"
           disabled={disabled || chosen.size === available.length}
           onClick={() => emit(new Set(available.map((column) => column.name)))}
-          className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-control bg-rule px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong disabled:cursor-not-allowed disabled:opacity-50"
         >
           Select all
         </button>
@@ -280,7 +281,7 @@ export function FeatureColumnSelector({
           type="button"
           disabled={disabled || chosen.size === 0}
           onClick={() => emit(new Set())}
-          className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-control bg-rule px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong disabled:cursor-not-allowed disabled:opacity-50"
         >
           Select none
         </button>
@@ -293,7 +294,7 @@ export function FeatureColumnSelector({
             emit(next);
           }}
           title="Columns with one distinct value per row carry no signal — they let a model memorise instead of generalise."
-          className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-control bg-rule px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong disabled:cursor-not-allowed disabled:opacity-50"
         >
           Exclude ID-like columns
           {idLikeChosen.length > 0 && <> ({idLikeChosen.length})</>}
@@ -313,18 +314,18 @@ export function FeatureColumnSelector({
       )}
 
       {available.length === 0 ? (
-        <p className="rounded-md border border-gray-300 bg-gray-50 p-4 text-sm text-ink-muted">
+        <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
           There are no other columns to learn from. A dataset needs at least one
           feature column besides the target.
         </p>
       ) : (
-        <div className="max-h-72 overflow-y-auto rounded-md border border-gray-300 bg-gray-50 p-2">
+        <div className="max-h-72 overflow-y-auto rounded-control border border-rule bg-paper-sunken p-2">
           {available.map((column) => {
             const checked = chosen.has(column.name);
             return (
               <label
                 key={column.name}
-                className={`flex cursor-pointer items-center gap-3 rounded px-2 py-2 transition-colors hover:bg-gray-200 ${
+                className={`flex cursor-pointer items-center gap-3 rounded-control px-2 py-2 transition-colors hover:bg-paper-sunken ${
                   disabled ? "cursor-not-allowed opacity-60" : ""
                 }`}
               >
@@ -333,15 +334,15 @@ export function FeatureColumnSelector({
                   checked={checked}
                   disabled={disabled}
                   onChange={() => toggle(column.name)}
-                  className="h-5 w-5 flex-shrink-0 rounded border-gray-300 text-accent focus:ring-accent"
+                  className="h-5 w-5 flex-shrink-0 rounded-control border-rule text-accent focus:ring-accent"
                 />
                 <span className="min-w-0 flex-grow truncate font-medium text-ink">
                   {column.name}
                 </span>
                 <KindBadge column={column} />
                 {isIdLike(column, nRows) && (
-                  <span className="inline-block rounded bg-gray-200 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-state-warn">
-                    ⚠ ID-like
+                  <span className="inline-block rounded-control bg-paper-sunken px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-state-warn">
+                    {WARNING_MARK} ID-like
                   </span>
                 )}
                 <span className="w-28 flex-shrink-0 text-right text-xs text-ink-muted">
@@ -366,7 +367,7 @@ export function FeatureColumnSelector({
 
       {chosen.size === 0 && available.length > 0 && (
         <p className="mt-2 text-sm font-medium text-state-bad">
-          ⚠ Select at least one feature column — a model needs something to learn
+          {WARNING_MARK} Select at least one feature column — a model needs something to learn
           from.
         </p>
       )}

@@ -25,8 +25,9 @@ that was fitted on the data you uploaded.
 - Task type is inferred (classification vs regression) and can be overridden —
   the override matters for integer-coded targets like `0/1/2`, which look
   numeric but are really classes
-- 17 scikit-learn algorithms across both tasks, each with a hyperparameter form
-  generated from the algorithm's own parameter schema
+- 19 algorithms across both tasks — 17 from scikit-learn plus XGBoost and
+  LightGBM — each with a hyperparameter form generated from the algorithm's
+  own parameter schema
 - Adjustable train/test split, random seed, stratification, feature scaling,
   and optional k-fold cross-validation
 - Untouched hyperparameters are left to scikit-learn's own defaults
@@ -42,6 +43,15 @@ that was fitted on the data you uploaded.
 - "Try it yourself" — a prediction form built from the model's own input schema,
   with class probabilities
 - Download the fitted model as a `.joblib` file, or the evaluation as Markdown
+
+### 4. Dashboard
+- Every run this instance has trained, ranked by whichever metric you pick
+- Ranking honours the metric's own direction, so for log loss or MAE the
+  shortest bar leads
+- Train-split scores beside test-split scores, so the overfitting gap is
+  visible across runs rather than one run at a time
+- Metrics are only compared within one task type: accuracy and R² are not on
+  the same scale, so the chart says so instead of drawing them together
 
 ## How the model is built
 
@@ -74,6 +84,15 @@ The app is then at **http://localhost:8080** — the SPA, the API under `/api/`,
 the interactive docs at `/api/docs/` and the Django admin at `/admin/`, all on
 one origin.
 
+| Path | What is there |
+|------|---------------|
+| `/` | The front page: what the app does, the method, the estimator list |
+| `/app` | The workbench — overview and the resume panel |
+| `/app/preprocessing`, `/app/training`, `/app/evaluation` | The three tools, each deep-linkable |
+| `/about` | How the pipeline is assembled, in detail |
+| `/api/docs/` | Interactive API documentation (assets self-hosted, no CDN) |
+| `/admin/` | Django admin |
+
 Three containers come up: `db` (PostgreSQL 17), `backend` (Django on gunicorn)
 and `frontend` (the built SPA on nginx, which also reverse-proxies `/api` to
 the backend — which is why there is no CORS configuration to get wrong).
@@ -105,6 +124,36 @@ Set `DJANGO_SUPERUSER_USERNAME` and `DJANGO_SUPERUSER_PASSWORD` to have an
 To point the SPA at a backend somewhere else, set `API_BASE_URL` — the frontend
 image reads it at start-up and writes it into `/config.js`, so no rebuild is
 needed.
+
+#### The in-app helper
+
+An optional "Ask for help" button on every workbench page, answered by a model
+through OpenRouter. It is off until a key is set:
+
+```bash
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODEL=qwen/qwen3.7-flash   # any slug from openrouter.ai/models
+```
+
+The key stays on the server — the browser only ever calls `/api/assistant/`, so
+the key is never in the JavaScript bundle. When someone asks a question the
+model is told which page they are on, their column *names*, types and
+missing-value counts, and the scores of their last run. It is never sent a row
+of their data.
+
+#### Search engines
+
+`robots.txt` and `sitemap.xml` are served from the site root, and the canonical
+URL, Open Graph tags and sitemap entries all come from one `SITE_URL`. The
+frontend container rewrites them at start-up, so deploying to a different host
+needs no rebuild:
+
+```bash
+SITE_URL=https://furina.nevatal.id
+```
+
+Only `/` and `/about` are listed for indexing. Everything under `/app` depends
+on a dataset the visitor uploaded, so there is nothing there for a crawler.
 
 #### Behind HTTPS
 
@@ -157,6 +206,8 @@ python manage.py test core
 | Method | Path | Purpose |
 |--------|------|---------|
 | `GET` | `/api/health/` | Service check with library versions |
+| `GET` | `/api/assistant/` | Whether the in-app helper is configured |
+| `POST` | `/api/assistant/` | Ask the in-app helper a question |
 | `POST` | `/api/datasets/upload/` | Upload a CSV, get its profile back |
 | `GET` | `/api/datasets/` | List datasets |
 | `GET` | `/api/datasets/{id}/` | Profile + preview |

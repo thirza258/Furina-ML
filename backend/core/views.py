@@ -17,6 +17,7 @@ from typing import Any
 import numpy
 import pandas
 import sklearn
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -24,9 +25,11 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core import assistant
 from core.models import Dataset, TrainingRun
 from core.ml import registry
 from core.ml.io import DataError, dataframe_preview, json_safe, read_csv, write_csv
@@ -252,6 +255,88 @@ class HealthView(APIView):
                 "numpy": numpy.__version__,
             }
         )
+
+
+class AssistantView(APIView):
+    """GET/POST /api/assistant/ -- the in-app helper, proxied to OpenRouter.
+
+    GET reports whether the feature is switched on, so the button can explain
+    itself instead of failing on first use.
+
+    POST takes the conversation so far plus the ids of whatever the user is
+    looking at, and answers with the model's reply. The ids are resolved here
+    rather than trusted from the client: the request says *which* dataset, the
+    server decides what about it the model is told.
+
+    This is the only throttled endpoint in the app, and the only one that costs
+    the operator money per call. There is no login here, so on a public
+    deployment an unthrottled POST is an open proxy to a metered API. The per-
+    request caps in `core.assistant` bound how expensive one answer can be;
+    this bounds how many of them a single address can ask for.
+    """
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "assistant"
+
+    @extend_schema(responses=dict)
+    def get(self, request) -> Response:
+        return Response(
+            {
+                "enabled": assistant.is_configured(),
+                "model": settings.OPENROUTER_MODEL if assistant.is_configured() else None,
+            }
+        )
+
+    @extend_schema(request=dict, responses=dict)
+    def post(self, request) -> Response:
+        if not assistant.is_configured():
+            return Response(
+                {
+                    "detail": (
+                        "The assistant is not configured on this server. Set "
+                        "OPENROUTER_API_KEY and restart to switch it on."
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        history = assistant.sanitize_history(request.data.get("messages"))
+        if not history:
+            return bad_request("Ask a question and the assistant will answer it.")
+
+        context = request.data.get("context") or {}
+        if not isinstance(context, dict):
+            context = {}
+
+        dataset = _lookup_optional(Dataset, context.get("dataset_id"))
+        run = _lookup_optional(TrainingRun, context.get("run_id"))
+        tool = str(context.get("tool") or "")[:64] or None
+
+        system_prompt = assistant.build_system_prompt(tool=tool, dataset=dataset, run=run)
+
+        try:
+            reply = assistant.ask(system_prompt, history)
+        except assistant.AssistantNotConfigured as exc:
+            return Response(
+                {"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except assistant.AssistantError as exc:
+            return Response(
+                {"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY
+            )
+
+        return Response({"reply": reply, "model": settings.OPENROUTER_MODEL})
+
+
+def _lookup_optional(model: Any, raw_id: Any):
+    """Fetch by id, or None. A stale id in a saved workspace is not an error."""
+    if not raw_id:
+        return None
+    try:
+        uuid.UUID(str(raw_id))
+    except (ValueError, AttributeError, TypeError):
+        return None
+    return model.objects.filter(pk=raw_id).first()
 
 
 # --------------------------------------------------------------------------

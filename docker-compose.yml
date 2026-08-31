@@ -53,6 +53,14 @@ services:
       GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-300}
 
+      # The in-app helper. With no key the feature reports itself as off and
+      # the button says so; nothing else changes.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-qwen/qwen3.7-flash}
+      # Per-IP ceiling on the one endpoint that spends money.
+      ASSISTANT_RATE_LIMIT: ${ASSISTANT_RATE_LIMIT:-20/hour}
+      SITE_URL: ${SITE_URL:-https://furina.nevatal.id}
+
       # Optional: create an /admin/ login on first boot.
       DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-}
@@ -80,6 +88,8 @@ services:
       # very same value the backend is given -- one number, no drift.
       MAX_UPLOAD_SIZE: ${MAX_UPLOAD_BYTES:-52428800}
       PROXY_TIMEOUT: ${PROXY_TIMEOUT:-300s}
+      # Public origin for the canonical link, Open Graph tags and the sitemap.
+      SITE_URL: ${SITE_URL:-https://furina.nevatal.id}
     ports:
       - "${APP_PORT:-8080}:80"
     depends_on:

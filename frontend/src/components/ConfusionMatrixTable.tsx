@@ -53,10 +53,10 @@ export default function ConfusionMatrixTable({
   if (labels.length === 0 || matrix.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        <h2 className="text-xl font-semibold text-ink mb-4">
           Confusion matrix
         </h2>
-        <p className="rounded-md border border-gray-300 bg-gray-100 p-4 text-sm text-ink-muted">
+        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
           The backend returned an empty confusion matrix for this run, so there
           is nothing to plot.
         </p>
@@ -76,7 +76,7 @@ export default function ConfusionMatrixTable({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">
+      <h2 className="text-xl font-semibold text-ink mb-2">
         Confusion matrix
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -145,7 +145,7 @@ export default function ConfusionMatrixTable({
                           RAMP_BG[step] ?? "bg-ramp-0"
                         } ${rampTextClass(step)} ${
                           isDiagonal
-                            ? "rounded-sm ring-2 ring-inset ring-ink font-bold"
+                            ? "rounded-control ring-2 ring-inset ring-ink font-bold"
                             : ""
                         }`}
                       >
@@ -171,14 +171,14 @@ export default function ConfusionMatrixTable({
         </table>
       </div>
 
-      <h3 className="mt-8 mb-3 text-lg font-semibold text-gray-800">
+      <h3 className="mt-8 mb-3 text-lg font-semibold text-ink">
         Per-class scores
       </h3>
       {perClass && perClass.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-300 text-left text-ink-muted">
+              <tr className="border-b border-rule text-left text-ink-muted">
                 <th className="py-2 pr-4 font-semibold">Class</th>
                 <th className="py-2 pr-4 font-semibold">Precision</th>
                 <th className="py-2 pr-4 font-semibold">Recall</th>
@@ -190,7 +190,7 @@ export default function ConfusionMatrixTable({
               {perClass.map((entry) => (
                 <tr
                   key={entry.label}
-                  className="border-b border-gray-200 hover:bg-gray-50"
+                  className="border-b border-rule hover:bg-paper-sunken"
                 >
                   <td
                     className="max-w-[14rem] truncate py-2 pr-4 text-ink"
@@ -220,7 +220,7 @@ export default function ConfusionMatrixTable({
           </p>
         </div>
       ) : (
-        <p className="rounded-md border border-gray-300 bg-gray-100 p-4 text-sm text-ink-muted">
+        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
           This run did not report per-class precision and recall.
         </p>
       )}

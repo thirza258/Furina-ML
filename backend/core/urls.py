@@ -8,6 +8,7 @@ app_name = "core"
 
 urlpatterns = [
     path("health/", views.HealthView.as_view(), name="health"),
+    path("assistant/", views.AssistantView.as_view(), name="assistant"),
     path("datasets/upload/", views.DatasetUploadView.as_view(), name="dataset-upload"),
     path("datasets/", views.DatasetListView.as_view(), name="dataset-list"),
     path("datasets/<uuid:pk>/", views.DatasetDetailView.as_view(), name="dataset-detail"),

@@ -155,10 +155,10 @@ export default function PredictionForm({
   if (schema.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        <h2 className="text-xl font-semibold text-ink mb-4">
           Try it yourself
         </h2>
-        <p className="rounded-md border border-gray-300 bg-gray-100 p-4 text-sm text-ink-muted">
+        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
           This run did not record an input schema, so there is no form to build.
           Retrain the model to make live predictions available.
         </p>
@@ -172,7 +172,7 @@ export default function PredictionForm({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">
+      <h2 className="text-xl font-semibold text-ink mb-2">
         Try it yourself
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -186,7 +186,7 @@ export default function PredictionForm({
         <button
           type="button"
           onClick={() => setValues(exampleValues(schema))}
-          className="rounded-md bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400"
+          className="rounded-control bg-rule px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong"
         >
           Fill with an example row
         </button>
@@ -197,7 +197,7 @@ export default function PredictionForm({
             setResult(null);
             setError(null);
           }}
-          className="rounded-md bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-400"
+          className="rounded-control bg-rule px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-rule-strong"
         >
           Clear the form
         </button>
@@ -217,7 +217,7 @@ export default function PredictionForm({
               <div key={field.name}>
                 <label
                   htmlFor={inputId}
-                  className="mb-1 block text-sm font-medium text-gray-700"
+                  className="mb-1 block text-sm font-medium text-ink"
                   title={field.name}
                 >
                   <span className="align-middle">{field.name}</span>
@@ -234,7 +234,7 @@ export default function PredictionForm({
                     onChange={(event) =>
                       setField(field.name, event.target.value)
                     }
-                    className="w-full rounded-md border border-gray-300 bg-gray-200 p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-control border border-rule bg-paper-sunken p-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="">(leave blank)</option>
                     {field.options.map((option) => (
@@ -253,7 +253,7 @@ export default function PredictionForm({
                     onChange={(event) =>
                       setField(field.name, event.target.value)
                     }
-                    className="w-full rounded-md border border-gray-300 bg-gray-200 p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-control border border-rule bg-paper-sunken p-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 ) : (
                   <input
@@ -264,7 +264,7 @@ export default function PredictionForm({
                     onChange={(event) =>
                       setField(field.name, event.target.value)
                     }
-                    className="w-full rounded-md border border-gray-300 bg-gray-200 p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-control border border-rule bg-paper-sunken p-3 text-ink focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 )}
 
@@ -280,7 +280,7 @@ export default function PredictionForm({
         <button
           type="submit"
           disabled={submitting || !filledIn}
-          className="mt-6 w-full rounded-md bg-primary px-4 py-3 text-lg font-semibold text-white transition-colors hover:bg-opacity-90 disabled:cursor-not-allowed disabled:bg-primary/50"
+          className="mt-6 w-full rounded-control bg-primary px-4 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#471724] disabled:cursor-not-allowed disabled:bg-primary/50"
         >
           {submitting ? "Predicting…" : "Predict"}
         </button>
@@ -294,7 +294,7 @@ export default function PredictionForm({
       </form>
 
       {error && (
-        <div className="mt-4 flex items-start justify-between gap-4 rounded-md border border-state-bad/40 bg-state-bad/10 p-4">
+        <div className="mt-4 flex items-start justify-between gap-4 rounded-control border border-state-bad/40 bg-state-bad/10 p-4">
           <p className="text-sm text-state-bad">
             <span className="font-semibold">✕ Prediction failed. </span>
             {error}
@@ -310,7 +310,7 @@ export default function PredictionForm({
       )}
 
       {result && (
-        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-6">
+        <div className="mt-6 border border-rule bg-paper-sunken p-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
             Predicted {targetColumn}
           </p>
@@ -325,7 +325,7 @@ export default function PredictionForm({
 
           {sortedProbabilities && sortedProbabilities.length > 0 ? (
             <div className="mt-5">
-              <h3 className="mb-2 text-sm font-semibold text-gray-800">
+              <h3 className="mb-2 text-sm font-semibold text-ink">
                 How confident the model is
               </h3>
               <ul className="space-y-2">
@@ -342,7 +342,7 @@ export default function PredictionForm({
                       >
                         {entry.label}
                       </span>
-                      <span className="h-3 flex-1 rounded-[4px] bg-gray-200">
+                      <span className="h-3 flex-1 rounded-[4px] bg-paper-sunken">
                         <span
                           className="block h-3 rounded-[4px] bg-series-1 transition-opacity hover:opacity-80"
                           style={{ width: `${pct}%` }}

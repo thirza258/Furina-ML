@@ -133,7 +133,15 @@ class DatasetDetailSerializer(DatasetSummarySerializer):
 
 
 class TrainingRunSummarySerializer(serializers.Serializer):
-    """TrainingRunSummary: everything a run list row needs."""
+    """TrainingRunSummary: everything a run list row needs.
+
+    The full `metrics` and `train_metrics` blobs are included, not just the
+    headline number. They are flat `{name: float}` dicts of roughly ten keys,
+    so the cost is small, and carrying them here is what lets the dashboard
+    rank and compare every run from one request instead of one request per row.
+    `train_metrics` is what makes the train-versus-test gap -- the only
+    overfitting signal there is -- visible in a list.
+    """
 
     def to_representation(self, instance: Any) -> dict:
         return json_safe(
@@ -149,6 +157,12 @@ class TrainingRunSummarySerializer(serializers.Serializer):
                 "status": str(instance.status or "success"),
                 "primary_metric_name": instance.primary_metric_name,
                 "primary_metric": instance.primary_metric,
+                "metrics": dict(instance.metrics or {}),
+                "train_metrics": dict(instance.train_metrics or {}),
+                "n_train": int(instance.n_train or 0),
+                "n_test": int(instance.n_test or 0),
+                "duration_ms": int(instance.duration_ms or 0),
+                "cv_folds": instance.cv_folds,
                 "created_at": _iso(instance.created_at),
             }
         )

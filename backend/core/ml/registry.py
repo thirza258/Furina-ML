@@ -50,6 +50,15 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
+# The two non-scikit-learn entries in the catalogue. Both ship a scikit-learn
+# compatible wrapper, so they drop into the same Pipeline, answer to the same
+# `clone()` that cross-validation relies on, and pickle through joblib exactly
+# like every other estimator here. They are pinned in requirements.txt; a hard
+# import means a missing dependency fails at startup rather than silently
+# shrinking the catalogue.
+from lightgbm import LGBMClassifier, LGBMRegressor
+from xgboost import XGBClassifier, XGBRegressor
+
 __all__ = [
     "ALGORITHM_KEYS",
     "AlgorithmNotFound",
@@ -576,6 +585,173 @@ _GB_SHARED: tuple[_Param, ...] = (
         advanced=True,
     ),
     _tree_max_features_param("1.0", advanced=True),
+)
+
+# --------------------------------------------------------------------------
+# Gradient boosting libraries outside scikit-learn
+#
+# Defaults below are each library's own defaults, not opinions of ours -- the
+# app's contract is that a hyperparameter you do not touch is left where the
+# library put it. XGBoost's learning rate really is 0.3 and LightGBM's really
+# is 0.1; they are not typos for each other.
+# --------------------------------------------------------------------------
+
+_XGB_SHARED: tuple[_Param, ...] = (
+    _n_estimators_param(100, "How many boosting rounds are run, one tree per round."),
+    _float_param(
+        "learning_rate",
+        "Learning rate",
+        0.3,
+        0.001,
+        1.0,
+        "How much each new tree is allowed to correct. Lower values need more rounds "
+        "but usually score better.",
+        step=0.01,
+    ),
+    _int_param(
+        "max_depth",
+        "Maximum tree depth",
+        6,
+        1,
+        16,
+        "The main size control for this model: deeper trees capture more interaction "
+        "between features and overfit sooner.",
+    ),
+    _float_param(
+        "subsample",
+        "Row sampling per round",
+        1.0,
+        0.1,
+        1.0,
+        "The fraction of rows each tree is fitted on. Below 1.0 this adds randomness "
+        "that usually helps generalisation.",
+        step=0.05,
+    ),
+    _float_param(
+        "colsample_bytree",
+        "Feature sampling per tree",
+        1.0,
+        0.1,
+        1.0,
+        "The fraction of features each tree may choose from.",
+        step=0.05,
+    ),
+    _float_param(
+        "min_child_weight",
+        "Minimum child weight",
+        1.0,
+        0.0,
+        20.0,
+        "How much evidence a split must have before it is kept. Higher values make "
+        "the model more conservative.",
+        step=0.1,
+        advanced=True,
+    ),
+    _float_param(
+        "gamma",
+        "Minimum split gain",
+        0.0,
+        0.0,
+        10.0,
+        "A split has to improve the loss by at least this much to be made at all.",
+        step=0.01,
+        advanced=True,
+    ),
+    _float_param(
+        "reg_lambda",
+        "L2 regularization",
+        1.0,
+        0.0,
+        10.0,
+        "Penalty on large leaf values, which smooths the model.",
+        step=0.01,
+        advanced=True,
+    ),
+    _float_param(
+        "reg_alpha",
+        "L1 regularization",
+        0.0,
+        0.0,
+        10.0,
+        "Penalty that pushes leaf values to exactly zero, which simplifies the model.",
+        step=0.01,
+        advanced=True,
+    ),
+)
+
+_LGBM_SHARED: tuple[_Param, ...] = (
+    _n_estimators_param(100, "How many boosting rounds are run, one tree per round."),
+    _float_param(
+        "learning_rate",
+        "Learning rate",
+        0.1,
+        0.001,
+        1.0,
+        "How much each new tree is allowed to correct. Lower values need more rounds "
+        "but usually score better.",
+        step=0.01,
+    ),
+    _int_param(
+        "num_leaves",
+        "Maximum leaves per tree",
+        31,
+        2,
+        255,
+        "The main size control for this model: LightGBM grows leaf-by-leaf rather than "
+        "level-by-level, so this matters more here than tree depth does.",
+    ),
+    _int_param(
+        "min_child_samples",
+        "Minimum rows per leaf",
+        20,
+        1,
+        200,
+        "A leaf has to hold at least this many rows, which stops the model carving out "
+        "single-row special cases.",
+    ),
+    _int_param(
+        "max_depth",
+        "Maximum tree depth",
+        -1,
+        -1,
+        32,
+        "An extra ceiling on depth on top of the leaf count. -1 means no limit, which "
+        "is the usual choice for LightGBM.",
+        advanced=True,
+    ),
+    _float_param(
+        "colsample_bytree",
+        "Feature sampling per tree",
+        1.0,
+        0.1,
+        1.0,
+        "The fraction of features each tree may choose from.",
+        step=0.05,
+        advanced=True,
+    ),
+    _float_param(
+        "reg_lambda",
+        "L2 regularization",
+        0.0,
+        0.0,
+        10.0,
+        "Penalty on large leaf values, which smooths the model.",
+        step=0.01,
+        advanced=True,
+    ),
+    _float_param(
+        "reg_alpha",
+        "L1 regularization",
+        0.0,
+        0.0,
+        10.0,
+        "Penalty that pushes leaf values to exactly zero, which simplifies the model.",
+        step=0.01,
+        advanced=True,
+    ),
+    # LightGBM's `subsample` is deliberately absent: it does nothing unless
+    # `subsample_freq` is also set above 0, and a control that silently does
+    # nothing is worse than no control at all.
 )
 
 _HGB_SHARED: tuple[_Param, ...] = (
@@ -1520,6 +1696,62 @@ _ALGORITHMS: tuple[_Algorithm, ...] = (
         },
     ),
     _Algorithm(
+        key="xgboost",
+        label="XGBoost",
+        family="Ensembles",
+        description=(
+            "Gradient boosting from the XGBoost library rather than scikit-learn. Level-wise "
+            "trees with strong regularization; often the first thing to reach for on "
+            "tabular data."
+        ),
+        supports_proba=True,
+        supports_feature_importance=True,
+        variants={
+            # verbosity=0 keeps XGBoost's own warnings out of the server log;
+            # anything the user needs to know is reported through the run's
+            # warnings list instead.
+            CLASSIFICATION: _Variant(
+                cls=XGBClassifier,
+                params=_XGB_SHARED,
+                overrides={"verbosity": 0},
+            ),
+            # XGBClassifier has no `class_weight`; it balances with
+            # `scale_pos_weight`, which only applies to two-class problems, so
+            # no weighting control is offered rather than one that half works.
+            REGRESSION: _Variant(
+                cls=XGBRegressor,
+                params=_XGB_SHARED,
+                overrides={"verbosity": 0},
+            ),
+        },
+    ),
+    _Algorithm(
+        key="lightgbm",
+        label="LightGBM",
+        family="Ensembles",
+        description=(
+            "Gradient boosting from the LightGBM library. Grows trees leaf-by-leaf instead "
+            "of level-by-level, which is what makes it fast on wide datasets with many rows."
+        ),
+        supports_proba=True,
+        supports_feature_importance=True,
+        variants={
+            # verbose=-1 silences the per-fit "[LightGBM] [Info] ..." banner,
+            # which otherwise lands in the gunicorn log on every training run
+            # and on every cross-validation fold.
+            CLASSIFICATION: _Variant(
+                cls=LGBMClassifier,
+                params=(*_LGBM_SHARED, _class_weight_param()),
+                overrides={"verbose": -1},
+            ),
+            REGRESSION: _Variant(
+                cls=LGBMRegressor,
+                params=_LGBM_SHARED,
+                overrides={"verbose": -1},
+            ),
+        },
+    ),
+    _Algorithm(
         key="ada_boost",
         label="Scikit-learn — AdaBoost",
         family="Ensembles",
@@ -1881,23 +2113,43 @@ def _apply_compatibility(key: str, clean: dict[str, Any]) -> list[str]:
 
 @lru_cache(maxsize=None)
 def _accepted_params(cls: type) -> frozenset[str]:
-    """Keyword arguments the estimator class actually accepts."""
+    """Keyword arguments the estimator class actually accepts.
+
+    Reading the signature is enough for every scikit-learn estimator, which
+    names each hyperparameter explicitly. It is *not* enough for XGBoost:
+    `XGBClassifier.__init__` is `(self, *, objective=..., **kwargs)`, so the
+    signature advertises exactly one name and the other forty arrive through
+    `**kwargs`. Filtering on the signature alone would silently drop every
+    hyperparameter the user set, along with `random_state` -- the run would
+    still succeed, just unconfigured and unreproducible, with nothing said.
+
+    So when the constructor takes `**kwargs`, the signature is treated as
+    incomplete and `get_params()` -- the scikit-learn estimator contract, which
+    XGBoost does implement fully -- is folded in.
+    """
+    names: set[str] = set()
+    takes_var_keyword = False
     try:
         signature = inspect.signature(cls)
-        names = {
-            name
-            for name, parameter in signature.parameters.items()
-            if parameter.kind
-            in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
-        }
-        if names:
-            return frozenset(names)
+        for name, parameter in signature.parameters.items():
+            if parameter.kind in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY,
+            ):
+                names.add(name)
+            elif parameter.kind is inspect.Parameter.VAR_KEYWORD:
+                takes_var_keyword = True
     except (TypeError, ValueError):  # pragma: no cover - defensive
-        pass
-    try:  # pragma: no cover - defensive
-        return frozenset(cls().get_params())
+        takes_var_keyword = True
+
+    if names and not takes_var_keyword:
+        return frozenset(names)
+
+    try:
+        names |= set(cls().get_params())
     except Exception:  # pragma: no cover - defensive
-        return frozenset()
+        pass
+    return frozenset(names)
 
 
 # --------------------------------------------------------------------------
@@ -2064,7 +2316,13 @@ def build_estimator(
     clean, _ = coerce_hyperparameters(algorithm.key, task_name, dict(hyperparameters or {}))
     merged: dict[str, Any] = {**variant.overrides, **clean}
 
-    accepted = _accepted_params(variant.cls)
+    # The registry's own overrides are always accepted. The filter exists to
+    # drop *user* settings meant for the other task, not to second-guess this
+    # module: LightGBM's `verbose` is a passthrough keyword absent from its
+    # `get_params()`, so filtering it out would leave every fit -- and every
+    # cross-validation fold -- printing an "[LightGBM] [Info] ..." banner into
+    # the server log.
+    accepted = _accepted_params(variant.cls) | set(variant.overrides)
     kwargs = {name: value for name, value in merged.items() if name in accepted}
     if "random_state" in accepted and random_state is not None:
         try:

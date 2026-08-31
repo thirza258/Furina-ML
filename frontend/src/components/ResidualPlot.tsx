@@ -46,10 +46,10 @@ export default function ResidualPlot({
   if (usable.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        <h2 className="text-xl font-semibold text-ink mb-4">
           Actual vs predicted
         </h2>
-        <p className="rounded-md border border-gray-300 bg-gray-100 p-4 text-sm text-ink-muted">
+        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
           This run did not return any actual-vs-predicted samples, so there is
           nothing to plot.
         </p>
@@ -81,7 +81,7 @@ export default function ResidualPlot({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">
+      <h2 className="text-xl font-semibold text-ink mb-2">
         Actual vs predicted
       </h2>
       <p className="mb-4 text-sm text-ink-muted">

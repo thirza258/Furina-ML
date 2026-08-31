@@ -106,8 +106,8 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
   };
 
   return (
-    <div className="w-full bg-white p-8 rounded-lg shadow-lg">
-      <h2 className="text-xl font-semibold text-gray-800 mb-1">Load your data</h2>
+    <div className="w-full panel p-8">
+      <h2 className="text-xl font-semibold text-ink mb-1">Load your data</h2>
       <p className="text-sm text-ink-muted mb-4">
         A delimited text file ({ACCEPTED_EXTENSIONS.join(", ")}), up to{" "}
         {formatBytes(MAX_UPLOAD_BYTES)}. The first row is read as the header.
@@ -131,13 +131,13 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
         role="button"
         tabIndex={0}
         aria-label="Choose a data file, or drop one here"
-        className={`cursor-pointer rounded-md border-2 border-dashed p-6 text-center transition-colors ${
+        className={`cursor-pointer rounded-control border-2 border-dashed p-6 text-center transition-colors ${
           dragging
             ? "border-primary bg-primary/10"
-            : "border-gray-300 bg-gray-200 hover:border-primary"
+            : "border-rule bg-paper-sunken hover:border-primary"
         } ${uploading ? "cursor-not-allowed opacity-60" : ""}`}
       >
-        <p className="text-gray-800 font-semibold">
+        <p className="text-ink font-semibold">
           Drag a file here, or click to browse
         </p>
         <p className="text-sm text-ink-muted mt-1">
@@ -160,7 +160,7 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
       <div className="mt-4">
         <label
           htmlFor="delimiter"
-          className="block text-sm font-semibold text-gray-800 mb-1"
+          className="block text-sm font-semibold text-ink mb-1"
         >
           Column separator
         </label>
@@ -171,7 +171,7 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
             setDelimiter(event.target.value as DelimiterChoice)
           }
           disabled={uploading}
-          className="w-full p-3 bg-gray-200 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+          className="w-full p-3 bg-paper-sunken border border-rule rounded-control text-ink focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
         >
           {DELIMITER_OPTIONS.map((option) => (
             <option key={option.label} value={option.value}>
@@ -190,7 +190,7 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
             <span>Uploading…</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+          <div className="h-2 w-full rounded-full bg-paper-sunken overflow-hidden">
             <div
               className="h-2 rounded-full bg-primary transition-all"
               style={{ width: `${progress}%` }}
@@ -205,7 +205,7 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
 
       {error && (
         <div
-          className="mt-4 rounded-md border border-state-bad/40 bg-state-bad/10 p-3"
+          className="mt-4 rounded-control border border-state-bad/40 bg-state-bad/10 p-3"
           role="alert"
         >
           <div className="flex items-start justify-between gap-4">
@@ -226,7 +226,7 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
 
       <button
         type="button"
-        className="w-full mt-6 bg-primary text-white py-3 px-4 rounded-md text-lg font-semibold hover:bg-opacity-90 transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+        className="w-full mt-6 bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
         onClick={() => void handleSubmit()}
         disabled={!selectedFile || uploading}
       >

@@ -11,6 +11,10 @@ import type { AxiosInstance } from "axios";
 import type {
   AlgorithmSpec,
   ApiError,
+  AssistantContext,
+  AssistantMessage,
+  AssistantReply,
+  AssistantStatus,
   DatasetDetail,
   DatasetSummary,
   HealthResponse,
@@ -221,6 +225,25 @@ const services = {
 
   reportDownloadUrl(id: string, format: "md" | "json" = "md"): string {
     return `${API_BASE_URL}/runs/${id}/report/?format=${format}`;
+  },
+
+  /** Whether this server has an OpenRouter key, so the UI can explain itself. */
+  assistantStatus(): Promise<AssistantStatus> {
+    return request(() => client.get<AssistantStatus>("/assistant/"));
+  },
+
+  /**
+   * Ask the in-app helper. The key lives on the server, so this never carries
+   * one; `context` sends ids, and the server decides what about them the model
+   * is told.
+   */
+  askAssistant(
+    messages: AssistantMessage[],
+    context: AssistantContext
+  ): Promise<AssistantReply> {
+    return request(() =>
+      client.post<AssistantReply>("/assistant/", { messages, context })
+    );
   },
 };
 
