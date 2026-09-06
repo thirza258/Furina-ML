@@ -36,10 +36,10 @@ export default function FeatureImportanceChart({
   if (importance === null || importance.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-ink mb-4">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           Feature importance
         </h2>
-        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
+        <p className="text-small text-ink-muted max-w-measure">
           {algorithmLabel} does not expose feature importances, so there is
           nothing to rank here. Tree-based models (random forest, gradient
           boosting, decision tree) and linear models do expose them — retrain
@@ -61,7 +61,7 @@ export default function FeatureImportanceChart({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-ink mb-2">
+      <h2 className="font-serif text-h3 text-ink mb-2">
         Feature importance
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -87,9 +87,9 @@ export default function FeatureImportanceChart({
               >
                 {entry.feature}
               </span>
-              <span className="h-3 flex-1 rounded-[4px] bg-paper-sunken">
+              <span className="h-3 flex-1 rounded-control bg-paper-sunken">
                 <span
-                  className="block h-3 rounded-[4px] bg-series-1 transition-opacity hover:opacity-80"
+                  className="block h-3 rounded-control bg-series-1 transition-opacity hover:opacity-80"
                   style={{ width: `${width}%` }}
                   title={`${entry.feature}: ${formatImportance(entry.importance)}`}
                 />

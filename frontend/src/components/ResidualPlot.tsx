@@ -46,10 +46,10 @@ export default function ResidualPlot({
   if (usable.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-ink mb-4">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           Actual vs predicted
         </h2>
-        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
+        <p className="text-small text-ink-muted max-w-measure">
           This run did not return any actual-vs-predicted samples, so there is
           nothing to plot.
         </p>
@@ -81,7 +81,7 @@ export default function ResidualPlot({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-ink mb-2">
+      <h2 className="font-serif text-h3 text-ink mb-2">
         Actual vs predicted
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -107,7 +107,7 @@ export default function ResidualPlot({
                 y1={MARGIN.top}
                 x2={tick.x}
                 y2={MARGIN.top + PLOT_HEIGHT}
-                className="stroke-gray-200"
+                className="stroke-rule"
                 strokeWidth={1}
               />
               <line
@@ -115,7 +115,7 @@ export default function ResidualPlot({
                 y1={tick.y}
                 x2={MARGIN.left + PLOT_WIDTH}
                 y2={tick.y}
-                className="stroke-gray-200"
+                className="stroke-rule"
                 strokeWidth={1}
               />
             </g>
@@ -127,7 +127,7 @@ export default function ResidualPlot({
             y1={toY(domainMin)}
             x2={toX(domainMax)}
             y2={toY(domainMax)}
-            className="stroke-gray-400"
+            className="stroke-rule-strong"
             strokeWidth={1}
             strokeDasharray="4 4"
           />
@@ -137,7 +137,7 @@ export default function ResidualPlot({
             y1={MARGIN.top + PLOT_HEIGHT}
             x2={MARGIN.left + PLOT_WIDTH}
             y2={MARGIN.top + PLOT_HEIGHT}
-            className="stroke-gray-300"
+            className="stroke-rule"
             strokeWidth={1}
           />
           <line
@@ -145,7 +145,7 @@ export default function ResidualPlot({
             y1={MARGIN.top}
             x2={MARGIN.left}
             y2={MARGIN.top + PLOT_HEIGHT}
-            className="stroke-gray-300"
+            className="stroke-rule"
             strokeWidth={1}
           />
 

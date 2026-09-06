@@ -133,17 +133,17 @@ const LandingPage = () => {
       {/* Intro, or a way back into work already in progress.              */}
       {/* --------------------------------------------------------------- */}
       {restoring ? (
-        <div className="w-full panel p-8 mb-6">
+        <div className="panel">
           <p className="text-ink-muted">Restoring your last workspace…</p>
         </div>
       ) : hasWork ? (
-        <div className="w-full panel p-8 mb-6">
+        <div className="panel">
           <h2 className="font-serif text-h3 text-ink mb-4">
             Resume where you left off
           </h2>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="border border-rule rounded-control p-4">
+            <div>
               <p className="text-xs uppercase tracking-wide text-ink-muted mb-1">
                 Active dataset
               </p>
@@ -164,7 +164,7 @@ const LandingPage = () => {
               )}
             </div>
 
-            <div className="border border-rule rounded-control p-4">
+            <div>
               <p className="text-xs uppercase tracking-wide text-ink-muted mb-1">
                 Last training run
               </p>
@@ -210,8 +210,8 @@ const LandingPage = () => {
               onClick={() => goToTool(TOOL_TRAINING)}
               className={
                 run
-                  ? "w-full bg-rule text-ink py-3 px-4 rounded-control text-lg font-semibold hover:bg-rule-strong transition-colors"
-                  : "w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
+                  ? "btn btn-secondary text-body py-3 w-full"
+                  : "btn btn-primary text-body py-3 w-full"
               }
             >
               {run ? "Train another model" : "Train a model"}
@@ -221,8 +221,8 @@ const LandingPage = () => {
               onClick={() => goToTool(TOOL_EVALUATION)}
               className={
                 run
-                  ? "w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
-                  : "w-full bg-rule text-ink py-3 px-4 rounded-control text-lg font-semibold hover:bg-rule-strong transition-colors"
+                  ? "btn btn-primary text-body py-3 w-full"
+                  : "btn btn-secondary text-body py-3 w-full"
               }
             >
               See the evaluation
@@ -230,7 +230,7 @@ const LandingPage = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full panel p-8 mb-6">
+        <div className="panel">
           <h2 className="panel-title">Nothing loaded yet</h2>
           <p className="prose-page mb-6">
             The workbench needs a dataset before it can do anything. Upload a
@@ -259,7 +259,7 @@ const LandingPage = () => {
         {STEPS.map((step) => (
           <div
             key={step.tool}
-            className="w-full panel p-8 flex flex-col"
+            className="panel flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
               <span
@@ -287,7 +287,7 @@ const LandingPage = () => {
       {/* --------------------------------------------------------------- */}
       {/* What the backend actually does.                                  */}
       {/* --------------------------------------------------------------- */}
-      <div className="w-full panel p-8 mb-6">
+      <div className="panel">
         <h2 className="font-serif text-h3 text-ink mb-4">
           What happens under the hood
         </h2>
@@ -321,7 +321,7 @@ const LandingPage = () => {
       {/* --------------------------------------------------------------- */}
       {/* Algorithm families.                                              */}
       {/* --------------------------------------------------------------- */}
-      <div className="w-full panel p-8">
+      <div className="panel">
         <h2 className="font-serif text-h3 text-ink mb-4">
           Algorithms you can train
         </h2>
@@ -376,7 +376,7 @@ const LandingPage = () => {
               {families.map((group) => (
                 <div
                   key={group.family}
-                  className="border border-rule rounded-control p-4"
+                 
                 >
                   <h3 className="font-semibold text-ink mb-2">
                     {group.family}

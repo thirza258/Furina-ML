@@ -49,11 +49,11 @@ interface StatTileProps {
 
 function StatTile({ label, value, sublabel }: StatTileProps) {
   return (
-    <div className="rounded-control border border-rule bg-paper px-4 py-3">
+    <div className="py-2">
       <div className="text-xs uppercase tracking-wide text-ink-muted">
         {label}
       </div>
-      <div className="text-2xl font-bold text-ink break-words">{value}</div>
+      <div className="font-serif text-h2 text-ink break-words">{value}</div>
       {sublabel && <div className="text-xs text-ink-muted">{sublabel}</div>}
     </div>
   );
@@ -137,7 +137,7 @@ function ReportPanel({ report }: { report: PreprocessReport }) {
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center border border-rule-strong bg-paper-sunken font-serif text-caption font-semibold text-ink">
                 {index + 1}
               </span>
               <span className="font-semibold text-ink">{opLabel(step.op)}</span>
@@ -340,10 +340,10 @@ function DataPreprocessing() {
   };
 
   const previousDatasets = (
-    <div className="w-full panel p-8">
+    <div className="panel">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-ink">
+          <h2 className="font-serif text-h3 text-ink">
             Load a previous dataset
           </h2>
           <p className="text-sm text-ink-muted">
@@ -354,7 +354,7 @@ function DataPreprocessing() {
           type="button"
           onClick={() => void refreshList()}
           disabled={listLoading}
-          className="whitespace-nowrap rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-secondary whitespace-nowrap"
         >
           {listLoading ? "Refreshing…" : "Refresh"}
         </button>
@@ -404,7 +404,7 @@ function DataPreprocessing() {
                     type="button"
                     onClick={() => void loadDataset(summary.id)}
                     disabled={active || pending}
-                    className="rounded-control bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+                    className="btn btn-primary"
                   >
                     {pending ? "Working…" : active ? "In use" : "Load"}
                   </button>
@@ -425,7 +425,7 @@ function DataPreprocessing() {
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken"
+                        className="btn btn-secondary"
                       >
                         Keep
                       </button>
@@ -435,7 +435,7 @@ function DataPreprocessing() {
                       type="button"
                       onClick={() => setConfirmDeleteId(summary.id)}
                       disabled={pending}
-                      className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn btn-secondary"
                     >
                       Delete
                     </button>
@@ -455,7 +455,7 @@ function DataPreprocessing() {
         <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
           Data Preprocessing
         </h1>
-        <div className="w-full panel p-8">
+        <div className="panel">
           <p className="text-ink-muted">Restoring your last dataset…</p>
         </div>
       </div>
@@ -483,10 +483,10 @@ function DataPreprocessing() {
         </div>
       ) : (
         <div className="space-y-8">
-          <div className="w-full panel p-8">
+          <div className="panel">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-xl font-semibold text-ink break-words">
+                <h2 className="font-serif text-h3 text-ink break-words">
                   {dataset.name}
                 </h2>
                 <p className="text-sm text-ink-muted">
@@ -504,7 +504,7 @@ function DataPreprocessing() {
                   setAppliedFrom(null);
                   resetResults();
                 }}
-                className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken"
+                className="btn btn-secondary"
               >
                 Upload a different file
               </button>
@@ -549,7 +549,7 @@ function DataPreprocessing() {
                     <button
                       type="button"
                       onClick={() => setAppliedFrom(null)}
-                      className="rounded-control border border-rule px-3 py-2 text-sm font-semibold text-ink hover:bg-paper-sunken"
+                      className="btn btn-secondary"
                     >
                       Keep it
                     </button>
@@ -559,7 +559,7 @@ function DataPreprocessing() {
             )}
           </div>
 
-          <div className="w-full panel p-8">
+          <div className="panel">
             <TableViewer
               preview={dataset.preview}
               title="Preview"
@@ -567,11 +567,11 @@ function DataPreprocessing() {
             />
           </div>
 
-          <div className="w-full panel p-8">
+          <div className="panel">
             <DatasetProfile columns={dataset.columns} />
           </div>
 
-          <div className="w-full panel p-8">
+          <div className="panel">
             <PreprocessingCheckbox
               columns={dataset.columns}
               steps={steps}
@@ -607,7 +607,7 @@ function DataPreprocessing() {
                 type="button"
                 onClick={() => void runPreprocess(false)}
                 disabled={!canRun}
-                className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+                className="btn btn-primary text-body py-3 w-full"
               >
                 {busy === "apply" ? "Applying…" : "Apply preprocessing"}
               </button>
@@ -619,9 +619,9 @@ function DataPreprocessing() {
           </div>
 
           {report && (
-            <div className="w-full panel p-8">
+            <div className="panel">
               <div className="mb-4">
-                <h2 className="text-xl font-semibold text-ink">
+                <h2 className="font-serif text-h3 text-ink">
                   {previewResult ? "Preview report" : "What was applied"}
                 </h2>
                 <p className="text-sm text-ink-muted">
@@ -635,7 +635,7 @@ function DataPreprocessing() {
           )}
 
           {previewResult && (
-            <div className="w-full panel p-8">
+            <div className="panel">
               <TableViewer
                 preview={previewResult.preview}
                 title="Preview of the cleaned data"
@@ -646,8 +646,8 @@ function DataPreprocessing() {
             </div>
           )}
 
-          <div className="w-full panel p-8">
-            <h2 className="text-xl font-semibold text-ink mb-4">
+          <div className="panel">
+            <h2 className="font-serif text-h3 text-ink mb-4">
               Next steps
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -661,7 +661,7 @@ function DataPreprocessing() {
               <button
                 type="button"
                 onClick={() => goToTool("Data Training")}
-                className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+                className="btn btn-primary text-body py-3 w-full"
               >
                 Continue to Training
               </button>

@@ -420,7 +420,7 @@ const DataTraining = () => {
   if (restoring) {
     return (
       <div className="bg-paper min-h-full p-8 w-full">
-        <div className="w-full panel p-8">
+        <div className="panel">
           <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
           <p className="text-ink-muted">Loading your workspace…</p>
         </div>
@@ -431,7 +431,7 @@ const DataTraining = () => {
   if (!dataset) {
     return (
       <div className="bg-paper min-h-full p-8 w-full">
-        <div className="w-full panel p-8">
+        <div className="panel">
           <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
 
           {restoreError && (
@@ -443,8 +443,8 @@ const DataTraining = () => {
             </div>
           )}
 
-          <div className="rounded-control border border-rule bg-paper-sunken p-8 text-center">
-            <h2 className="text-xl font-semibold text-ink mb-4">
+          <div className="py-10 text-center">
+            <h2 className="font-serif text-h3 text-ink mb-4">
               No dataset loaded yet
             </h2>
             <p className="mx-auto mb-6 max-w-xl text-ink-muted">
@@ -456,7 +456,7 @@ const DataTraining = () => {
             <button
               type="button"
               onClick={() => goToTool("Data Preprocessing")}
-              className="mx-auto block w-full max-w-sm bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
+              className="btn btn-primary text-body py-3 mx-auto w-full max-w-sm"
             >
               Go to Data Preprocessing
             </button>
@@ -470,12 +470,12 @@ const DataTraining = () => {
 
   return (
     <div className="bg-paper min-h-full p-8 w-full">
-      <div className="w-full panel p-8">
+      <div className="panel">
         <style>{INDETERMINATE_CSS}</style>
 
         <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
 
-        <div className="mb-8 rounded-control border border-rule bg-paper-sunken p-4">
+        <div className="mb-8 bg-paper-sunken p-4">
           <p className="text-sm text-ink-muted">Training on</p>
           <p className="text-lg font-semibold text-ink">{dataset.name}</p>
           <p className="text-sm text-ink-muted">
@@ -486,7 +486,7 @@ const DataTraining = () => {
 
         {/* ---------------- split ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Split the data
           </h2>
           <div className="relative flex items-center">
@@ -569,7 +569,7 @@ const DataTraining = () => {
 
         {/* ---------------- target ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Choose the target column
           </h2>
           <TargetColumnSelector
@@ -585,7 +585,7 @@ const DataTraining = () => {
 
         {/* ---------------- features ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Choose the features
           </h2>
           <FeatureColumnSelector
@@ -602,7 +602,7 @@ const DataTraining = () => {
 
         {/* ---------------- task type ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-ink mb-4">Task type</h2>
+          <h2 className="font-serif text-h3 text-ink mb-4">Task type</h2>
           <div className="flex flex-wrap gap-2">
             {TASK_CHOICES.map((choice) => (
               <button
@@ -653,7 +653,7 @@ const DataTraining = () => {
 
         {/* ---------------- seed ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Set random seed
           </h2>
           <div className="flex items-center space-x-4">
@@ -690,7 +690,7 @@ const DataTraining = () => {
         <div className="mb-10">
           <label
             htmlFor="model-select"
-            className="block text-xl font-semibold text-ink mb-4"
+            className="block font-serif text-h3 text-ink mb-4"
           >
             Choose model
           </label>
@@ -747,7 +747,7 @@ const DataTraining = () => {
               </p>
 
               {selectedSpec !== null && (
-                <div className="mt-3 rounded-control border border-rule bg-paper-sunken p-4">
+                <div className="mt-4">
                   <p className="text-sm text-ink">{selectedSpec.description}</p>
                   <p className="mt-2 text-sm text-ink-muted">
                     {selectedSpec.supports_feature_importance
@@ -766,11 +766,11 @@ const DataTraining = () => {
 
         {/* ---------------- hyperparameters ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Hyperparameters
           </h2>
           {selectedSpec === null ? (
-            <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
+            <p className="text-small text-ink-muted max-w-measure">
               Choose an algorithm to see the settings it accepts.
             </p>
           ) : (
@@ -789,7 +789,7 @@ const DataTraining = () => {
 
         {/* ---------------- options ---------------- */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Training options
           </h2>
 
@@ -914,7 +914,7 @@ const DataTraining = () => {
             type="button"
             onClick={() => void handleTrain()}
             disabled={training || validationError !== null}
-            className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+            className="btn btn-primary text-body py-3 w-full"
           >
             {training ? "Training…" : "Train the model"}
           </button>
@@ -970,7 +970,7 @@ const DataTraining = () => {
           )}
 
           {result !== null && (
-            <div className="rounded-control border border-rule bg-paper-sunken p-6">
+            <div className="mt-4">
               {result.status === "failed" ? (
                 <div className="rounded-control border-l-4 border-state-bad bg-red-50 p-4">
                   <p className="font-semibold text-state-bad">
@@ -988,7 +988,7 @@ const DataTraining = () => {
 
                   <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
                     <div className="rounded-control bg-paper-raised p-4">
-                      <p className="text-3xl font-bold text-ink">
+                      <p className="font-serif text-h2 text-ink tabular">
                         {formatMetric(result.primary_metric)}
                       </p>
                       <p className="text-sm text-ink-muted">
@@ -996,19 +996,19 @@ const DataTraining = () => {
                       </p>
                     </div>
                     <div className="rounded-control bg-paper-raised p-4">
-                      <p className="text-3xl font-bold text-ink">
+                      <p className="font-serif text-h2 text-ink tabular">
                         {formatDuration(result.duration_ms)}
                       </p>
                       <p className="text-sm text-ink-muted">fit + evaluate</p>
                     </div>
                     <div className="rounded-control bg-paper-raised p-4">
-                      <p className="text-3xl font-bold text-ink">
+                      <p className="font-serif text-h2 text-ink tabular">
                         {result.n_train.toLocaleString()}
                       </p>
                       <p className="text-sm text-ink-muted">rows trained on</p>
                     </div>
                     <div className="rounded-control bg-paper-raised p-4">
-                      <p className="text-3xl font-bold text-ink">
+                      <p className="font-serif text-h2 text-ink tabular">
                         {result.n_test.toLocaleString()}
                       </p>
                       <p className="text-sm text-ink-muted">rows tested on</p>
@@ -1045,7 +1045,7 @@ const DataTraining = () => {
                   <button
                     type="button"
                     onClick={() => goToTool("Model Evaluation")}
-                    className="mt-6 w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
+                    className="btn btn-primary text-body py-3 w-full mt-6"
                   >
                     View full evaluation
                   </button>
@@ -1059,7 +1059,7 @@ const DataTraining = () => {
 
         {/* ---------------- recent runs ---------------- */}
         <div>
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             Recent runs on this dataset
           </h2>
 
@@ -1084,7 +1084,7 @@ const DataTraining = () => {
           {runsLoading && runs.length === 0 ? (
             <p className="text-sm text-ink-muted">Loading previous runs…</p>
           ) : runs.length === 0 ? (
-            <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
+            <p className="text-small text-ink-muted max-w-measure">
               No models have been trained on {dataset.name} yet. Train one above
               and it will appear here, so you can compare algorithms on the same
               data.

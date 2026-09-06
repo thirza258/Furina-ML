@@ -106,8 +106,8 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
   };
 
   return (
-    <div className="w-full panel p-8">
-      <h2 className="text-xl font-semibold text-ink mb-1">Load your data</h2>
+    <div className="panel">
+      <h2 className="font-serif text-h3 text-ink mb-1">Load your data</h2>
       <p className="text-sm text-ink-muted mb-4">
         A delimited text file ({ACCEPTED_EXTENSIONS.join(", ")}), up to{" "}
         {formatBytes(MAX_UPLOAD_BYTES)}. The first row is read as the header.
@@ -226,7 +226,7 @@ const InsertDataFile: React.FC<InsertDataFileProps> = ({ onUploadSuccess }) => {
 
       <button
         type="button"
-        className="w-full mt-6 bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+        className="btn btn-primary text-body py-3 w-full mt-6"
         onClick={() => void handleSubmit()}
         disabled={!selectedFile || uploading}
       >

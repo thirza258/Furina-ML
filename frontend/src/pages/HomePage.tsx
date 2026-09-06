@@ -72,6 +72,20 @@ const STAGES: Stage[] = [
       "A prediction form built from the model's own input schema, and the fitted pipeline as a .joblib download",
     ],
   },
+  {
+    n: "4",
+    title: "Dashboard",
+    lead:
+      "Once there is more than one run, the question stops being \u201chow did this model " +
+      "do?\u201d and becomes \u201cwhich of these is best, and did the last change help?\u201d " +
+      "The dashboard ranks every run you have trained.",
+    points: [
+      "Ranked by whichever metric you choose, on the held-out test split",
+      "Ranking follows the metric's own direction, so for log loss or MAE the shortest bar leads",
+      "Training scores beside test scores, so the overfitting gap is visible across runs, not one at a time",
+      "Metrics are only compared within one task type: accuracy and R\u00b2 are not on the same scale, and the chart says so rather than drawing them together",
+    ],
+  },
 ];
 
 const PIPELINE = `Pipeline
@@ -108,9 +122,6 @@ const HomePage = () => {
 
   return (
     <div className="min-h-dvh bg-paper text-ink">
-      {/* The rule across the top is the one piece of ornament on the page. */}
-      <div className="border-t-4 border-primary" />
-
       <div className="mx-auto max-w-4xl px-6 sm:px-8">
         {/* ---------------------------------------------------------- */}
         {/* Masthead                                                    */}
@@ -170,8 +181,9 @@ const HomePage = () => {
         <section className="py-10 border-b border-rule">
           <h2 className="font-serif text-h2 mb-2">The pipeline</h2>
           <p className="prose-page text-ink-muted mb-8">
-            Three tools, in the order you walk them. Each one needs the previous
-            one&rsquo;s output.
+            Three tools, in the order you walk them &mdash; each needs the
+            previous one&rsquo;s output &mdash; and a fourth that looks back
+            across everything you have trained.
           </p>
 
           <ol className="space-y-10">
@@ -188,12 +200,9 @@ const HomePage = () => {
                     {stage.n}. {stage.title}
                   </h3>
                   <p className="mt-2 prose-page">{stage.lead}</p>
-                  <ul className="mt-4 space-y-1.5 font-sans text-small text-ink-muted">
+                  <ul className="mt-4 ml-4 list-disc space-y-1.5 font-sans text-small text-ink-muted marker:text-rule-strong">
                     {stage.points.map((point) => (
-                      <li
-                        key={point}
-                        className="pl-4 border-l border-rule leading-relaxed"
-                      >
+                      <li key={point} className="leading-relaxed">
                         {point}
                       </li>
                     ))}
@@ -220,7 +229,7 @@ const HomePage = () => {
             </p>
           </div>
 
-          <figure className="panel bg-paper-sunken p-5 overflow-x-auto">
+          <figure className="callout bg-paper-sunken overflow-x-auto">
             <pre className="font-mono text-small text-ink leading-relaxed">
               {PIPELINE}
             </pre>
@@ -239,7 +248,8 @@ const HomePage = () => {
             Estimators
           </h2>
           <p className="prose-page text-ink-muted mb-6">
-            {count} algorithms across classification and regression.{" "}
+            {count} algorithms across classification and regression, including
+            XGBoost and LightGBM alongside scikit-learn&rsquo;s own.{" "}
             {isLive
               ? "This list was read from the server just now."
               : "This is the documented catalogue; the server publishes the authoritative list at /api/algorithms/."}

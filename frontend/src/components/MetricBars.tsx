@@ -107,18 +107,10 @@ export default function MetricBars({ rows, def, showTrain, onOpen }: MetricBarsP
                 {label}
               </button>
 
+              {/* No gridlines. Every bar is labelled with its own value and
+                  the axis sits under the whole group, so ruling the plot would
+                  add lines without adding information. */}
               <div className="relative">
-                {/* Recessive gridlines, drawn behind the bars. */}
-                <div aria-hidden="true" className="absolute inset-0">
-                  {ticks.map((tick, index) => (
-                    <span
-                      key={tick}
-                      className="absolute top-0 bottom-0 w-px bg-rule/60"
-                      style={{ left: `${(index / (ticks.length - 1)) * 100}%` }}
-                    />
-                  ))}
-                </div>
-
                 <div className="relative space-y-0.5 py-0.5">
                   {showTrain && trainValue !== null && (
                     <Bar

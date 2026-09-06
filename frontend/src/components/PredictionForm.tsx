@@ -155,10 +155,10 @@ export default function PredictionForm({
   if (schema.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-ink mb-4">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           Try it yourself
         </h2>
-        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
+        <p className="text-small text-ink-muted max-w-measure">
           This run did not record an input schema, so there is no form to build.
           Retrain the model to make live predictions available.
         </p>
@@ -172,7 +172,7 @@ export default function PredictionForm({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-ink mb-2">
+      <h2 className="font-serif text-h3 text-ink mb-2">
         Try it yourself
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -280,7 +280,7 @@ export default function PredictionForm({
         <button
           type="submit"
           disabled={submitting || !filledIn}
-          className="mt-6 w-full rounded-control bg-primary px-4 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#471724] disabled:cursor-not-allowed disabled:bg-primary/50"
+          className="btn btn-primary text-body py-3 w-full mt-6"
         >
           {submitting ? "Predicting…" : "Predict"}
         </button>
@@ -310,7 +310,7 @@ export default function PredictionForm({
       )}
 
       {result && (
-        <div className="mt-6 border border-rule bg-paper-sunken p-6">
+        <div className="mt-6 bg-paper-sunken p-5">
           <p className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
             Predicted {targetColumn}
           </p>
@@ -342,9 +342,9 @@ export default function PredictionForm({
                       >
                         {entry.label}
                       </span>
-                      <span className="h-3 flex-1 rounded-[4px] bg-paper-sunken">
+                      <span className="h-3 flex-1 rounded-control bg-paper-sunken">
                         <span
-                          className="block h-3 rounded-[4px] bg-series-1 transition-opacity hover:opacity-80"
+                          className="block h-3 rounded-control bg-series-1 transition-opacity hover:opacity-80"
                           style={{ width: `${pct}%` }}
                           title={`${entry.label}: ${pct.toFixed(1)}% confidence`}
                         />

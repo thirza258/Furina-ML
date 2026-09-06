@@ -151,7 +151,7 @@ export default function PreprocessingCheckbox({
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-ink">
+        <h2 className="font-serif text-h3 text-ink">
           Build a cleaning recipe
         </h2>
         <p className="text-sm text-ink-muted">
@@ -162,14 +162,14 @@ export default function PreprocessingCheckbox({
       </div>
 
       {steps.length === 0 ? (
-        <div className="mb-6 rounded-control border border-rule bg-paper p-4">
+        <div className="mb-6">
           <p className="text-sm text-ink-muted">
             No steps selected yet. Your recipe and its running order will appear
             here.
           </p>
         </div>
       ) : (
-        <div className="mb-6 rounded-control border border-rule bg-paper p-4">
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-ink">
               Recipe order ({steps.length}{" "}
@@ -191,9 +191,9 @@ export default function PreprocessingCheckbox({
             {steps.map((step, index) => (
               <li
                 key={step.op}
-                className="flex items-center gap-3 rounded-control bg-paper-raised border border-rule px-3 py-2"
+                className="flex items-center gap-3 py-1"
               >
-                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center border border-rule-strong bg-paper-sunken font-serif text-caption font-semibold text-ink">
                   {index + 1}
                 </span>
                 <span className="flex-grow text-sm text-ink">

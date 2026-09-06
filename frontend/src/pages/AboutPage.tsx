@@ -221,8 +221,8 @@ const AboutPage = () => {
       </h1>
 
       {/* ---------------------------------------------------------------- */}
-      <div className="w-full panel p-8 mb-6">
-        <h2 className="text-xl font-semibold text-ink mb-4">
+      <div className="panel">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           What this project is for
         </h2>
         <p className="font-serif text-body text-ink max-w-measure mb-3">
@@ -245,8 +245,8 @@ const AboutPage = () => {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      <div className="w-full panel p-8 mb-6">
-        <h2 className="text-xl font-semibold text-ink mb-4">
+      <div className="panel">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           The pipeline the backend builds
         </h2>
         <p className="font-serif text-body text-ink max-w-measure mb-4">
@@ -260,7 +260,7 @@ const AboutPage = () => {
         </p>
 
         <div className="grid gap-4 md:grid-cols-2 mb-4">
-          <div className="border border-rule rounded-control p-4">
+          <div>
             <h3 className="font-semibold text-ink mb-2">Numeric columns</h3>
             <ol className="text-sm text-ink-muted list-decimal pl-5 space-y-1">
               <li>
@@ -279,7 +279,7 @@ const AboutPage = () => {
               </li>
             </ol>
           </div>
-          <div className="border border-rule rounded-control p-4">
+          <div>
             <h3 className="font-semibold text-ink mb-2">
               Categorical, text, boolean and date columns
             </h3>
@@ -326,8 +326,8 @@ const AboutPage = () => {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      <div className="w-full panel p-8 mb-6">
-        <h2 className="text-xl font-semibold text-ink mb-4">
+      <div className="panel">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           How the task type is decided
         </h2>
         <p className="font-serif text-body text-ink max-w-measure mb-3">
@@ -369,8 +369,8 @@ const AboutPage = () => {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      <div className="w-full panel p-8 mb-6">
-        <h2 className="text-xl font-semibold text-ink mb-4">
+      <div className="panel">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           What each metric means
         </h2>
         <h3 className="font-semibold text-ink mb-2">Classification</h3>
@@ -395,8 +395,8 @@ const AboutPage = () => {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      <div className="w-full panel p-8 mb-6">
-        <h2 className="text-xl font-semibold text-ink mb-4">Tech stack</h2>
+      <div className="panel">
+        <h2 className="font-serif text-h3 text-ink mb-4">Tech stack</h2>
         <div className="grid gap-6 md:grid-cols-2">
           <div>
             <h3 className="font-semibold text-ink mb-2">Frontend</h3>
@@ -435,8 +435,8 @@ const AboutPage = () => {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      <div className="w-full panel p-8 mb-6">
-        <h2 className="text-xl font-semibold text-ink mb-4">
+      <div className="panel">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           API reference
         </h2>
         <p className="font-serif text-body text-ink max-w-measure mb-4">
@@ -516,7 +516,7 @@ const AboutPage = () => {
           href={DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="block w-full text-center bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
+          className="btn btn-primary text-body py-3 w-full"
         >
           Open the live API docs at {DOCS_URL}
         </a>
@@ -526,8 +526,8 @@ const AboutPage = () => {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      <div className="w-full panel p-8">
-        <h2 className="text-xl font-semibold text-ink mb-4">
+      <div className="panel">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           Ready to try it?
         </h2>
         <p className="font-serif text-body text-ink max-w-measure mb-6">
@@ -537,7 +537,7 @@ const AboutPage = () => {
         <button
           type="button"
           onClick={() => goToTool(TOOL_PREPROCESSING)}
-          className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
+          className="btn btn-primary text-body py-3 w-full"
         >
           Upload a CSV
         </button>

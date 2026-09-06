@@ -65,7 +65,7 @@ export default function TableViewer({
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-ink">{title}</h2>
+        <h2 className="font-serif text-h3 text-ink">{title}</h2>
         <p className="text-sm text-ink-muted">
           {subtitle ??
             (totalRows !== undefined
@@ -75,7 +75,7 @@ export default function TableViewer({
       </div>
 
       {headers.length === 0 || shownRows === 0 ? (
-        <div className="rounded-control border border-rule bg-paper p-6 text-center">
+        <div className="py-8 text-center">
           <p className="font-semibold text-ink">Nothing to show</p>
           <p className="text-sm text-ink-muted mt-1">
             {headers.length === 0

@@ -44,12 +44,12 @@ export default function MetricsPanel({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-ink mb-4">
+      <h2 className="font-serif text-h3 text-ink mb-4">
         Test-set metrics
       </h2>
 
       {!hasAnyValue && (
-        <p className="mb-4 rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
+        <p className="mb-4 text-small text-ink-muted max-w-measure">
           This run finished without producing any metrics. That usually means
           training failed — check the error box above.
         </p>
@@ -61,9 +61,9 @@ export default function MetricsPanel({
           return (
             <div
               key={def.key}
-              className="border border-rule bg-paper-sunken p-4"
+              className="bg-paper-sunken p-4"
             >
-              <p className="text-3xl font-bold text-ink font-mono leading-tight">
+              <p className="text-h2 font-mono text-ink leading-tight tabular">
                 {formatted ? formatted.main : "n/a"}
               </p>
               <p className="mt-1 text-sm font-semibold text-ink">{def.label}</p>

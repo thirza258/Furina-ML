@@ -139,7 +139,7 @@ const HyperparameterForm = ({
         {spec.type === "bool" ? (
           <label
             htmlFor={fieldId}
-            className="flex cursor-pointer items-center gap-3 rounded-control border border-rule bg-paper-sunken p-3"
+            className="flex cursor-pointer items-center gap-3 bg-paper-sunken p-3"
           >
             <input
               id={fieldId}
@@ -232,7 +232,7 @@ const HyperparameterForm = ({
 
   if (specs.length === 0) {
     return (
-      <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
+      <p className="text-small text-ink-muted max-w-measure">
         This algorithm exposes no tunable settings — it runs with scikit-learn's
         defaults.
       </p>
@@ -274,7 +274,7 @@ const HyperparameterForm = ({
       {basic.length > 0 && <div className="space-y-4">{basic.map(renderField)}</div>}
 
       {advanced.length > 0 && (
-        <details className="mt-4 rounded-control border border-rule bg-paper-sunken p-4">
+        <details className="mt-4 bg-paper-sunken p-4">
           <summary className="cursor-pointer text-sm font-semibold text-ink">
             Advanced ({advanced.length})
             {advancedTouched > 0 && (

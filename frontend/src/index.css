@@ -72,8 +72,20 @@
 /* hairline rather than a drop shadow: paper does not float.            */
 /* ------------------------------------------------------------------ */
 @layer components {
+  /* A section of the page, not a card.
+     Boxing every block was its own kind of decoration: panels nest, so a form
+     inside a section inside a page drew three rules around the same content.
+     A section is separated by the space around it and anchored by the rule
+     under its heading -- one rule per section, which is how a page is set.
+     Use `.callout` for the few blocks that genuinely have to be contained. */
   .panel {
-    @apply bg-paper-raised border border-rule;
+    @apply block mb-10;
+  }
+
+  /* Material that is set apart from the running page: a warning, a figure, a
+     row of controls. This is the only thing that gets a box. */
+  .callout {
+    @apply block border border-rule bg-paper-raised p-5;
   }
 
   /* A heading with the rule under it that a journal would set. */

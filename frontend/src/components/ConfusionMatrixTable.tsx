@@ -53,10 +53,10 @@ export default function ConfusionMatrixTable({
   if (labels.length === 0 || matrix.length === 0) {
     return (
       <section>
-        <h2 className="text-xl font-semibold text-ink mb-4">
+        <h2 className="font-serif text-h3 text-ink mb-4">
           Confusion matrix
         </h2>
-        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
+        <p className="text-small text-ink-muted max-w-measure">
           The backend returned an empty confusion matrix for this run, so there
           is nothing to plot.
         </p>
@@ -76,7 +76,7 @@ export default function ConfusionMatrixTable({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-ink mb-2">
+      <h2 className="font-serif text-h3 text-ink mb-2">
         Confusion matrix
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -220,7 +220,7 @@ export default function ConfusionMatrixTable({
           </p>
         </div>
       ) : (
-        <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
+        <p className="text-small text-ink-muted max-w-measure">
           This run did not report per-class precision and recall.
         </p>
       )}

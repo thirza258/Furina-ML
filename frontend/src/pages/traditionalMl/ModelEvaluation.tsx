@@ -104,7 +104,7 @@ interface FactProps {
 
 function Fact({ label, value, hint }: FactProps) {
   return (
-    <div className="rounded-control border border-rule bg-paper-sunken p-3">
+    <div className="bg-paper-sunken p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
         {label}
       </p>
@@ -128,7 +128,7 @@ function CrossValidationBlock({ run }: { run: TrainingRunDetail }) {
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-ink mb-2">
+      <h2 className="font-serif text-h3 text-ink mb-2">
         Cross-validation
       </h2>
       <p className="mb-4 text-sm text-ink-muted">
@@ -148,9 +148,9 @@ function CrossValidationBlock({ run }: { run: TrainingRunDetail }) {
               <span className="w-20 shrink-0 text-sm text-ink">
                 Fold {index + 1}
               </span>
-              <span className="h-3 flex-1 rounded-[4px] bg-paper-sunken">
+              <span className="h-3 flex-1 rounded-control bg-paper-sunken">
                 <span
-                  className="block h-3 rounded-[4px] bg-series-1 transition-opacity hover:opacity-80"
+                  className="block h-3 rounded-control bg-series-1 transition-opacity hover:opacity-80"
                   style={{ width: `${width}%` }}
                   title={`Fold ${index + 1} (${cv.scoring}): ${formatScore(score)}`}
                 />
@@ -214,7 +214,7 @@ export default function EvaluationReport() {
   };
 
   const runPicker = (
-    <div className="rounded-control border border-rule bg-paper-sunken p-4">
+    <div className="mt-4">
       <h3 className="mb-2 text-sm font-semibold text-ink">
         Open a previous training run
       </h3>
@@ -254,7 +254,7 @@ export default function EvaluationReport() {
             type="button"
             onClick={() => void handleLoadRun()}
             disabled={selectedRunId === "" || loadingRun}
-            className="shrink-0 rounded-control bg-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-[#471724] disabled:cursor-not-allowed disabled:bg-primary/50"
+            className="btn btn-primary text-body px-6 py-3 shrink-0"
           >
             {loadingRun ? "Loading…" : "Load run"}
           </button>
@@ -275,7 +275,7 @@ export default function EvaluationReport() {
   if (restoring) {
     return (
       <div className="bg-paper min-h-full p-8">
-        <div className="w-full panel p-8">
+        <div className="panel">
           <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
             Evaluation Report
           </h1>
@@ -290,7 +290,7 @@ export default function EvaluationReport() {
   if (!run) {
     return (
       <div className="bg-paper min-h-full p-8">
-        <div className="w-full panel p-8">
+        <div className="panel">
           <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
             Evaluation Report
           </h1>
@@ -306,7 +306,7 @@ export default function EvaluationReport() {
           <button
             type="button"
             onClick={() => goToTool("Data Training")}
-            className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors disabled:bg-primary/50 disabled:cursor-not-allowed"
+            className="btn btn-primary text-body py-3 w-full"
           >
             Go to Data Training
           </button>
@@ -329,7 +329,7 @@ export default function EvaluationReport() {
 
   return (
     <div className="bg-paper min-h-full p-8">
-      <div className="w-full panel p-8">
+      <div className="panel">
         <h1 className="font-serif text-h1 font-semibold text-ink mb-2">
           Evaluation Report
         </h1>
@@ -383,7 +383,7 @@ export default function EvaluationReport() {
         )}
 
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-h3 text-ink mb-4">
             About this run
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -486,7 +486,7 @@ export default function EvaluationReport() {
             <button
               type="button"
               onClick={() => goToTool("Data Training")}
-              className="w-full bg-primary text-white py-3 px-4 rounded-control text-lg font-semibold hover:bg-[#471724] transition-colors"
+              className="btn btn-primary text-body py-3 w-full"
             >
               Back to Data Training
             </button>
@@ -518,10 +518,10 @@ export default function EvaluationReport() {
                 />
               ) : (
                 <section>
-                  <h2 className="text-xl font-semibold text-ink mb-4">
+                  <h2 className="font-serif text-h3 text-ink mb-4">
                     Confusion matrix
                   </h2>
-                  <p className="rounded-control border border-rule bg-paper p-4 text-sm text-ink-muted">
+                  <p className="text-small text-ink-muted max-w-measure">
                     This run did not return a confusion matrix.
                   </p>
                 </section>
@@ -550,14 +550,14 @@ export default function EvaluationReport() {
             <hr className="my-8 border-t border-rule" />
 
             <section>
-              <h2 className="text-xl font-semibold text-ink mb-4">
+              <h2 className="font-serif text-h3 text-ink mb-4">
                 Take it with you
               </h2>
               <div className="space-y-4">
                 <a
                   href={services.reportDownloadUrl(run.id, "md")}
                   download
-                  className="block w-full rounded-control bg-primary px-4 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-[#471724]"
+                  className="btn btn-primary text-body py-3 w-full"
                 >
                   Download the evaluation report (Markdown)
                 </a>

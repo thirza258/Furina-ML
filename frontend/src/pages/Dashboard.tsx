@@ -243,7 +243,7 @@ export default function Dashboard() {
         <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
           Dashboard
         </h1>
-        <div className="panel p-6 border-state-bad">
+        <div className="callout border-state-bad">
           <p className="font-medium text-state-bad">
             {WARNING_MARK} The run history could not be loaded — {error}
           </p>
@@ -258,7 +258,7 @@ export default function Dashboard() {
         <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
           Dashboard
         </h1>
-        <div className="panel p-8">
+        <div className="panel">
           <h2 className="panel-title">Nothing trained yet</h2>
           <p className="prose-page mb-6">
             This page ranks and compares the models you have trained. It fills in
@@ -290,7 +290,7 @@ export default function Dashboard() {
       {/* ---------------------------------------------------------------- */}
       {/* Summary. Plain figures, not charts: they are unrelated quantities. */}
       {/* ---------------------------------------------------------------- */}
-      <div className="grid gap-px bg-rule border border-rule sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 border-b border-rule pb-6 mb-8">
         <StatTile label="Runs in view" value={String(filtered.length)}
           note={failedCount > 0 ? `${failedCount} failed` : "all completed"} />
         <StatTile
@@ -307,7 +307,7 @@ export default function Dashboard() {
       {/* ---------------------------------------------------------------- */}
       {/* Filters — one row, above the chart they act on.                   */}
       {/* ---------------------------------------------------------------- */}
-      <div className="panel p-4 mb-6 flex flex-wrap items-end gap-x-6 gap-y-4">
+      <div className="callout mb-8 flex flex-wrap items-end gap-x-6 gap-y-4">
         <Field label="Task">
           <select
             value={taskFilter}
@@ -369,7 +369,7 @@ export default function Dashboard() {
       {/* ---------------------------------------------------------------- */}
       {/* Comparison                                                        */}
       {/* ---------------------------------------------------------------- */}
-      <section className="panel p-6 mb-8">
+      <section className="panel">
         <h2 className="panel-title">
           {activeMetric ? `Ranked by ${activeMetric.label.toLowerCase()}` : "Comparison"}
         </h2>
@@ -510,7 +510,7 @@ export default function Dashboard() {
 
 function StatTile({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="bg-paper-raised px-5 py-4">
+    <div>
       <p className="field-label">{label}</p>
       <p className="mt-1 font-serif text-h2 text-ink tabular">{value}</p>
       <p className="mt-0.5 font-sans text-caption text-ink-muted truncate" title={note}>

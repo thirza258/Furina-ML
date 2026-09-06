@@ -137,7 +137,7 @@ export function TargetColumnSelector({
       )}
 
       {selected && (
-        <div className="mt-3 rounded-control border border-rule bg-paper-sunken p-4">
+        <div className="mt-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="font-semibold text-ink">{selected.name}</span>
             <KindBadge column={selected} />
@@ -204,7 +204,7 @@ export function TargetColumnSelector({
       )}
 
       {blocked.length > 0 && (
-        <details className="mt-3 rounded-control border border-rule bg-paper-sunken p-3">
+        <details className="mt-3 bg-paper-sunken p-3">
           <summary className="cursor-pointer text-sm font-medium text-ink">
             {blocked.length} {plural(blocked.length, "column", "columns")} cannot
             be a target — why?
@@ -314,12 +314,12 @@ export function FeatureColumnSelector({
       )}
 
       {available.length === 0 ? (
-        <p className="rounded-control border border-rule bg-paper-sunken p-4 text-sm text-ink-muted">
+        <p className="text-small text-ink-muted max-w-measure">
           There are no other columns to learn from. A dataset needs at least one
           feature column besides the target.
         </p>
       ) : (
-        <div className="max-h-72 overflow-y-auto rounded-control border border-rule bg-paper-sunken p-2">
+        <div className="max-h-72 overflow-y-auto bg-paper-sunken p-2">
           {available.map((column) => {
             const checked = chosen.has(column.name);
             return (

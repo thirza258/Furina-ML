@@ -160,7 +160,7 @@ export default function AssistantFab({ tool }: AssistantFabProps) {
                   Ask about anything on screen — what a control does, which
                   column to predict, whether a score is any good.
                 </p>
-                <p className="font-sans text-caption text-ink-muted border-l-2 border-rule pl-3">
+                <p className="font-sans text-caption text-ink-muted">
                   Your question is answered by a language model run by OpenRouter.
                   It is told your column <em>names</em>, their types and your
                   scores — never the rows themselves.
@@ -181,14 +181,9 @@ export default function AssistantFab({ tool }: AssistantFabProps) {
               </>
             ) : (
               messages.map((message, index) => (
-                <div
-                  key={`${message.role}-${index}`}
-                  className={
-                    message.role === "user"
-                      ? "border-l-2 border-primary pl-3"
-                      : "border-l-2 border-rule pl-3"
-                  }
-                >
+                // The label names the speaker; a coloured bar beside it would
+                // be saying the same thing a second time.
+                <div key={`${message.role}-${index}`}>
                   <p className="field-label mb-1">
                     {message.role === "user" ? "You" : "Helper"}
                   </p>

@@ -117,7 +117,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
 
   if (columns.length === 0) {
     return (
-      <div className="rounded-control border border-rule bg-paper p-6 text-center">
+      <div className="py-8 text-center">
         <p className="font-semibold text-ink">No column profile yet</p>
         <p className="text-sm text-ink-muted mt-1">
           The profile appears as soon as a dataset is loaded.
@@ -129,7 +129,7 @@ export default function DatasetProfile({ columns }: DatasetProfileProps) {
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-ink">Column profile</h2>
+        <h2 className="font-serif text-h3 text-ink">Column profile</h2>
         <p className="text-sm text-ink-muted">
           {columns.length} columns · {withMissing} with missing values ·{" "}
           {targetable} usable as a prediction target. Click a heading to sort.
