@@ -8,7 +8,7 @@
  * then being allowed to look anyway is far less frustrating than a dead
  * button, and every page renders its own empty state with a way forward.
  */
-import React from "react";
+import React, { useState } from "react";
 
 import { useWorkspace } from "../context/workspaceContext";
 
@@ -18,7 +18,7 @@ interface SidebarProps {
 }
 
 /** Must match the strings App.tsx switches on — a typo here is a dead link. */
-const APPLICATION_TOOLS = ["Landing Page", "Dashboard", "About Us"] as const;
+const APPLICATION_TOOLS = ["Landing Page", "Dashboard", "Courses", "About Us"] as const;
 
 /**
  * What the sidebar prints, where that differs from the routing key.
@@ -47,6 +47,7 @@ interface PipelineStep {
 
 const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
   const { dataset, run, restoring } = useWorkspace();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const steps: PipelineStep[] = [
     {
@@ -87,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
       <li key={tool}>
         <button
           type="button"
-          onClick={() => setSelectedTool(tool)}
+          onClick={() => { setSelectedTool(tool); setMobileOpen(false); }}
           aria-current={isSelected ? "page" : undefined}
           className={`w-full text-left py-2 pl-3 pr-2 border-l-2 cursor-pointer transition-colors ${
             isSelected
@@ -138,8 +139,15 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
   };
 
   return (
-    <div className="w-64 lg:w-72 bg-paper h-full border-r border-rule z-10 flex-shrink-0 flex flex-col overflow-y-auto">
-      <div className="flex-shrink-0 px-4 py-5">
+    <div className="w-full md:w-64 lg:w-72 bg-paper md:h-full max-h-[45dvh] md:max-h-none border-b md:border-b-0 md:border-r border-rule z-10 flex-shrink-0 flex flex-col overflow-y-auto">
+      <button
+        type="button" aria-expanded={mobileOpen} aria-controls="workbench-tools"
+        onClick={() => setMobileOpen((open) => !open)}
+        className="md:hidden flex items-center justify-between px-5 py-3 text-small font-medium min-h-11"
+      >
+        <span>Tools · {toolLabel(selectedTool)}</span><span aria-hidden="true">{mobileOpen ? "−" : "+"}</span>
+      </button>
+      <div id="workbench-tools" className={`${mobileOpen ? "block" : "hidden"} md:block flex-shrink-0 px-4 py-5`}>
         <h2 className="field-label mb-4">Tools</h2>
         <div className="overflow-y-auto">
           <div className="mb-4">

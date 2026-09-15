@@ -11,7 +11,7 @@
  * a navigation, so going back returns you to the previous tool instead of
  * dropping you out of the app entirely.
  */
-import { useCallback } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import AboutPage from './pages/AboutPage';
@@ -27,6 +27,8 @@ import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
 import WorkspaceProvider from './context/WorkspaceProvider';
 
+const CoursesPage = lazy(() => import('./pages/CoursesPage'));
+
 /**
  * The tool names the sidebar and the pages pass around, paired with the path
  * each one lives at. The names are the contract — `goToTool("Data Training")`
@@ -38,6 +40,7 @@ const TOOL_ROUTES: { tool: string; path: string }[] = [
   { tool: 'Data Preprocessing', path: '/app/preprocessing' },
   { tool: 'Data Training', path: '/app/training' },
   { tool: 'Model Evaluation', path: '/app/evaluation' },
+  { tool: 'Courses', path: '/app/courses' },
   { tool: 'About Us', path: '/about' },
 ];
 
@@ -61,7 +64,9 @@ function Workbench() {
     pathname.length > 1 && pathname.endsWith('/')
       ? pathname.slice(0, -1)
       : pathname;
-  const selectedTool = TOOL_FOR_PATH.get(normalized) ?? DEFAULT_TOOL;
+  const selectedTool = normalized.startsWith('/app/courses/')
+    ? 'Courses'
+    : TOOL_FOR_PATH.get(normalized) ?? DEFAULT_TOOL;
 
   const handleToolSelection = useCallback(
     (tool: string) => {
@@ -78,6 +83,8 @@ function Workbench() {
         return <DataTraining />;
       case 'Model Evaluation':
         return <EvaluationReport />;
+      case 'Courses':
+        return <Suspense fallback={<p className="p-8" role="status">Loading courses…</p>}><CoursesPage /></Suspense>;
       case 'Dashboard':
         return <Dashboard />;
       case 'About Us':
@@ -91,12 +98,12 @@ function Workbench() {
   return (
     <div className="h-dvh flex flex-col bg-paper">
       <NavBar selectedTool={selectedTool} />
-      <div className="flex flex-grow overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-grow overflow-hidden">
         <Sidebar
           selectedTool={selectedTool}
           setSelectedTool={handleToolSelection}
         />
-        <main className="flex-grow overflow-y-auto">
+        <main className="flex-grow min-w-0 min-h-0 overflow-y-auto">
           {/* A cap on the measure: full-bleed panels on a wide monitor put
               120 characters on a line, which nobody reads. */}
           <div className="mx-auto max-w-7xl">{renderSelectedPage()}</div>
@@ -130,6 +137,9 @@ function App() {
         <Route path="/app/preprocessing" element={<Workbench />} />
         <Route path="/app/training" element={<Workbench />} />
         <Route path="/app/evaluation" element={<Workbench />} />
+        <Route path="/app/courses" element={<Workbench />} />
+        <Route path="/app/courses/:courseId" element={<Workbench />} />
+        <Route path="/app/courses/:courseId/:lessonId" element={<Workbench />} />
         <Route path="/about" element={<Workbench />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

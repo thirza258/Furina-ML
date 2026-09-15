@@ -13,6 +13,7 @@ import {
   TargetColumnSelector,
 } from "../../components/ColumnSelector";
 import HyperparameterForm from "../../components/HyperparameterForm";
+import CourseLink from "../../components/CourseLink";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
 import { WARNING_MARK } from "../../explainer/marks";
@@ -433,6 +434,7 @@ const DataTraining = () => {
       <div className="bg-paper min-h-full p-8 w-full">
         <div className="panel">
           <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
+          <CourseLink courseId="training" />
 
           {restoreError && (
             <div className="mb-6 rounded-control border-l-4 border-state-bad bg-red-50 p-4">
@@ -474,6 +476,7 @@ const DataTraining = () => {
         <style>{INDETERMINATE_CSS}</style>
 
         <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
+        <CourseLink courseId="training" />
 
         <div className="mb-8 bg-paper-sunken p-4">
           <p className="text-sm text-ink-muted">Training on</p>

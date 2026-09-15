@@ -125,6 +125,20 @@
   .prose-page p + p {
     @apply mt-4;
   }
+
+  .course-progress {
+    @apply block w-full h-2 border-0 bg-paper-sunken;
+    appearance: none;
+  }
+  .course-progress::-webkit-progress-bar {
+    @apply bg-paper-sunken;
+  }
+  .course-progress::-webkit-progress-value {
+    @apply bg-primary;
+  }
+  .course-progress::-moz-progress-bar {
+    @apply bg-primary;
+  }
 }
 
 /* Honour the system setting rather than animating regardless. */

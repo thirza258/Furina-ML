@@ -143,6 +143,9 @@ const HomePage = () => {
             >
               Enter the workbench
             </Link>
+            <Link to="/app/courses" className="font-sans text-small">
+              ML &amp; AI courses
+            </Link>
             <Link to="/about" className="font-sans text-small">
               How it works
             </Link>
@@ -166,11 +169,12 @@ const HomePage = () => {
               measured on rows the model never saw.
             </p>
             <p>
-              Nothing on these pages is a sample, a mock-up or a simulation.
-              Every metric, every confusion matrix and every prediction is
+              Every workspace metric, confusion matrix and prediction is
               computed from the file you uploaded by the estimator you chose.
               Where the application cannot do something, it says so rather than
               filling the gap with a plausible number.
+              The courses use clearly labelled teaching examples to explain
+              how to train and evaluate your own models.
             </p>
           </div>
         </section>

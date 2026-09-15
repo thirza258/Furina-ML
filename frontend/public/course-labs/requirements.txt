@@ -1,0 +1,3 @@
+# CPU teaching labs verified with Python 3.14.4 on macOS ARM64.
+# Use a Python/platform combination supported by this PyTorch release.
+torch==2.14.0

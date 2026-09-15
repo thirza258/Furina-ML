@@ -1,0 +1,117 @@
+import type { Course } from "./types";
+
+export const transformersCourse: Course = {
+  id: "transformers", title: "Transformer Models", level: "Intermediate", track: "Language",
+  description: "Build a small causal transformer and understand its internals: tokens, attention, masks, residual blocks, training objectives and autoregressive generation.",
+  prerequisites: ["PyTorch modules, tensor shapes and training loops", "Matrix multiplication and softmax", "Validation-based checkpoint selection"],
+  prerequisiteCourses: ["base-models", "intermediate-models"], practiceMode: "python", nextCourseId: "llms",
+  outcomes: ["Trace queries, keys and values through attention", "Implement and verify a causal mask", "Train a tiny next-token model", "Explain context length, generation and evaluation limits"],
+  lab: { filename: "transformer_model.py", title: "Train a tiny causal transformer", description: "Train a small transformer on procedurally generated symbol sequences. The CPU script checks that changing future tokens cannot affect earlier logits, selects a validation checkpoint, reports test cross-entropy and generates a continuation.", exercises: ["Run the causal-invariance check and explain what it protects.", "Change context length or head count while preserving compatible dimensions.", "Compare the learned predictor with a uniform-token baseline and inspect generated sequences."] },
+  capstone: { title: "Build a tested sequence model", brief: "Extend the tiny transformer to a new symbolic grammar or a small text corpus with a documented source-level split. Show that masking, token alignment and evaluation work.", deliverables: ["Tokenizer or vocabulary specification and split manifest", "An annotated architecture with tensor shapes", "Causal-mask and shifted-target checks", "Validation history, test loss and decoded generations"], rubric: ["Future tokens do not influence past predictions", "Loss counts only intended target positions", "Vocabulary and context settings accompany checkpoints", "Generated samples are separated from quantitative evaluation"] },
+  references: [
+    { title: "Attention Is All You Need — original paper", url: "https://arxiv.org/abs/1706.03762" },
+    { title: "PyTorch: TransformerEncoderLayer", url: "https://docs.pytorch.org/docs/stable/generated/torch.nn.TransformerEncoderLayer.html" },
+    { title: "PyTorch: scaled dot-product attention", url: "https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html" },
+  ],
+  lessons: [
+    {
+      id: "tokens-and-embeddings", title: "Turn sequences into tokens and embeddings", minutes: 25,
+      intro: "A transformer receives a sequence of vectors. Tokenization decides what the discrete units mean; embedding lookup maps their IDs into learned vectors.",
+      sections: [
+        { title: "Choose a vocabulary and boundary rules", body: "Characters, bytes and subword pieces produce different sequence lengths and vocabularies. A smaller vocabulary often creates longer sequences, increasing computation. Define padding, document boundaries and unknown-token behavior. If you train a tokenizer, use only the allowed training corpus and version the resulting vocabulary with the model." },
+        { title: "Track the embedding shape", body: "Token IDs of shape [batch, length] become embeddings of shape [batch, length, width]. The embedding table has [vocabulary, width] learned values. The token ID itself has no numeric distance meaning: token 8 is not twice token 4. Semantic or task relationships are learned through the objective." },
+        { title: "Represent order", body: "Attention needs a way to distinguish positions if sequence order matters. Learned position embeddings, sinusoidal signals and rotary position methods introduce order differently. Training on a fixed context length does not guarantee reliable behavior at much longer lengths. The lab uses learned positions with an explicit maximum context." },
+      ],
+      example: { title: "One sequence, three tensors", body: "A batch of 16 sequences with 32 tokens each has IDs shaped [16,32]. At width 64, embeddings are [16,32,64]. A vocabulary of 100 tokens requires 6,400 token-embedding parameters before any positional embeddings or transformer layers." },
+      practice: ["Inspect the lab vocabulary and decode one training sequence.", "Calculate the token-embedding parameter count before running.", "Explain how a character vocabulary changes sequence length compared with a word vocabulary."],
+      quiz: { question: "What does an embedding layer do to a token ID?", options: ["Uses its numeric magnitude as the word meaning", "Looks up a learned vector associated with that ID", "Automatically removes padding and future tokens"], correctIndex: 1, explanation: "An embedding table maps discrete IDs to learned vectors. Masking and padding behavior require separate handling." },
+    },
+    {
+      id: "attention-mechanics", title: "Compute queries, keys, values and attention", minutes: 35,
+      intro: "Attention lets a position combine information from permitted positions. The weights depend on compatibility between its query and the other positions' keys.",
+      sections: [
+        { title: "Follow scaled dot-product attention", body: "Project input vectors into queries Q, keys K and values V. Compute QKᵀ / √dₖ, apply the allowed-position mask, normalize each query row with softmax, then multiply by V. Each result is a weighted sum of value vectors. The scaling controls dot-product magnitude as key dimension changes." },
+        { title: "Understand multiple heads", body: "Each head forms attention using its own projections or slice of projected features. Concatenated head outputs are mixed by an output projection. In common implementations, model width must be divisible by the number of heads. More heads do not automatically mean a stronger model; width, data, optimization and compute also matter." },
+        { title: "Interpret attention carefully", body: "An attention weight describes one internal mixing operation, not a complete causal explanation of the model's output. Residual paths and later layers also influence the result. Inspect weights to debug masks or alignment, but validate claims about feature influence with interventions and task-level evidence." },
+      ],
+      experiment: "attention",
+      example: { title: "A normalized row", body: "If the permitted attention scores for a query are all equal, softmax gives them equal weight. Masking one position before softmax removes its contribution and renormalizes the remaining weights. Masking after softmax without renormalization changes that calculation." },
+      code: { title: "Attention for one batch of heads", source: "# q, k, v have shape [batch, heads, length, head_width].\nimport math\nscores = q @ k.transpose(-2, -1) / math.sqrt(q.size(-1))\nscores = scores.masked_fill(blocked_positions, float('-inf'))\nweights = scores.softmax(dim=-1)\noutput = weights @ v", explanation: "This conceptual excerpt uses True for blocked positions in masked_fill. Check the documented boolean-mask convention when switching to a library attention API; conventions differ." },
+      practice: ["Use the explorer to inspect permitted positions for different query tokens.", "Calculate a softmax row and check that its permitted weights sum to one.", "Draw the shapes of QKᵀ and the result of multiplying attention weights by V."],
+      quiz: { question: "What is the output of attention at one query position?", options: ["A weighted combination of permitted value vectors", "Always the single token with the highest score", "The unnormalized sum of every token ID"], correctIndex: 0, explanation: "Softmax weights mix value vectors. Standard attention is a weighted combination, not a hard selection of one token." },
+    },
+    {
+      id: "transformer-blocks", title: "Assemble transformer blocks and architectures", minutes: 30,
+      intro: "Attention is one component of a transformer. Residual connections, normalization and position-wise feed-forward layers determine how stacked blocks transform the sequence.",
+      sections: [
+        { title: "Trace a residual block", body: "A residual connection adds a sublayer's output to its input, so dimensions must agree. A feed-forward sublayer expands and projects each position independently, usually with a nonlinear activation. Normalization helps manage activation scale. Pre-norm and post-norm place normalization differently and can have different optimization behavior." },
+        { title: "Match architecture to the information flow", body: "Encoder-style models can use bidirectional context for representations or masked-token objectives. Causal decoder-style models predict continuations from prefixes. Encoder-decoder models condition a decoder on a separately encoded input, as in translation or some speech recognition systems. The attention permissions and training objective matter more than a marketing label." },
+        { title: "Keep the output head explicit", body: "For token prediction, a projection maps each position's hidden vector to vocabulary logits. Classification may pool a sequence or use a designated token instead. Weight tying can share input embeddings with an output projection when dimensions and design allow it. Check whether a head predicts one label per sequence or one label per position." },
+      ],
+      example: { title: "Why the lab uses an encoder-layer module", body: "PyTorch's TransformerEncoderLayer provides self-attention and feed-forward blocks. Applying a causal mask to a stack of these blocks yields causal self-attention for the lab's next-token model. The module name alone does not make the resulting information flow bidirectional." },
+      practice: ["Annotate residual and feed-forward paths in the lab architecture.", "Calculate per-head width for a model width of 64 and four heads.", "Describe how the output head changes for sequence classification."],
+      quiz: { question: "What determines whether a self-attention block can read future positions?", options: ["The name of the checkpoint directory", "Whether it uses ReLU or GELU", "The attention mask and information-flow design"], correctIndex: 2, explanation: "Attention permissions determine which positions can exchange information. The class name of a reusable block is not sufficient to establish causality." },
+    },
+    {
+      id: "causal-and-padding-masks", title: "Prevent future-token and padding leakage", minutes: 35,
+      intro: "A model trained to predict the next token must not read that token through its inputs. Mask mistakes can produce excellent-looking loss while making generation fail.",
+      sections: [
+        { title: "Block future keys for each query", body: "At position t, causal attention may use positions up to and including t. A triangular mask blocks later keys before normalization. Padding masks solve another problem: synthetic padding positions should not act as meaningful input. Keep these roles separate and check whether a given API expects True to mean allowed or blocked." },
+        { title: "Align next-token targets", body: "For token sequence [A,B,C,D], a common training pair is input [A,B,C] and target [B,C,D]. Shift exactly once: some language-model classes shift internally, while a handwritten loss expects you to do it. Avoid constructing overlapping train/test windows from the same original document, which can leak exact text across the split." },
+        { title: "Test causality with an intervention", body: "In evaluation mode, compare logits for two sequences that share a prefix but have different suffixes. Logits within the shared prefix should match within numerical tolerance. This checks the actual forward computation, including masks. Also test padded batches against equivalent unpadded examples where the architecture permits a clean comparison." },
+      ],
+      example: { title: "The hidden-copy failure", body: "If input [A,B,C] is trained to predict [B,C,D] without a causal mask, the representation at A can attend directly to B. The model may learn to copy a visible answer, an option unavailable when generating from A alone." },
+      practice: ["Run the lab's future-token invariance assertion.", "Temporarily remove the causal mask and observe the assertion fail, then restore it.", "Write down the exact input and target positions for a four-token sequence."],
+      quiz: { question: "Why can removing the causal mask lower training loss misleadingly?", options: ["The model may read target tokens from future input positions", "It forces the model to use fewer parameters", "It automatically provides a larger independent test set"], correctIndex: 0, explanation: "Future input positions contain answers to earlier next-token targets. Reading them makes the training task easier than autoregressive generation." },
+    },
+    {
+      id: "sequence-objectives", title: "Choose objectives and normalize token loss", minutes: 30,
+      intro: "The loss defines which positions teach the model. Padding, document boundaries and prompt tokens need deliberate treatment so the objective matches the task you intend to learn.",
+      sections: [
+        { title: "Distinguish causal, masked and conditional objectives", body: "Causal language modeling predicts later tokens from a prefix. Masked-token learning reconstructs hidden positions using permitted context. Conditional sequence generation predicts outputs given another input. These objectives expose different information during training, so their raw losses are not directly interchangeable." },
+        { title: "Exclude positions without supervision", body: "Padding can be ignored in the target loss using an agreed ignore index. Supervised instruction tuning may also ignore user-prompt positions while keeping them available as context. Attention masks control what can be read; loss masks control what is scored. A batch with no supervised target tokens must be detected rather than producing an invalid average." },
+        { title: "Report comparable token metrics", body: "Cross-entropy should be aggregated over valid target tokens. Perplexity is exp(mean negative log-likelihood) when natural logarithms are used. It depends on tokenization and the evaluated corpus; a lower number from a different tokenizer is not necessarily a better model. A good token score also does not establish factual correctness or instruction following." },
+      ],
+      example: { title: "A perplexity calculation", body: "If the mean next-token negative log-likelihood is 1.5 nats over the evaluated tokens, perplexity is exp(1.5), approximately 4.48. Averaging sequence perplexities instead generally gives a different result from aggregating token losses first." },
+      practice: ["Inspect how the lab flattens vocabulary logits and target IDs for cross-entropy.", "Add a valid-token count to a padded version of the dataset.", "Calculate perplexity from the reported token loss and label the corpus and vocabulary."],
+      quiz: { question: "What is the difference between an attention mask and a loss mask?", options: ["Both always remove the same tokens from the input", "One controls readable positions; the other controls scored targets", "A loss mask changes the vocabulary order"], correctIndex: 1, explanation: "A prompt may be visible as context while excluded from the target loss. Information flow and supervision are distinct decisions." },
+    },
+    {
+      id: "train-a-tiny-transformer", title: "Train and debug a tiny transformer", minutes: 40,
+      intro: "Use a sequence task with an inspectable rule to connect the architecture to actual learning. Verify the data and masks before treating an improving loss as evidence that the task is solved.",
+      sections: [
+        { title: "Build a known-rule sequence dataset", body: "The lab samples symbol sequences from a small procedural grammar with independent random generators for each split. This makes a simple baseline available and keeps training inexpensive. Shared grammar is intentional; repeated source documents in a text task need a different split protocol. The result demonstrates sequence learning on that grammar, not broad language ability." },
+        { title: "Run a minimal training schedule", body: "Train a small causal stack with AdamW, clip gradients and choose the checkpoint by validation token loss. Log step count, context length, vocabulary size and the number of valid tokens. Ensure positional embeddings cover the input length and that the prediction head matches the vocabulary. Keep a full-precision CPU run as a debugging reference." },
+        { title: "Investigate loss without plausible generations", body: "Check token shifts, special-token handling, dropout at inference and whether the generation loop uses the same context convention as training. A model can also improve average loss by learning frequent transitions while failing rare ones. Evaluate at positions and sequence types that test the rule you care about." },
+      ],
+      example: { title: "Compare with a uniform-token predictor", body: "For a vocabulary of V equally likely choices, a uniform predictor has cross-entropy log(V). This is a simple reference. A grammar-aware baseline may be much stronger, so beating uniform prediction alone is not enough to demonstrate that all dependencies were learned." },
+      practice: ["Run the downloadable transformer lab and retain its JSON report.", "Compare its test loss with the uniform baseline and inspect generated transitions.", "Change one architecture setting, select using validation data, and explain the new result."],
+      quiz: { question: "What does beating a uniform-token baseline establish?", options: ["The model is a general-purpose assistant", "Its outputs are factually correct", "It predicts this evaluation distribution better than uniform guessing"], correctIndex: 2, explanation: "The result concerns a particular distribution and baseline. It does not establish general language capability or correctness." },
+    },
+    {
+      id: "generation-and-context", title: "Generate tokens and understand context costs", minutes: 30,
+      intro: "Autoregressive generation repeatedly predicts one more token. Its runtime behavior differs from training on a whole sequence, and its sampling choices affect outputs without changing learned weights.",
+      sections: [
+        { title: "Decode one step at a time", body: "Feed a prefix, take the last position's logits, choose a token and append it. Greedy decoding picks the largest logit. Temperature rescales logits before sampling; top-k and top-p restrict the sampling distribution. Specify stopping tokens and a generation-length limit. Different decoding settings must be recorded when comparing outputs." },
+        { title: "Understand KV caching", body: "A key/value cache reuses representations from previous positions during incremental decoding. This reduces repeated computation, but cache memory grows with batch size, sequence length, layers, heads and precision. It is distinct from optimizer or activation memory during training. Architecture-specific cache conventions matter when implementing custom generation." },
+        { title: "Budget context realistically", body: "Naive dense attention forms a length-by-length score matrix, so doubling sequence length quadruples the number of score entries. Optimized kernels can avoid materializing that full matrix while preserving dense attention's arithmetic. Long-context capability also depends on training and positional behavior, not simply raising a configuration limit." },
+      ],
+      experiment: "attention",
+      example: { title: "A teaching generation loop", body: "The lab recomputes its short context at each step for clarity and crops to its trained context limit. It does not implement a KV cache. That is reasonable for a small CPU exercise and would be inefficient for long-context serving." },
+      practice: ["Generate twice with greedy decoding and then with seeded sampling.", "Record the context limit and stopping rule in the output report.", "Estimate how score-matrix entries change from length 128 to 512."],
+      quiz: { question: "What is the main purpose of a KV cache during autoregressive decoding?", options: ["Reuse previous keys and values instead of recomputing them each step", "Store Adam optimizer moments", "Guarantee that generated facts are correct"], correctIndex: 0, explanation: "The cache accelerates incremental attention by retaining previous key/value representations. It does not improve factual reliability by itself." },
+    },
+    {
+      id: "transformer-capstone", title: "Capstone: validate a complete transformer experiment", minutes: 55,
+      intro: "Produce a small transformer whose architecture, training objective and generation behavior can all be explained. Correctness checks are part of the deliverable, not optional debugging notes.",
+      sections: [
+        { title: "Choose a measurable sequence task", body: "Extend the grammar or use text whose origin and permitted use you understand. Split original sources before creating windows. Define a vocabulary, document-boundary rule and maximum context. Include a baseline that addresses the task's real dependency instead of only uniform guessing." },
+        { title: "Verify the entire token path", body: "Trace raw sequence to IDs, embeddings, masked blocks, logits, target loss and decoded output. Demonstrate a correct shift and a causal-invariance check. Evaluate the selected checkpoint in evaluation mode. Keep tokenizer, architecture and preprocessing versions beside the weights so the token path can be reproduced." },
+        { title: "Explain what the result supports", body: "Report validation selection, final token loss, baseline comparison, generation settings and representative failures. If a model succeeds only on short familiar patterns, say so. Propose a longer or different source distribution as a new evaluation rather than claiming that a few fluent samples prove broad capability." },
+      ],
+      example: { title: "A useful failure analysis", body: "A model learns local alternating symbols but fails a dependency separated by many positions. Separate these cases in evaluation. A low average loss dominated by easy local transitions can obscure the long-range failure." },
+      practice: ["Complete the transformer capstone deliverables on the course overview.", "Include a source-level split check and the future-token invariance test.", "Compare two context lengths and explain an observed failure using actual outputs."],
+      quiz: { question: "Which evidence most directly checks that generation training did not read future answers?", options: ["A low training loss alone", "Matching prefix logits when only later tokens change", "A large number of attention heads"], correctIndex: 1, explanation: "The intervention tests the computation's causal boundary. Low loss and architecture size do not establish that boundary." },
+    },
+  ],
+};

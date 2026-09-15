@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import ConfusionMatrixTable from "../../components/ConfusionMatrixTable";
+import CourseLink from "../../components/CourseLink";
 import FeatureImportanceChart from "../../components/FeatureImportanceChart";
 import MetricsPanel from "../../components/MetricsPanel";
 import PredictionForm from "../../components/PredictionForm";
@@ -294,6 +295,7 @@ export default function EvaluationReport() {
           <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
             Evaluation Report
           </h1>
+          <CourseLink courseId="evaluation" />
           {restoreError && (
             <ErrorBox title="Could not reach the API." message={restoreError} />
           )}
@@ -334,6 +336,7 @@ export default function EvaluationReport() {
           Evaluation Report
         </h1>
         <p className="mb-8 text-lg text-ink">{runLabel(run)}</p>
+        <CourseLink courseId="evaluation" />
 
         {trainedOnOtherDataset && dataset !== null && (
           <div className="mb-6 rounded-control border border-state-warn/40 bg-state-warn/10 p-4">

@@ -5,8 +5,8 @@ Upload a dataset, see what is actually in it, clean it, pick a model, tune its
 hyperparameters, train it, read the evaluation, and make live predictions —
 without writing any code.
 
-Nothing is simulated: every number on the evaluation page comes from a model
-that was fitted on the data you uploaded.
+Workbench evaluation uses real training results: every number on its evaluation
+page comes from a model that was fitted on the data you uploaded.
 
 ## What it does
 
@@ -53,6 +53,44 @@ that was fitted on the data you uploaded.
 - Metrics are only compared within one task type: accuracy and R² are not on
   the same scale, so the chart says so instead of drawing them together
 
+### 5. Courses
+- Nine courses with **72 lessons**, from beginner to advanced:
+
+  | Course | Lessons | Practical work |
+  |--------|---------|----------------|
+  | Model Training | 4 | Target selection, splitting and training in the workbench |
+  | Model Evaluation | 4 | Metrics, overfitting and run comparisons |
+  | Base Model Training | 8 | A PyTorch MLP trained from random weights |
+  | Intermediate Model Training | 8 | Imbalance handling and validation-selected thresholds |
+  | Transformer Models | 8 | A causal transformer, mask checks and token prediction |
+  | Large Language Model Training | 8 | Response-only supervision and a small LoRA adaptation lab |
+  | Vision-Language Models (VLMs) | 8 | Image/text alignment and multi-positive contrastive learning |
+  | Voice & Speech Models | 8 | Audio features, CTC alignment and tone-sequence recognition |
+  | Designing Machine Learning Systems | 16 | Architecture, data contracts, serving, monitoring, rollout and a complete design workbook |
+
+- Search course and lesson topics; filter by level or specialization
+- Course overviews with prerequisites, linked learning paths, syllabuses,
+  primary references, downloadable labs and capstone review criteria
+- Seven self-contained Python scripts under `frontend/public/course-labs/`,
+  with setup instructions. The six neural-model labs use pinned PyTorch
+  requirements; the system-design lab uses only Python's standard library.
+  All generate local teaching data and run real model fitting on CPU
+- Interactive examples for splits, classification/regression metrics, attention
+  masks, training memory and batch budgets, audio timing, CTC decoding,
+  system architecture, serving capacity and request-based error budgets
+- The system-design lab replays a canary rollout, delayed labels, fallback and
+  rollback. Its request timings and dependency incidents are explicitly
+  simulated; it does not start a prediction server or measure real throughput.
+  A downloadable workbook includes a worked design and capstone rubric
+- A knowledge check in every lesson, with explanations and unlimited retries
+- Knowledge-check progress is saved in this browser; courses can be read and
+  completed without a dataset or a running backend
+- Python labs and capstones are reviewed separately from quiz completion.
+  Neural, LLM, vision-language, speech and system-design labs run in an external Python
+  environment; the web training tools continue to train tabular scikit-learn models
+- Open **Courses** from the sidebar, home page, or either model tool. Individual
+  lessons have shareable URLs under `/app/courses/{course}/{lesson}`
+
 ## How the model is built
 
 Every run assembles one scikit-learn `Pipeline`:
@@ -89,6 +127,9 @@ one origin.
 | `/` | The front page: what the app does, the method, the estimator list |
 | `/app` | The workbench — overview and the resume panel |
 | `/app/preprocessing`, `/app/training`, `/app/evaluation` | The three tools, each deep-linkable |
+| `/app/courses` | Searchable ML and AI course library with saved lesson progress |
+| `/app/courses/{course}` | Course syllabus, prerequisites, labs and project criteria |
+| `/app/courses/{course}/{lesson}` | A lesson, its exercises and knowledge check |
 | `/about` | How the pipeline is assembled, in detail |
 | `/api/docs/` | Interactive API documentation (assets self-hosted, no CDN) |
 | `/admin/` | Django admin |
@@ -152,8 +193,8 @@ needs no rebuild:
 SITE_URL=https://furina.nevatal.id
 ```
 
-Only `/` and `/about` are listed for indexing. Everything under `/app` depends
-on a dataset the visitor uploaded, so there is nothing there for a crawler.
+Only `/` and `/about` are listed for indexing. The workbench and its courses
+under `/app` are excluded from the sitemap.
 
 #### Behind HTTPS
 

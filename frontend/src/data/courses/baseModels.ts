@@ -1,0 +1,125 @@
+import type { Course } from "./types";
+
+export const baseModelsCourse: Course = {
+  id: "base-models", title: "Base Model Training", level: "Beginner", track: "Deep learning",
+  description: "Build and train a neural network from random weights. Follow the complete path from tensors and data splits to a tested, reloadable checkpoint.",
+  prerequisites: ["Python functions, loops and lists", "Basic algebra, averages and the idea of a derivative", "The Model Training and Model Evaluation courses, or equivalent knowledge"],
+  prerequisiteCourses: ["training", "evaluation"], practiceMode: "python", nextCourseId: "intermediate-models",
+  outcomes: ["Implement a forward pass and gradient update", "Build separate training, validation and test datasets", "Diagnose a failing training loop", "Save, reload and evaluate your own base model"],
+  lab: {
+    filename: "base_model.py", title: "Train an MLP from random weights",
+    description: "A complete CPU lab using PyTorch and generated classification data. It trains a small multilayer perceptron, selects a checkpoint on validation loss, evaluates untouched test rows, and verifies checkpoint reloads. No model or dataset download is needed.",
+    exercises: ["Run the default experiment and record validation loss and test accuracy.", "Change the learning rate and hidden width separately; choose settings using validation data.", "Add a second random seed and explain variation without choosing the best test score."],
+  },
+  capstone: {
+    title: "Deliver a reproducible base model",
+    brief: "Extend the lab to a documented classification dataset or a new synthetic task. Decide your evaluation protocol before changing the architecture.",
+    deliverables: ["Dataset description, split IDs, target definition and baseline", "Training code, environment versions, configuration and loss history", "A reloadable checkpoint and final test report", "Three inspected mistakes and a short statement of limitations"],
+    rubric: ["No fitted transform or model selection uses test data", "Training and validation modes are handled correctly", "Reloaded predictions match the selected checkpoint", "Conclusions include the baseline, sample size and failure examples"],
+  },
+  references: [
+    { title: "PyTorch: learn the basics", url: "https://docs.pytorch.org/tutorials/beginner/basics/intro.html" },
+    { title: "PyTorch: optimizing model parameters", url: "https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial.html" },
+  ],
+  lessons: [
+    {
+      id: "what-is-a-base-model", title: "Define the model and its training objective", minutes: 20,
+      intro: "Here, a base model starts from random weights and learns an initial task. This may be a small supervised network or a language model trained on next-token prediction. “Base” describes a training stage, not a guarantee of capability.",
+      sections: [
+        { title: "Separate architecture, weights and objective", body: "The architecture specifies the operations and connections. Weights are the numeric values learned within that structure. The objective is the scalar quantity training tries to reduce. Two networks with the same architecture can behave very differently because they learned from different data or losses. Write down inputs, outputs and the intended prediction before choosing layer sizes." },
+        { title: "Distinguish pretraining from adaptation", body: "Training from scratch initializes weights without importing a learned checkpoint. Pretraining often learns reusable patterns from a broad dataset. Fine-tuning starts from learned weights and adapts them to a new objective or distribution. A pretrained language model is not automatically an instruction-following assistant; later courses examine the extra data and objectives involved." },
+        { title: "Make the first experiment small enough to inspect", body: "Begin with a task whose correct answer and baseline you understand. Limit data and model size so you can inspect a batch, run a few updates and repeat the experiment cheaply. The supplied lab is a real fit on generated data, but its accuracy measures only that teaching distribution. Its purpose is to make every training step visible." },
+      ],
+      example: { title: "A concrete model contract", body: "Input: two measured coordinates. Output: two class logits. Target: which side of a nonlinear boundary contains the point. Baseline: always choose the most common training class. Acceptance: improve validation performance, then measure the chosen checkpoint once on the held-out test partition." },
+      practice: ["Write an input/output contract for a task you understand.", "Identify whether the task needs scratch training or adaptation of an existing model.", "Install PyTorch in an isolated Python environment using the lab setup, then run the supplied base-model script."],
+      quiz: { question: "Which change makes an experiment fine-tuning rather than training from scratch?", options: ["Increasing the batch size", "Initializing from previously learned model weights", "Saving a checkpoint at the end"], correctIndex: 1, explanation: "Fine-tuning reuses a learned starting point. Batch size and checkpoint saving can be part of either workflow." },
+    },
+    {
+      id: "tensors-and-shapes", title: "Understand tensors, layers and shapes", minutes: 25,
+      intro: "A tensor is an array with a shape and a numeric type. Keeping track of shapes is one of the fastest ways to understand a neural network and catch errors before they become misleading metrics.",
+      sections: [
+        { title: "Follow one batch through the network", body: "For tabular inputs, [batch, features] becomes [batch, hidden] after a linear layer and [batch, classes] after a classification head. A linear layer computes xWᵀ + b. Its weight matrix has one row per output unit. An activation such as ReLU introduces nonlinearity; stacking only linear layers still produces a linear mapping." },
+        { title: "Choose numeric types deliberately", body: "Neural layers normally receive floating-point inputs. Class-index targets for cross-entropy are integer tensors, with one index per example. A boolean mask means something different from a floating additive attention mask. Inspect dtype, shape and a few values together: a correctly shaped tensor can still represent the wrong thing." },
+        { title: "Keep devices consistent", body: "Model weights, inputs and targets must be on compatible devices. The labs default to CPU so their mechanics can be inspected on a laptop. Moving a model to a GPU does not move every later batch automatically. Device transfers and accidental float64 inputs can also make a small experiment unexpectedly slow." },
+      ],
+      example: { title: "Count the trainable parameters", body: "A 2 → 16 → 2 MLP has 2×16 + 16 parameters in its first layer and 16×2 + 2 in its output layer: 82 in total. The batch dimension changes how many examples are processed, not the number of learned parameters." },
+      code: { title: "Inspect a forward pass", source: "import torch\nfrom torch import nn\nmodel = nn.Sequential(nn.Linear(2, 16), nn.ReLU(), nn.Linear(16, 2))\nx = torch.randn(8, 2)\nlogits = model(x)\nassert logits.shape == (8, 2)\nprint(sum(p.numel() for p in model.parameters()))  # 82", explanation: "This standalone snippet performs a forward pass. It does not train the model or turn logits into calibrated probabilities." },
+      practice: ["Run the snippet and annotate every tensor dimension.", "Change hidden width from 16 to 32 and calculate the parameter count before running.", "Deliberately pass three input features and explain the resulting shape error."],
+      quiz: { question: "What is the output shape for 32 examples and 5 mutually exclusive classes?", options: ["[5, 32]", "[32, 32]", "[32, 5]"], correctIndex: 2, explanation: "Each example receives one logit per class, so the batch dimension stays first and the class dimension is last." },
+    },
+    {
+      id: "datasets-and-batches", title: "Construct datasets and batches without leakage", minutes: 25,
+      intro: "The data pipeline decides what the optimizer sees and what evaluation means. Split examples before fitting transforms, and keep enough metadata to prove where each example came from.",
+      sections: [
+        { title: "Assign three separate roles", body: "Training examples update weights. Validation examples guide checkpoint selection and experimental decisions. Test examples support the final evaluation after those decisions. Split by person, document, recording or time when examples share an underlying source. Randomly separating fragments from the same source can make the test unrealistically easy." },
+        { title: "Fit transforms on training data", body: "Estimate feature means, scales and learned vocabularies using the allowed training partition. Apply those fixed values to validation and test inputs. Save them with the model. Training augmentation can introduce variation, but validation preprocessing should be stable enough that checkpoint comparisons reflect model changes rather than random crops or noise." },
+        { title: "Understand what batching changes", body: "A batch averages or sums contributions from multiple examples before an update. Shuffling training examples helps avoid learning from an arbitrary file order. Keep validation deterministic and include its final partial batch. When batch sizes vary, average loss by the number of examples or valid tokens, not by giving every batch equal weight." },
+      ],
+      example: { title: "A split by original source", body: "If one recording yields 100 short clips, put all 100 into the same partition. Otherwise the model may recognize recording conditions rather than learn the task. Record the original recording ID in a split manifest even when the training tensors no longer contain it." },
+      practice: ["Inspect the lab's separate random generators for training, validation and test data.", "Add a transform computed only from training inputs and save its parameters.", "Explain how you would split a dataset with multiple rows from each customer."],
+      quiz: { question: "Where should examples used to select the best epoch come from?", options: ["A validation partition", "The final test partition", "Only the examples with the highest training loss"], correctIndex: 0, explanation: "Checkpoint selection is a model-development decision. It uses validation data so the test partition remains independent of that choice." },
+    },
+    {
+      id: "loss-and-gradients", title: "Connect predictions, loss and gradients", minutes: 30,
+      intro: "Training needs a differentiable objective that responds to prediction errors. Autograd traces the forward computation and computes how changing each trainable parameter would change that objective.",
+      sections: [
+        { title: "Match the loss to the output", body: "For mutually exclusive classes, PyTorch cross-entropy consumes unnormalized logits and integer class indices. Do not apply a separate softmax first. For multilabel classification, independent binary outputs need a different target representation and loss. For regression, squared error penalizes large misses strongly; an absolute-error objective behaves differently near outliers." },
+        { title: "Interpret a gradient as a local signal", body: "A gradient describes a local slope, not a promise that a large update will improve the whole problem. Backpropagation applies the chain rule through the computation graph. Calling loss.backward() populates parameter gradients; it does not update weights. An optimizer performs the update using those gradients and any state it maintains." },
+        { title: "Debug broken computation graphs", body: "Detaching predictions, converting loss to a Python number before backward, or evaluating the forward pass inside no_grad can remove the path needed for learning. Logging loss.item() is fine after retaining the tensor used for backward. Check that intended trainable parameters have finite gradients and that at least some weights change after an update." },
+      ],
+      example: { title: "One squared-error derivative", body: "For prediction ŷ = wx, target y and loss (wx − y)², the gradient with respect to w is 2(wx − y)x. With x=2, w=1 and y=3, the gradient is −4. An SGD step with learning rate 0.1 moves w to 1.4, making the prediction 2.8." },
+      practice: ["Verify the derivative example by hand and with a scalar PyTorch tensor.", "Inspect the logits and targets passed to the lab's loss function.", "Temporarily detach the logits and identify why backward can no longer train the network."],
+      quiz: { question: "What does loss.backward() do?", options: ["Loads the next batch", "Computes gradients through the recorded graph", "Updates all weights and saves the model"], correctIndex: 1, explanation: "Backward computes gradients. optimizer.step() applies an update, while data loading and checkpoint saving are separate operations." },
+    },
+    {
+      id: "training-loop", title: "Write and diagnose the training loop", minutes: 30,
+      intro: "A training loop is a sequence of explicit state changes. Make those changes visible before adding frameworks, accelerators or distributed execution.",
+      sections: [
+        { title: "Perform one optimizer step correctly", body: "Switch the network into training mode, clear gradients, compute predictions and loss, backpropagate, then update the optimizer. PyTorch accumulates gradients, so forgetting to clear them changes the algorithm. Intentional gradient accumulation is useful, but its normalization and update schedule must be designed explicitly." },
+        { title: "Separate evaluation mode from gradient recording", body: "model.eval() changes the behavior of layers such as dropout and batch normalization. It does not disable gradient computation. Use an inference or no-grad context for validation and return to model.train() before the next training epoch. This prevents validation from using training-time randomness or updating running statistics." },
+        { title: "Use a tiny-batch diagnostic", body: "Try overfitting a handful of correctly labelled examples. Failure can expose a target mismatch, detached gradients, an unsuitable learning rate or insufficient model capacity. Success is a wiring check, not evidence of generalization. Also inspect loss for NaNs, gradient norms, class balance and predictions that collapse to one label." },
+      ],
+      code: { title: "The core update", source: "# model, optimizer, inputs and targets come from your training setup.\nmodel.train()\noptimizer.zero_grad(set_to_none=True)\nlogits = model(inputs)\nloss = torch.nn.functional.cross_entropy(logits, targets)\nloss.backward()\noptimizer.step()\n\nmodel.eval()\nwith torch.no_grad():\n    validation_logits = model(validation_inputs)", explanation: "This excerpt names the operations to inspect in the complete downloadable lab. The validation forward pass never calls optimizer.step()." },
+      example: { title: "Recognize an accumulated-gradient bug", body: "If you intended one update per batch but never clear gradients, the second update includes gradients from both the first and second batches. That is different from averaging two microbatches and taking one deliberately normalized update." },
+      practice: ["Run the lab and record the first and last training losses.", "Train on 16 examples to check that the model can fit a small clean batch.", "Add checks for finite loss and nonzero weight changes; remove any debugging shortcuts before validation."],
+      quiz: { question: "Which validation setup is correct?", options: ["model.eval() and a no-grad context, without optimizer updates", "model.train() followed by backward on validation loss", "model.eval() alone guarantees no gradients are recorded"], correctIndex: 0, explanation: "Evaluation mode controls layer behavior; a no-grad context controls graph recording. Validation must not update model weights." },
+    },
+    {
+      id: "budget-and-checkpoints", title: "Plan compute and save recoverable checkpoints", minutes: 25,
+      intro: "Training consumes memory and time even before a model is useful. Estimate the experiment's size, measure a short run, and save enough state to reproduce the chosen result.",
+      sections: [
+        { title: "Count updates and examples", body: "An epoch is one pass through the training dataset. An optimizer step updates the weights once. With gradient accumulation, several microbatches contribute to one update. Report examples or valid tokens processed along with epoch counts; different batch sizes, sequence lengths and dropped batches can make equal epoch counts misleading." },
+        { title: "Include memory beyond weights", body: "Parameter storage is only part of training memory. Gradients, optimizer state, activations and temporary workspaces also matter. A simple mixed-precision Adam estimate may include 2-byte weights, 2-byte gradients, 4-byte master weights and two 4-byte moments: roughly 16 bytes per parameter before activations. Actual frameworks can store these differently, so profile the configuration you use." },
+        { title: "Save for inference or for resuming", body: "An inference artifact needs model weights, architecture configuration and preprocessing or tokenizer information. Exact training resumption additionally needs optimizer and scheduler state, training position and relevant random-generator states. Copy the best validation checkpoint rather than retaining a reference to weights that later epochs overwrite. Load only checkpoint files from sources you trust." },
+      ],
+      experiment: "training-budget",
+      example: { title: "An update budget", body: "For 8,192 examples, microbatch size 16 and accumulation over 4 microbatches on one worker, there are 128 optimizer updates per complete epoch. Three epochs give 384 updates. A different final-batch policy or distributed sampler can change this arithmetic." },
+      practice: ["Use the budget explorer and calculate effective batch size yourself.", "Time a short local run before multiplying its step count.", "Inspect the lab's saved configuration and explain what extra state is needed for exact training resumption."],
+      quiz: { question: "What is missing from a weights-only file if you want to resume Adam training exactly?", options: ["The name of the output folder only", "A larger test set", "Optimizer state, training position and other relevant run state"], correctIndex: 2, explanation: "Adam's running moments and the rest of the training state affect the next update. Weights alone are sufficient for neither exact resumption nor reconstructing an unknown architecture." },
+    },
+    {
+      id: "evaluate-and-reload", title: "Evaluate and reload the selected model", minutes: 25,
+      intro: "A model is ready for evaluation when its development decisions are fixed. Test the actual checkpoint you intend to keep, including the preprocessing used at prediction time.",
+      sections: [
+        { title: "Select first, test afterward", body: "Choose architecture, hyperparameters and checkpoint using training and validation data. Then evaluate once on the untouched test partition. If test results trigger further tuning, they have become development feedback; obtain fresh final evidence before claiming another independent evaluation. Keep the original baseline and split definition in the report." },
+        { title: "Look beyond one aggregate", body: "For classification, inspect the confusion matrix, per-class support and important failure groups. For regression, attach units to MAE and inspect residuals. Variation across seeds is useful to report, but the best seed is not an unbiased summary. Small datasets require cautious claims about rare cases and shifts beyond the sampled distribution." },
+        { title: "Test the exported artifact", body: "Instantiate the architecture from saved configuration, load the selected weights, restore preprocessing and compare predictions on a fixed batch. A saved object that reloads successfully can still use the wrong class order or transform. Record package versions and validate that evaluation mode is restored before producing outputs." },
+      ],
+      example: { title: "A checkpoint round trip", body: "Record logits for ten fixed inputs before saving. Reload the selected checkpoint into a fresh network, use the same inputs and compare the tensors with a reasonable numerical tolerance. This checks the artifact path; it does not replace held-out evaluation." },
+      practice: ["Inspect the test report generated by the lab after validation checkpoint selection.", "Confirm the checkpoint round-trip check passes.", "Add a confusion matrix and describe one failure pattern rather than only the aggregate accuracy."],
+      quiz: { question: "Which checkpoint should receive the final test evaluation?", options: ["Whichever epoch gets the best test accuracy", "The checkpoint selected before inspecting final test results", "Always the last epoch, regardless of the selection protocol"], correctIndex: 1, explanation: "The test evaluates a decision already made using development data. Choosing the checkpoint on the test set would compromise that independence." },
+    },
+    {
+      id: "base-model-capstone", title: "Capstone: document and defend a base model", minutes: 45,
+      intro: "Bring the pieces together in a small, complete experiment. The goal is a result someone else can reproduce and question, with every training and evaluation choice explained.",
+      sections: [
+        { title: "Write the protocol before the comparison", body: "State the task, baseline, split unit, primary validation metric and allowed experiment budget. Decide how a checkpoint wins and when training stops. Keep test IDs out of exploratory notebooks. For the generated lab, describe the boundary and noise process so another reader understands why the task is easier than a real application." },
+        { title: "Make one controlled improvement", body: "Compare the supplied MLP with one deliberate variation, such as a narrower network, a different activation or weight decay. Keep the split and evaluation code fixed. Explain the mechanism you expect to change and record both successful and failed attempts. Additional complexity is justified by evidence, not by a longer architecture description." },
+        { title: "Hand over a usable experiment", body: "Bundle code, configuration, preprocessing, checkpoint and results. Include the command that recreates the run and the procedure for evaluating a saved model. Discuss mistakes, unavailable evidence and the next experiment. Passing this page's quiz records conceptual progress; review the capstone deliverables separately before considering the practical project finished." },
+      ],
+      example: { title: "A defensible conclusion", body: "“The wider network improved validation accuracy by two percentage points under our fixed protocol. We selected it before inspecting the test set. Its remaining errors cluster near the synthetic boundary, and we have not tested any real-world population.” The exact numbers must come from your own run." },
+      practice: ["Complete the capstone checklist on the course overview.", "Run the chosen model from a fresh process and reproduce its evaluation.", "Write a one-page report explaining one improvement, one failure and one limitation."],
+      quiz: { question: "Which result best demonstrates a complete base-model project?", options: ["A reproducible selected checkpoint with a documented independent evaluation", "A screenshot of the lowest training loss", "A model file with no configuration or split information"], correctIndex: 0, explanation: "A complete experiment connects the saved artifact to its configuration, data protocol and evaluation evidence. Training loss alone is not enough." },
+    },
+  ],
+};

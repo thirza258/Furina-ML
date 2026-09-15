@@ -3,8 +3,7 @@
  * of this app asks most often: is the backend up, what data am I working on,
  * and did my model train?
  *
- * The backend check is the important one. Every page here is useless without
- * the Django server, and "nothing happens when I click" is a miserable way to
+ * The backend check matters for the dataset tools. "Nothing happens when I click" is a miserable way to
  * discover it is not running — so a failed health check is stated in words,
  * with the reason and the API base URL, in a bar nobody can miss.
  */
@@ -49,6 +48,7 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
   const { dataset, run, restoring, restoreError } = useWorkspace();
   const [health, setHealth] = useState<HealthState>({ status: "checking" });
   const [rechecking, setRechecking] = useState<boolean>(false);
+  const isCourse = selectedTool === "Courses";
 
   const checkHealth = useCallback(async (): Promise<HealthState> => {
     try {
@@ -155,12 +155,13 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
 
           {/* Backend connectivity. Never colour alone: each state carries a
               mark and a word. */}
-          {health.status === "checking" && (
+          {isCourse && <span className="text-ink-muted">Self-paced lessons</span>}
+          {!isCourse && health.status === "checking" && (
             <span className="flex items-baseline gap-2 text-ink-muted">
               <span aria-hidden="true">◌</span> Checking backend…
             </span>
           )}
-          {health.status === "online" && (
+          {!isCourse && health.status === "online" && (
             <span
               className="flex items-baseline gap-2 text-state-good"
               title={`scikit-learn ${health.info.sklearn} · pandas ${health.info.pandas} · numpy ${health.info.numpy} · ${API_BASE_URL}`}
@@ -171,7 +172,7 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
               </span>
             </span>
           )}
-          {health.status === "offline" && (
+          {!isCourse && health.status === "offline" && (
             <span className="flex items-baseline gap-2 text-state-bad font-medium">
               <span aria-hidden="true">▲</span> Disconnected
             </span>
@@ -179,8 +180,8 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
         </div>
       </nav>
 
-      {/* Unmissable, because nothing in this app works without the server. */}
-      {health.status === "offline" && (
+      {/* Courses can be read and completed without the API. */}
+      {health.status === "offline" && !isCourse && (
         <div
           role="alert"
           className="w-full bg-state-bad text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3"

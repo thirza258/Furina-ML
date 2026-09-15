@@ -250,6 +250,18 @@ const LandingPage = () => {
       )}
 
       {/* --------------------------------------------------------------- */}
+      {/* Courses are available before a dataset or a trained model exists. */}
+      <section className="border-l-2 border-primary pl-5 mb-10">
+        <h2 className="font-serif text-h3 mb-2">Learn to train and evaluate ML &amp; AI models</h2>
+        <p className="text-ink-muted max-w-measure mb-4">
+          Follow courses from tabular ML and base neural models to transformers,
+          LLMs, vision-language models, voice and ML system design. Work through guided lessons,
+          download Python labs, and review capstone projects while keeping your
+          knowledge-check progress in this browser.
+        </p>
+        <Link to="/app/courses" className="btn btn-secondary">Browse courses</Link>
+      </section>
+
       {/* The three-step flow.                                             */}
       {/* --------------------------------------------------------------- */}
       <h2 className="font-serif text-h3 text-ink mb-4">
