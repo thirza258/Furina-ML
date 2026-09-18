@@ -15,6 +15,11 @@
     <link rel="canonical" href="https://furina.nevatal.id/" />
     <meta name="theme-color" content="#5A1D2E" />
 
+    <meta name="robots" content="index, follow" />
+    <meta
+      name="keywords"
+      content="machine learning, scikit-learn, tabular ML, CSV modeling, model training, ML courses, transformers, LLMs, vision language models, ML system design, AI education"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Furina ML" />
     <meta property="og:title" content="Furina ML — train scikit-learn models on your own CSV" />
@@ -29,6 +34,40 @@
       name="twitter:description"
       content="Train real scikit-learn, XGBoost and LightGBM models on your own CSV, without writing any Python."
     />
+
+    <!-- Structured Data (JSON-LD) for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://furina.nevatal.id/#website",
+          "url": "https://furina.nevatal.id/",
+          "name": "Furina ML",
+          "description": "Train scikit-learn models on your own CSV, with interactive courses from tabular ML to LLMs and system design.",
+          "inLanguage": "en"
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://furina.nevatal.id/#organization",
+          "name": "Furina ML",
+          "url": "https://furina.nevatal.id/"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Furina ML Workbench",
+          "applicationCategory": "EducationalApplication, DeveloperApplication",
+          "operatingSystem": "All",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        }
+      ]
+    }
+    </script>
     <!-- Runtime configuration. A classic script in <head> runs before the
          deferred module below, so window.__FURINA_API_BASE_URL__ is set by
          the time services.ts reads it. In a container this file is written

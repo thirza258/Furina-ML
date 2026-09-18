@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { COURSES, lessonKey, lessonPath, studyTime } from "../data/courseCatalogue";
 import type { Course } from "../data/courseCatalogue";
 import { CourseCapstone, CourseLab } from "../components/CourseResources";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 export default function CourseOverview({ course, completed, headingRef }: {
   course: Course; completed: string[]; headingRef: RefObject<HTMLHeadingElement | null>;
@@ -10,6 +11,28 @@ export default function CourseOverview({ course, completed, headingRef }: {
   const count = course.lessons.filter((lesson) => completed.includes(lessonKey(course, lesson))).length;
   const next = course.lessons.find((lesson) => !completed.includes(lessonKey(course, lesson))) ?? course.lessons[0];
   const totalMinutes = course.lessons.reduce((sum, lesson) => sum + lesson.minutes, 0);
+
+  usePageSeo({
+    title: `${course.title} Course — Syllabus & Labs`,
+    description: course.description,
+    path: `/app/courses/${course.id}`,
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "Course",
+      name: course.title,
+      description: course.description,
+      provider: {
+        "@type": "Organization",
+        name: "Furina ML",
+        sameAs: "https://furina.nevatal.id",
+      },
+      hasCourseInstance: {
+        "@type": "CourseInstance",
+        courseMode: "Online",
+        courseWorkload: studyTime(totalMinutes),
+      },
+    },
+  });
   return (
     <div className="p-5 sm:p-8">
       <Link to="/app/courses" className="text-small">← All courses</Link>

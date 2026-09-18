@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import services from "../services/services";
+import { usePageSeo } from "../hooks/usePageSeo";
 import {
   DOCUMENTED_COUNT,
   DOCUMENTED_FAMILIES,
@@ -95,6 +96,21 @@ const PIPELINE = `Pipeline
 └── estimator        the algorithm you chose`;
 
 const HomePage = () => {
+  usePageSeo({
+    title: "Furina ML — Train scikit-learn models on your own CSV",
+    description:
+      "Upload a CSV, clean it, choose a target column and algorithm, and train a real scikit-learn model in your browser. Explore interactive courses from tabular ML to LLMs.",
+    path: "/",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Furina ML",
+      url: "https://furina.nevatal.id/",
+      description:
+        "Train scikit-learn models on your own CSV, with interactive courses from tabular ML to LLMs.",
+    },
+  });
+
   // Paint the documented catalogue first, then upgrade in place if the server
   // answers. `live` staying null is not an error state worth reporting here.
   const [families, setFamilies] = useState<AlgorithmFamily[]>(DOCUMENTED_FAMILIES);
@@ -288,30 +304,76 @@ const HomePage = () => {
         {/* Colophon                                                    */}
         {/* ---------------------------------------------------------- */}
         <footer className="py-10">
-          <div className="grid gap-8 sm:grid-cols-2">
+          <div className="grid gap-8 sm:grid-cols-3">
             <div>
               <h2 className="field-label mb-3">Built on</h2>
-              <p className="font-sans text-small text-ink-muted leading-relaxed">
+              <p className="font-sans text-small text-ink-muted leading-relaxed mb-4">
                 Django and Django REST Framework on the server, scikit-learn and
                 pandas for the modelling, React and Vite in the browser. The
                 neural-network option is scikit-learn&rsquo;s multi-layer
                 perceptron, so the whole backend rests on one ML library.
               </p>
-            </div>
-            <div>
-              <h2 className="field-label mb-3">Elsewhere</h2>
               <ul className="font-sans text-small space-y-1.5">
                 <li>
-                  <Link to="/app">The workbench</Link>
-                </li>
-                <li>
-                  <Link to="/about">How it works, in detail</Link>
+                  <Link to="/about">Architecture &amp; pipeline details</Link>
                 </li>
                 <li>
                   <a href="/api/docs/">Interactive API documentation</a>
                 </li>
                 <li>
                   <a href="/api/health/">Service health</a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h2 className="field-label mb-3">Workbench Tools</h2>
+              <ul className="font-sans text-small space-y-1.5">
+                <li>
+                  <Link to="/app">Workbench Overview</Link>
+                </li>
+                <li>
+                  <Link to="/app/preprocessing">Data Preprocessing &amp; Profiling</Link>
+                </li>
+                <li>
+                  <Link to="/app/training">Model Training &amp; Tuning</Link>
+                </li>
+                <li>
+                  <Link to="/app/evaluation">Model Evaluation &amp; Metrics</Link>
+                </li>
+                <li>
+                  <Link to="/app/dashboard">Training Runs Dashboard</Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h2 className="field-label mb-3">Interactive Courses</h2>
+              <ul className="font-sans text-small space-y-1.5">
+                <li>
+                  <Link to="/app/courses">Course Library (All 9 Tracks)</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/training">Model Training Course</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/evaluation">Model Evaluation Course</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/base-models">Base Deep Learning Models</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/transformers">Transformer Architecture</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/llms">Large Language Models (LLMs)</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/vision-language">Vision-Language Models</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/voice">Voice &amp; Speech Models</Link>
+                </li>
+                <li>
+                  <Link to="/app/courses/ml-system-design">ML System Design</Link>
                 </li>
               </ul>
             </div>

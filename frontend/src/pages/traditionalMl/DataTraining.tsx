@@ -17,6 +17,7 @@ import CourseLink from "../../components/CourseLink";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
 import { WARNING_MARK } from "../../explainer/marks";
+import { usePageSeo } from "../../hooks/usePageSeo";
 import type {
   AlgorithmSpec,
   ApiError,
@@ -151,6 +152,13 @@ function draftTrainPct(draft: SplitDraft): number | null {
 
 const DataTraining = () => {
   const { dataset, setRun, goToTool, restoring, restoreError } = useWorkspace();
+
+  usePageSeo({
+    title: "Data Training — Model Fitting & Cross-Validation",
+    description:
+      "Select target and feature columns, tune hyperparameters, configure train/test split and k-fold cross-validation, and train scikit-learn models.",
+    path: "/app/training",
+  });
 
   /* ---------------- algorithm registry ---------------- */
   const [algorithms, setAlgorithms] = useState<AlgorithmSpec[]>([]);

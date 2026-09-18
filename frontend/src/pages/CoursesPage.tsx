@@ -7,6 +7,7 @@ import CourseLibrary from "./CourseLibrary";
 import CourseOverview from "./CourseOverview";
 import { COURSES, lessonKey, lessonPath } from "../data/courseCatalogue";
 import { useCourseProgress } from "../hooks/useCourseProgress";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 export default function CoursesPage() {
   const { courseId, lessonId } = useParams();
@@ -16,6 +17,58 @@ export default function CoursesPage() {
   const course = COURSES.find((item) => item.id === courseId);
   const lessonIndex = course?.lessons.findIndex((item) => item.id === lessonId) ?? -1;
   const lesson = course?.lessons[lessonIndex];
+
+  usePageSeo({
+    title:
+      lesson && course
+        ? `${lesson.title} — ${course.title}`
+        : course
+          ? `${course.title} Course`
+          : "Machine Learning & AI Courses",
+    description:
+      lesson?.intro ??
+      course?.description ??
+      "Explore self-paced courses with interactive lessons and practical labs.",
+    path:
+      course && lesson
+        ? `/app/courses/${course.id}/${lesson.id}`
+        : course
+          ? `/app/courses/${course.id}`
+          : "/app/courses",
+    jsonLd:
+      course && lesson
+        ? {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://furina.nevatal.id/",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Courses",
+                item: "https://furina.nevatal.id/app/courses",
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: course.title,
+                item: `https://furina.nevatal.id/app/courses/${course.id}`,
+              },
+              {
+                "@type": "ListItem",
+                position: 4,
+                name: lesson.title,
+                item: `https://furina.nevatal.id/app/courses/${course.id}/${lesson.id}`,
+              },
+            ],
+          }
+        : undefined,
+  });
 
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });

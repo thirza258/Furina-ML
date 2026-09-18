@@ -1,6 +1,7 @@
 import type { ReactNode, RefObject } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { COURSES, lessonKey, lessonPath, studyTime } from "../data/courseCatalogue";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 const TRACKS = [...new Set(COURSES.map((course) => course.track))];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -13,6 +14,24 @@ const SEARCH_INDEX = new Map(COURSES.map((course) => [course.id,
 export default function CourseLibrary({ completed, persistenceNote, headingRef }: {
   completed: string[]; persistenceNote: ReactNode; headingRef: RefObject<HTMLHeadingElement | null>;
 }) {
+  usePageSeo({
+    title: "Machine Learning & AI Courses — Hands-on Labs & Capstones",
+    description:
+      "Explore 9 self-paced courses and 72 lessons across Tabular ML, Base Models, Transformers, LLMs, Vision-Language, Voice, and ML System Design with downloadable Python labs.",
+    path: "/app/courses",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Furina ML Courses",
+      itemListElement: COURSES.map((course, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: course.title,
+        url: `https://furina.nevatal.id/app/courses/${course.id}`,
+      })),
+    },
+  });
+
   const [search, setSearch] = useSearchParams();
   const query = search.get("q") ?? "";
   const level = search.get("level") ?? "";

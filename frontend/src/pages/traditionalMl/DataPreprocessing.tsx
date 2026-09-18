@@ -7,6 +7,7 @@ import TableViewer from "../../components/TableViewer";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
 import { WARNING_MARK } from "../../explainer/marks";
+import { usePageSeo } from "../../hooks/usePageSeo";
 import type {
   DatasetDetail,
   DatasetPreviewResult,
@@ -177,6 +178,13 @@ function ReportPanel({ report }: { report: PreprocessReport }) {
 function DataPreprocessing() {
   const { dataset, setDataset, goToTool, restoring, restoreError } =
     useWorkspace();
+
+  usePageSeo({
+    title: "Data Preprocessing — CSV Profiling & Cleaning",
+    description:
+      "Upload CSV files, inspect column types, missing values and distributions, compose cleaning recipes, and preview transformed datasets.",
+    path: "/app/preprocessing",
+  });
 
   const [steps, setSteps] = useState<PreprocessStep[]>([]);
   const [report, setReport] = useState<PreprocessReport | null>(null);
