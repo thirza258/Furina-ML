@@ -4,6 +4,7 @@
 # Internal API endpoints, admin console, and static runtime files are disallowed.
 
 User-agent: *
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 Allow: /
 Disallow: /api/
 Disallow: /admin/
