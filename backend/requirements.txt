@@ -16,6 +16,8 @@ django-cors-headers==4.9.0
 daphne==4.2.1
 whitenoise==6.11.0
 gunicorn==26.2.0
+# Django as the OAuth2 provider JupyterHub signs students in with.
+django-oauth-toolkit==3.4.1
 
 # --- configuration / database ---
 dj-database-url==3.0.1

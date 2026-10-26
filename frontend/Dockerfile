@@ -19,17 +19,33 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . .
 RUN npm run build
 
+# --- notebooks: the JupyterLite preview -----------------------------------
+# A static site in which Python runs in the visitor's browser. The course
+# notebooks arrive as the `notebooks` build context (docker-compose.yml);
+# without compose: docker build --build-context notebooks=../notebooks .
+FROM python:3.13-slim AS lite
+
+WORKDIR /lite
+COPY jupyterlite/requirements.txt ./requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --disable-pip-version-check -r requirements.txt
+COPY --from=notebooks . /contents
+RUN rm -rf /contents/tools /contents/README.md \
+ && jupyter lite build --contents /contents --output-dir /site --no-sourcemaps
+
 # --- runtime -------------------------------------------------------------
 FROM nginx:1.29-alpine AS runtime
 
 # The template, not the finished config: 10-furina-config.sh renders it at
 # start-up so BACKEND_ORIGIN and API_BASE_URL are runtime settings.
 COPY nginx.conf.template /etc/furina/nginx.conf.template
+COPY nginx-jupyterhub.conf.template /etc/furina/nginx-jupyterhub.conf.template
 COPY docker-entrypoint.d/10-furina-config.sh /docker-entrypoint.d/10-furina-config.sh
 RUN chmod +x /docker-entrypoint.d/10-furina-config.sh \
  && rm -f /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=lite /site /usr/share/nginx/html/notebooks
 
 EXPOSE 80
 

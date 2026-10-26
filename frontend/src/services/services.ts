@@ -7,6 +7,13 @@
  */
 import axios, { AxiosError } from "axios";
 import type { AxiosInstance } from "axios";
+import type {
+  Credentials,
+  NotebookLaunch,
+  ProgressResponse,
+  Registration,
+  SessionInfo,
+} from "../interface/AccountTypes";
 
 import type {
   AlgorithmSpec,
@@ -31,6 +38,8 @@ declare global {
   interface Window {
     /** Set by the container's generated `/config.js`; absent in `npm run dev`. */
     __FURINA_API_BASE_URL__?: string;
+    /** `owner/repo/blob/branch/notebooks` on GitHub, for "Open in Colab". */
+    __FURINA_NOTEBOOKS_GITHUB__?: string;
   }
 }
 
@@ -53,11 +62,29 @@ function resolveApiBaseUrl(): string {
 
 export const API_BASE_URL: string = resolveApiBaseUrl();
 
+/**
+ * Where the course notebooks are published on GitHub, as
+ * `owner/repo/blob/branch/notebooks`, so a lesson can offer "Open in Colab".
+ * Empty (the default) hides that button: Colab can only open notebooks from a
+ * public repository that contains them.
+ */
+export const NOTEBOOKS_GITHUB_PATH: string = (
+  (typeof window !== "undefined" ? window.__FURINA_NOTEBOOKS_GITHUB__ : undefined)?.trim() ||
+  (import.meta.env.VITE_NOTEBOOKS_GITHUB as string | undefined)?.trim() ||
+  ""
+).replace(/^\/+|\/+$/g, "");
+
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   // Training a large model can legitimately take a while.
   timeout: 300000,
   headers: { Accept: "application/json" },
+  // Django's CSRF protection. Once someone is signed in, every POST and
+  // DELETE has to echo the csrftoken cookie (set by `session()`) back in this
+  // header; axios does that for same-origin requests.
+  xsrfCookieName: "csrftoken",
+  xsrfHeaderName: "X-CSRFToken",
+  withCredentials: true,
 });
 
 /** Turn any axios failure into the flat `{ detail, errors, status }` we render. */
@@ -244,6 +271,43 @@ const services = {
     return request(() =>
       client.post<AssistantReply>("/assistant/", { messages, context })
     );
+  },
+
+  /* ---------------- accounts ---------------- */
+
+  /** Who is signed in. Also sets the CSRF cookie the other calls need. */
+  session(): Promise<SessionInfo> {
+    return request(() => client.get<SessionInfo>("/auth/session/"));
+  },
+
+  login(credentials: Credentials): Promise<SessionInfo> {
+    return request(() => client.post<SessionInfo>("/auth/login/", credentials));
+  },
+
+  register(registration: Registration): Promise<SessionInfo> {
+    return request(() => client.post<SessionInfo>("/auth/register/", registration));
+  },
+
+  logout(): Promise<SessionInfo> {
+    return request(() => client.post<SessionInfo>("/auth/logout/"));
+  },
+
+  /* ---------------- course progress (signed in) ---------------- */
+
+  progress(): Promise<ProgressResponse> {
+    return request(() => client.get<ProgressResponse>("/progress/"));
+  },
+
+  /** Mark lessons complete; keys already saved are left alone. */
+  saveProgress(lessons: string[]): Promise<ProgressResponse> {
+    return request(() => client.post<ProgressResponse>("/progress/", { lessons }));
+  },
+
+  /* ---------------- notebooks ---------------- */
+
+  /** The URL that opens a lesson notebook in the student's own JupyterHub workspace. */
+  launchNotebook(path: string): Promise<NotebookLaunch> {
+    return request(() => client.post<NotebookLaunch>("/notebooks/launch/", { path }));
   },
 };
 

@@ -9,6 +9,8 @@
 #                      runtime file is the only way to move the API without
 #                      rebuilding the bundle.
 #   BACKEND_ORIGIN  -> the proxy_pass target in the rendered nginx config.
+#   JUPYTERHUB_URL  -> when set, a second server block for the hub's host name
+#                      and its student subdomains (nginx-jupyterhub.conf.template).
 set -eu
 
 API_BASE_URL="${API_BASE_URL:-/api}"
@@ -45,6 +47,10 @@ BACKEND_ORIGIN="$(printf '%s' "$BACKEND_ORIGIN" | sed -e 's#^https\?://##' -e 's
 
 TEMPLATE=/etc/furina/nginx.conf.template
 TARGET=/etc/nginx/conf.d/default.conf
+HUB_TEMPLATE=/etc/furina/nginx-jupyterhub.conf.template
+HUB_TARGET=/etc/nginx/conf.d/jupyterhub.conf
+JUPYTERHUB_URL="${JUPYTERHUB_URL:-}"
+JUPYTERHUB_ORIGIN="$(printf '%s' "${JUPYTERHUB_ORIGIN:-jupyterhub:8000}" | sed -e 's#^https\?://##' -e 's#/$##')"
 
 echo "[furina] backend upstream: ${BACKEND_ORIGIN} (via resolver ${RESOLVER})"
 echo "[furina] SPA API base URL: ${API_BASE_URL}"
@@ -61,7 +67,24 @@ sed \
 cat > /usr/share/nginx/html/config.js <<CONFIG
 // Generated at container start by 10-furina-config.sh -- do not edit.
 window.__FURINA_API_BASE_URL__ = "${API_BASE_URL}";
+window.__FURINA_NOTEBOOKS_GITHUB__ = "${NOTEBOOKS_GITHUB:-}";
 CONFIG
+
+# The hub's front door: its host name without scheme, port or path. The
+# server block is only written when a hub is configured, so a deployment
+# without one answers nothing extra.
+if [ -n "$JUPYTERHUB_URL" ]; then
+    HUB_HOST="$(printf '%s' "$JUPYTERHUB_URL" | sed -e 's#^[A-Za-z]*://##' -e 's#[:/].*$##')"
+    echo "[furina] JupyterHub: ${HUB_HOST} and *.${HUB_HOST} -> ${JUPYTERHUB_ORIGIN}"
+    sed \
+        -e "s#__HUB_HOST__#${HUB_HOST}#g" \
+        -e "s#__HUB_ORIGIN__#${JUPYTERHUB_ORIGIN}#g" \
+        -e "s#__MAX_UPLOAD_SIZE__#${MAX_UPLOAD_SIZE}#g" \
+        -e "s#__RESOLVER__#${RESOLVER}#g" \
+        "$HUB_TEMPLATE" > "$HUB_TARGET"
+else
+    rm -f "$HUB_TARGET"
+fi
 
 if [ "$SITE_URL" != "$BUILT_SITE_URL" ]; then
     echo "[furina] rewriting canonical origin to ${SITE_URL}"

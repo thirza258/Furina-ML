@@ -341,6 +341,15 @@ class AlgorithmTests(ApiTestCase):
             "knn",
             "naive_bayes",
             "mlp",
+            "dummy",
+            "huber_regression",
+            "bayesian_ridge",
+            "linear_svm",
+            "bagging",
+            "nearest_centroid",
+            "bernoulli_naive_bayes",
+            "linear_discriminant_analysis",
+            "quadratic_discriminant_analysis",
         ):
             self.assertIn(required, keys)
         for spec in specs:
@@ -575,6 +584,108 @@ class TrainingTests(ApiTestCase):
         self.assertNotIn("bogus_setting", run["effective_hyperparameters"])
         self.assertTrue(any("bogus_setting" in note for note in run["warnings"]))
         json.dumps(run["effective_hyperparameters"], allow_nan=False)
+
+
+class CatalogueCoverageTests(ApiTestCase):
+    """Every published algorithm, on every task it claims, through the real API."""
+
+    def test_every_algorithm_trains_predicts_and_downloads(self) -> None:
+        churn = self.upload(classification_csv(), name="churn")
+        grades = self.upload(multiclass_csv(), name="grades")
+        houses = self.upload(regression_csv(), name="houses")
+        cases = {
+            "classification": [(churn, "churn"), (grades, "grade")],
+            "regression": [(houses, "price")],
+        }
+        specs = self.client.get("/api/algorithms/").json()
+        for spec in specs:
+            for task in spec["tasks"]:
+                for dataset, target in cases[task]:
+                    with self.subTest(algorithm=spec["key"], task=task, target=target):
+                        self._check_one(spec, task, dataset, target)
+
+    def _check_one(self, spec: dict, task: str, dataset: dict, target: str) -> None:
+        code, run = self.train(
+            dataset_id=dataset["id"],
+            target_column=target,
+            algorithm=spec["key"],
+            task_type=task,
+            cv_folds=3,
+        )
+        self.assertEqual(code, 201, run)
+        self.assertEqual(run["task_type"], task)
+        self.assertEqual(len(run["cv"]["scores"]), 3)
+        json.dumps(run, allow_nan=False)
+
+        # The catalogue flags are what the training page promises before a
+        # run, so they have to match what a run actually reports.
+        self.assertEqual(
+            bool(run["feature_importance"]), spec["supports_feature_importance"]
+        )
+        if task == "classification":
+            self.assertEqual(run["metrics"]["roc_auc"] is not None, spec["supports_proba"])
+
+        row = {field["name"]: field["default"] for field in run["input_schema"]}
+        response = self.client.post(
+            f"/api/runs/{run['id']}/predict/", {"rows": [row]}, format="json"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        prediction = response.json()["predictions"][0]
+        if task == "classification":
+            self.assertIn(prediction["prediction"], run["classes"])
+            self.assertEqual(prediction["probabilities"] is not None, spec["supports_proba"])
+
+        response = self.client.get(f"/api/runs/{run['id']}/download_model/")
+        self.assertEqual(response.status_code, 200)
+        artifact = joblib.load(io.BytesIO(b"".join(response.streaming_content)))
+        self.assertEqual(artifact.algorithm, spec["key"])
+
+    def test_discriminant_analysis_shrinkage_switches_the_solver(self) -> None:
+        dataset = self.upload(classification_csv())
+        code, run = self.train(
+            dataset_id=dataset["id"],
+            target_column="churn",
+            algorithm="linear_discriminant_analysis",
+            hyperparameters={"shrinkage": "auto"},
+        )
+        self.assertEqual(code, 201, run)
+        self.assertEqual(run["effective_hyperparameters"]["solver"], "lsqr")
+        self.assertEqual(run["effective_hyperparameters"]["shrinkage"], "auto")
+        self.assertTrue(any("'svd' solver" in note for note in run["warnings"]))
+
+    def test_shrinkage_accepts_a_typed_amount_and_rejects_nonsense(self) -> None:
+        dataset = self.upload(classification_csv())
+        code, run = self.train(
+            dataset_id=dataset["id"],
+            target_column="churn",
+            algorithm="quadratic_discriminant_analysis",
+            hyperparameters={"shrinkage": "0.25"},
+        )
+        self.assertEqual(code, 201, run)
+        self.assertEqual(run["effective_hyperparameters"]["shrinkage"], 0.25)
+
+        code, run = self.train(
+            dataset_id=dataset["id"],
+            target_column="churn",
+            algorithm="quadratic_discriminant_analysis",
+            hyperparameters={"shrinkage": "7"},
+        )
+        self.assertEqual(code, 201, run)
+        self.assertEqual(run["effective_hyperparameters"]["shrinkage"], "auto")
+        self.assertTrue(any("between 0 and 1" in note for note in run["warnings"]))
+
+    def test_linear_svm_will_not_pair_hinge_loss_with_l1(self) -> None:
+        dataset = self.upload(classification_csv())
+        code, run = self.train(
+            dataset_id=dataset["id"],
+            target_column="churn",
+            algorithm="linear_svm",
+            hyperparameters={"penalty": "l1", "loss": "hinge"},
+        )
+        self.assertEqual(code, 201, run)
+        self.assertEqual(run["effective_hyperparameters"]["penalty"], "l1")
+        self.assertEqual(run["effective_hyperparameters"]["loss"], "squared_hinge")
+        self.assertTrue(any("hinge loss" in note for note in run["warnings"]))
 
 
 class RunEndpointTests(ApiTestCase):

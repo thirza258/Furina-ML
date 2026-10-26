@@ -8,6 +8,7 @@ export const tabularCourses: Course[] = [
     prerequisites: ["Read a CSV table; no programming required."],
     prerequisiteCourses: [],
     practiceMode: "workbench",
+    dependencyTier: 2,
     nextCourseId: "evaluation",
     title: "Model Training",
     description: "Turn a prediction question into a reproducible training run. Learn what to select, what the model learns, and how to improve it.",
@@ -99,7 +100,7 @@ export const tabularCourses: Course[] = [
         sections: [
           {
             title: "Start with a model you can explain",
-            body: "Furina filters its algorithm list by task. Logistic Regression is a classification model despite its name; Linear Regression predicts numeric quantities. Decision Trees and Random Forests support both tasks. A simple first run gives you something to compare with later experiments. Also calculate a naive reference, such as predicting the most common class, so a plausible-looking score has context.",
+            body: "Furina filters its algorithm list by task. Logistic Regression is a classification model despite its name; Linear Regression predicts numeric quantities. Decision Trees and Random Forests support both tasks. A simple first run gives you something to compare with later experiments. Also train a naive reference, such as the Dummy Baseline, which always predicts the most common class or the average target, so a plausible-looking score has context.",
           },
           {
             title: "Read the settings before changing them",
@@ -174,7 +175,8 @@ export const tabularCourses: Course[] = [
     prerequisites: ["Understand targets, features and a train/test split."],
     prerequisiteCourses: ["training"],
     practiceMode: "workbench",
-    nextCourseId: "base-models",
+    dependencyTier: 2,
+    nextCourseId: "data-preparation",
     title: "Model Evaluation",
     description: "Read a model's results with context. Understand mistakes, compare runs fairly, and decide what the evidence supports.",
     outcomes: [

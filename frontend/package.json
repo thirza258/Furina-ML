@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "notebooks": "sh scripts/build-notebooks.sh",
     "sitemap": "tsx scripts/generate-sitemap.ts"
   },
   "dependencies": {

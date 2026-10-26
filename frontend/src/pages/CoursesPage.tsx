@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import CourseExperiments from "../components/CourseExperiments";
 import CourseQuiz from "../components/CourseQuiz";
+import LessonNotebook from "../components/LessonNotebook";
 import { CourseCapstone } from "../components/CourseResources";
 import CourseLibrary from "./CourseLibrary";
 import CourseOverview from "./CourseOverview";
@@ -12,7 +13,7 @@ import { usePageSeo } from "../hooks/usePageSeo";
 export default function CoursesPage() {
   const { courseId, lessonId } = useParams();
   const navigate = useNavigate();
-  const { completed, canPersist, completeLesson } = useCourseProgress();
+  const { completed, canPersist, completeLesson, username, syncError } = useCourseProgress();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const course = COURSES.find((item) => item.id === courseId);
   const lessonIndex = course?.lessons.findIndex((item) => item.id === lessonId) ?? -1;
@@ -75,11 +76,16 @@ export default function CoursesPage() {
     headingRef.current?.closest("main")?.scrollTo({ top: 0 });
   }, [courseId, lessonId]);
 
+  const warning = syncError !== null || !canPersist;
   const persistenceNote = (
-    <p className={`text-small ${canPersist ? "text-ink-muted" : "text-state-warn"}`} role={canPersist ? undefined : "status"}>
-      {canPersist
-        ? "Completed lessons are saved in this browser. No account or dataset needed."
-        : "Progress is available for this visit, but browser storage could not be read or saved. It may be lost on reload."}
+    <p className={`text-small ${warning ? "text-state-warn" : "text-ink-muted"}`} role={warning ? "status" : undefined}>
+      {syncError !== null
+        ? `Progress could not be saved to your account: ${syncError}`
+        : username
+          ? `Completed lessons are saved to your account, ${username}.`
+          : canPersist
+            ? <>Completed lessons are saved in this browser. No account or dataset needed; <Link to="/login?next=/app/courses">sign in</Link> to keep them with an account.</>
+            : "Progress is available for this visit, but browser storage could not be read or saved. It may be lost on reload."}
     </p>
   );
 
@@ -106,6 +112,9 @@ export default function CoursesPage() {
   const next = course.lessons[lessonIndex + 1];
   const courseComplete = count === course.lessons.length;
   const nextCourse = COURSES.find((item) => item.id === course.nextCourseId);
+  // Notebook courses read like Colab: the notebook is the lesson, so it comes
+  // first and the explanation follows as notes.
+  const notebookFirst = course.practiceMode === "notebook" && Boolean(lesson.notebook);
 
   return (
     <div className="p-5 sm:p-8">
@@ -160,6 +169,8 @@ export default function CoursesPage() {
             <h1 ref={headingRef} tabIndex={-1} className="text-h1 mb-4 focus:outline-none">{lesson.title}</h1>
             <p className="prose-page text-lead">{lesson.intro}</p>
           </header>
+          {notebookFirst && <LessonNotebook key={lesson.id} course={course} lesson={lesson} />}
+          {notebookFirst && <h2 className="panel-title mt-10">Lesson notes</h2>}
           {lesson.sections.map((section) => (
             <section key={section.title} className="mb-7">
               <h2 className="text-h3 mb-3">{section.title}</h2>
@@ -178,9 +189,10 @@ export default function CoursesPage() {
             </section>
           )}
           {lesson.experiment && <CourseExperiments key={lesson.id} kind={lesson.experiment} />}
+          {lesson.notebook && !notebookFirst && <LessonNotebook key={lesson.id} course={course} lesson={lesson} />}
           <section className="my-8">
             <h2 className="panel-title">Put it into practice</h2>
-            <p className="text-small text-ink-muted mb-3">{course.practiceMode === "workbench" ? "Use your own CSV and a running backend for these workbench exercises." : "Work through these exercises in your Python environment. The course overview includes setup instructions, a downloadable CPU lab and project criteria."}</p>
+            <p className="text-small text-ink-muted mb-3">{course.practiceMode === "workbench" ? "Use your own CSV and a running backend for these workbench exercises." : course.practiceMode === "notebook" ? "Work through these in the lesson's notebook at the top of the page. Each ✍️ check tells you when your code is right." : "Work through these exercises in your Python environment. The course overview includes setup instructions, a downloadable CPU lab and project criteria."}</p>
             <ol className="list-decimal pl-5 space-y-3">
               {lesson.practice.map((step) => <li key={step}>{step}</li>)}
             </ol>
@@ -200,7 +212,7 @@ export default function CoursesPage() {
           {courseComplete && (
             <section className="border-l-2 border-state-good pl-5 mb-8" aria-label="Course complete">
               <h2 className="text-h3 mb-2">✓ {course.title} knowledge checks complete</h2>
-              <p className="mb-4">You have passed all {course.lessons.length} knowledge checks. {course.capstone ? "Complete the lab and review the capstone criteria to finish the practical work." : "Apply the lessons to a run and revisit any topic when you need it."}</p>
+              <p className="mb-4">You have passed all {course.lessons.length} knowledge checks. {course.capstone ? (course.lab ? "Complete the lab and review the capstone criteria to finish the practical work." : "Review your work against the capstone criteria to finish the practical project.") : "Apply the lessons to a run and revisit any topic when you need it."}</p>
               <Link to={nextCourse ? `/app/courses/${nextCourse.id}` : "/app/courses"} className="btn btn-primary">
                 {nextCourse ? `Continue to ${nextCourse.title}` : "Back to all courses"}
               </Link>

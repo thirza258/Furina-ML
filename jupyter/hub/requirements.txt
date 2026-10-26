@@ -1,0 +1,9 @@
+# Added to the official JupyterHub image (which pins jupyterhub itself).
+#
+# oauthenticator signs students in through Furina's own OAuth provider,
+# dockerspawner gives each of them an isolated container, and the idle culler
+# stops servers nobody is using.
+oauthenticator==17.4.0
+dockerspawner==14.0.0
+docker==7.2.0
+jupyterhub-idle-culler==2.0.0

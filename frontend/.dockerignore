@@ -13,3 +13,9 @@ dist/
 .DS_Store
 npm-debug.log*
 *.log
+
+# A local JupyterLite build for `npm run dev`; the image builds its own.
+public/notebooks/
+# Bytecode left behind by running a course lab locally.
+__pycache__/
+.jupyterlite-venv/

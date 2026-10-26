@@ -1,6 +1,23 @@
-export type CourseId = "training" | "evaluation" | "base-models" | "intermediate-models" | "transformers" | "llms" | "vision-language" | "voice" | "ml-system-design";
+export type CourseId = "math-foundations" | "neural-networks" | "training" | "evaluation" | "data-preparation" | "choosing-models" | "time-series" | "base-models" | "intermediate-models" | "transformers" | "llms" | "vision-language" | "voice" | "ml-system-design";
 export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
-export type CourseTrack = "Tabular ML" | "Deep learning" | "Language" | "Multimodal" | "Speech" | "ML systems";
+export type CourseTrack = "Mathematics" | "Tabular ML" | "Time series" | "Deep learning" | "Language" | "Multimodal" | "Speech" | "ML systems";
+
+/**
+ * What a course lets the learner's own code depend on.
+ *
+ * 0: the Python standard library only. 1: adds NumPy and Matplotlib.
+ * 2: adds pandas and scikit-learn. 3: adds PyTorch. A notebook may compare its
+ * result with a higher tier only in cells tagged `comparison` or
+ * `visualization`; notebooks/tools/check_notebooks.py enforces that.
+ */
+export type DependencyTier = 0 | 1 | 2 | 3;
+
+/** A notebook template under the repository's `notebooks/` folder. */
+export interface CourseNotebook {
+  /** Relative to `notebooks/`, e.g. "math-foundations/01_python_math_foundations.ipynb". */
+  path: string;
+  title: string;
+}
 
 export interface CourseReference {
   title: string;
@@ -17,6 +34,7 @@ export interface CourseLesson {
   example: { title: string; body: string };
   experiment?: "split" | "classification" | "regression" | "attention" | "training-budget" | "audio" | "system-architecture" | "system-budget";
   code?: { title: string; source: string; explanation: string };
+  notebook?: CourseNotebook;
   practice: string[];
   references?: CourseReference[];
   quiz: {
@@ -36,7 +54,8 @@ export interface Course {
   prerequisites: string[];
   prerequisiteCourses: CourseId[];
   outcomes: string[];
-  practiceMode: "workbench" | "python";
+  practiceMode: "workbench" | "python" | "notebook";
+  dependencyTier: DependencyTier;
   toolPath?: string;
   toolLabel?: string;
   nextCourseId?: CourseId;

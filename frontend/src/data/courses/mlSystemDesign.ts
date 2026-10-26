@@ -17,7 +17,7 @@ export const mlSystemDesignCourse: Course = {
   description: "Design the complete path from a product decision to a reliable prediction service. Work through data contracts, features, evaluation, deployment, capacity, monitoring and feedback using a delivery-delay case study.",
   prerequisites: ["Understand training, validation and test splits", "Read classification metrics and basic Python", "Know the purpose of an API, database and scheduled job; no cloud account is needed"],
   prerequisiteCourses: ["training", "evaluation"],
-  practiceMode: "python",
+  practiceMode: "python", dependencyTier: 0,
   outcomes: [
     "Turn a product goal into a measurable ML task and system contract",
     "Design data and feature pipelines that reproduce what was known at prediction time",

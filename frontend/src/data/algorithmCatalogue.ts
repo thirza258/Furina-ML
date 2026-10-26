@@ -15,6 +15,7 @@ export interface AlgorithmFamily {
 }
 
 export const DOCUMENTED_FAMILIES: AlgorithmFamily[] = [
+  { family: "Baselines", labels: ["Dummy Baseline"] },
   {
     family: "Linear models",
     labels: [
@@ -24,12 +25,24 @@ export const DOCUMENTED_FAMILIES: AlgorithmFamily[] = [
       "Ridge Regression",
       "Lasso Regression",
       "Elastic Net",
+      "Huber Regression",
+      "Bayesian Ridge Regression",
       "Stochastic Gradient Descent",
     ],
   },
   {
+    family: "Discriminant analysis",
+    labels: [
+      "Linear Discriminant Analysis",
+      "Quadratic Discriminant Analysis",
+    ],
+  },
+  {
     family: "Support vector machines",
-    labels: ["Support Vector Machine (SVC / SVR)"],
+    labels: [
+      "Support Vector Machine (SVC / SVR)",
+      "Linear Support Vector Machine",
+    ],
   },
   {
     family: "Trees and ensembles",
@@ -37,6 +50,7 @@ export const DOCUMENTED_FAMILIES: AlgorithmFamily[] = [
       "Decision Tree",
       "Random Forest",
       "Extra Trees",
+      "Bagging",
       "Gradient Boosting",
       "Histogram Gradient Boosting",
       "AdaBoost",
@@ -44,8 +58,14 @@ export const DOCUMENTED_FAMILIES: AlgorithmFamily[] = [
       "LightGBM",
     ],
   },
-  { family: "Nearest neighbours", labels: ["K-Nearest Neighbours"] },
-  { family: "Naive Bayes", labels: ["Gaussian Naive Bayes"] },
+  {
+    family: "Nearest neighbours",
+    labels: ["K-Nearest Neighbours", "Nearest Centroid"],
+  },
+  {
+    family: "Naive Bayes",
+    labels: ["Gaussian Naive Bayes", "Bernoulli Naive Bayes"],
+  },
   { family: "Neural networks", labels: ["Neural Network (MLP)"] },
 ];
 

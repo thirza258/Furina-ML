@@ -25,12 +25,28 @@ page comes from a model that was fitted on the data you uploaded.
 - Task type is inferred (classification vs regression) and can be overridden —
   the override matters for integer-coded targets like `0/1/2`, which look
   numeric but are really classes
-- 19 algorithms across both tasks — 17 from scikit-learn plus XGBoost and
+- 28 algorithms across both tasks — 26 from scikit-learn plus XGBoost and
   LightGBM — each with a hyperparameter form generated from the algorithm's
-  own parameter schema
+  own parameter schema:
+
+  | Family | Algorithms |
+  |--------|------------|
+  | Baselines | Dummy Baseline |
+  | Linear models | Logistic Regression, Ridge Classifier, Linear / Ridge / Lasso Regression, Elastic Net, Huber Regression, Bayesian Ridge Regression, SGD |
+  | Discriminant analysis | Linear and Quadratic Discriminant Analysis |
+  | Support vector machines | SVC / SVR, Linear Support Vector Machine |
+  | Trees and ensembles | Decision Tree, Random Forest, Extra Trees, Bagging, Gradient Boosting, Histogram Gradient Boosting, AdaBoost, XGBoost, LightGBM |
+  | Nearest neighbours | K-Nearest Neighbours, Nearest Centroid |
+  | Naive Bayes | Gaussian and Bernoulli Naive Bayes |
+  | Neural networks | Multilayer perceptron (MLP) |
+
 - Adjustable train/test split, random seed, stratification, feature scaling,
   and optional k-fold cross-validation
-- Untouched hyperparameters are left to scikit-learn's own defaults
+- Untouched hyperparameters are left to scikit-learn's own defaults, apart
+  from a few deliberate overrides that the form shows as its defaults — for
+  example, SVC estimates probabilities, and Quadratic Discriminant Analysis
+  uses Ledoit-Wolf shrinkage because one-hot columns make its plain per-class
+  covariance singular
 
 ### 3. Model Evaluation
 - Classification: accuracy, balanced accuracy, weighted precision / recall /
@@ -54,12 +70,17 @@ page comes from a model that was fitted on the data you uploaded.
   the same scale, so the chart says so instead of drawing them together
 
 ### 5. Courses
-- Nine courses with **72 lessons**, from beginner to advanced:
+- Fourteen courses with **107 lessons**, from beginner to advanced:
 
   | Course | Lessons | Practical work |
   |--------|---------|----------------|
+  | Mathematics for ML from First Principles | 5 | Pure-Python notebooks: floats, linear algebra, statistics, calculus, gradient descent |
   | Model Training | 4 | Target selection, splitting and training in the workbench |
   | Model Evaluation | 4 | Metrics, overfitting and run comparisons |
+  | Data Preparation | 5 | Reading the column profile, safe cleaning, and preprocessing without leaking the test split |
+  | Choosing a Model | 8 | Baselines, every estimator family in the workbench, and a fair, documented model comparison |
+  | Time-Series Forecasting | 8 | Chronological backtesting, lag features, multi-step forecasts and calibrated prediction intervals |
+  | Neural Networks from Scratch | 9 | Type-along NumPy notebooks: build, backpropagate, train, save and reload your own network |
   | Base Model Training | 8 | A PyTorch MLP trained from random weights |
   | Intermediate Model Training | 8 | Imbalance handling and validation-selected thresholds |
   | Transformer Models | 8 | A causal transformer, mask checks and token prediction |
@@ -71,10 +92,11 @@ page comes from a model that was fitted on the data you uploaded.
 - Search course and lesson topics; filter by level or specialization
 - Course overviews with prerequisites, linked learning paths, syllabuses,
   primary references, downloadable labs and capstone review criteria
-- Seven self-contained Python scripts under `frontend/public/course-labs/`,
+- Eight self-contained Python scripts under `frontend/public/course-labs/`,
   with setup instructions. The six neural-model labs use pinned PyTorch
-  requirements; the system-design lab uses only Python's standard library.
-  All generate local teaching data and run real model fitting on CPU
+  requirements, the forecasting lab uses pinned NumPy and scikit-learn, and
+  the system-design lab uses only Python's standard library. All generate
+  local teaching data and run real model fitting on CPU
 - Interactive examples for splits, classification/regression metrics, attention
   masks, training memory and batch budgets, audio timing, CTC decoding,
   system architecture, serving capacity and request-based error budgets
@@ -86,10 +108,31 @@ page comes from a model that was fitted on the data you uploaded.
 - Knowledge-check progress is saved in this browser; courses can be read and
   completed without a dataset or a running backend
 - Python labs and capstones are reviewed separately from quiz completion.
-  Neural, LLM, vision-language, speech and system-design labs run in an external Python
-  environment; the web training tools continue to train tabular scikit-learn models
+  Forecasting, neural, LLM, vision-language, speech and system-design labs run
+  in an external Python environment; the web training tools continue to train
+  tabular scikit-learn models. The workbench shuffles its train/test split, so
+  time-series practice happens in the forecasting lab
 - Open **Courses** from the sidebar, home page, or either model tool. Individual
   lessons have shareable URLs under `/app/courses/{course}/{lesson}`
+- Every course declares a dependency tier, from tier 0 (the Python standard
+  library only) to tier 3 (PyTorch)
+
+### 6. Accounts and Jupyter notebooks
+- Optional accounts (`/register`, `/login`) with student, instructor and admin
+  roles. The workbench and lesson text stay open without one
+- Signed-in course progress is saved to the account instead of the browser
+- Lessons can carry a Jupyter notebook, opened three ways: as the student's
+  own copy on a personal JupyterHub server (embedded beside the lesson, saved
+  between visits), as an in-browser JupyterLite preview that needs no account,
+  or as a download
+- One isolated notebook container per student: non-root, CPU, memory and
+  process limits, idle shutdown, a persistent volume, and no network route to
+  the database, the API or the internet. JupyterHub signs students in through
+  Furina's own OAuth provider, so there is no second login
+- The hub is opt-in (`COMPOSE_PROFILES=hub`). [docs/academy.md](docs/academy.md)
+  covers the architecture, the security model, deployment, backups and what
+  is not built yet; [notebooks/README.md](notebooks/README.md) covers writing
+  notebooks
 
 ## How the model is built
 
@@ -141,7 +184,7 @@ Migrations run automatically on every boot.
 
 ```bash
 docker compose logs -f backend        # follow the API log
-docker compose exec backend python manage.py test core   # run the test suite
+docker compose exec backend python manage.py test core academy   # run the test suite
 docker compose down                   # stop; datasets, models and the DB survive
 docker compose down -v                # stop and erase all of it
 ```
@@ -198,6 +241,26 @@ All public pages (`/`, `/about`), workbench tools (`/app`, `/app/preprocessing`,
 courses with 72 lessons (`/app/courses/*`) are listed in `sitemap.xml` and
 allowed in `robots.txt` for indexing.
 
+#### Per-student notebook servers (JupyterHub)
+
+Off by default. It needs a host name for the hub and a wildcard DNS record
+for the per-student subdomains under it; see the notebooks section of
+`.env.example` and [docs/academy.md](docs/academy.md). To try it on one
+machine:
+
+```bash
+COMPOSE_PROFILES=hub
+SITE_URL=http://furina.localhost:8080
+JUPYTERHUB_URL=http://notebooks.furina.localhost:8080
+JUPYTERHUB_OAUTH_CLIENT_ID=furina-jupyterhub
+JUPYTERHUB_OAUTH_CLIENT_SECRET=<python -c "import secrets; print(secrets.token_urlsafe(32))">
+JUPYTERHUB_CRYPT_KEY=<openssl rand -hex 32>
+```
+
+Then open `http://furina.localhost:8080`, create an account and open any
+lesson notebook. The in-browser JupyterLite preview at `/notebooks/` is always
+built into the frontend image and needs none of this.
+
 #### Behind HTTPS
 
 The `frontend` container speaks plain http on purpose, so you can put it behind
@@ -237,11 +300,25 @@ npm run dev
 The app is at `http://localhost:5173`. To point it at a different backend,
 copy `.env.example` to `.env` and set `VITE_API_BASE_URL`.
 
+To use the JupyterLite notebook preview in development, build it once into
+`public/notebooks/` (needs Python 3.10+), and again after editing a notebook:
+
+```bash
+npm run notebooks
+```
+
 ### Running the backend tests
 
 ```bash
 cd backend
-python manage.py test core
+python manage.py test core academy
+```
+
+The course notebooks have their own checker (structure, dependency tiers, and
+a clean run of every notebook):
+
+```bash
+python notebooks/tools/check_notebooks.py --execute
 ```
 
 ## API
@@ -265,8 +342,14 @@ python manage.py test core
 | `POST` | `/api/runs/{id}/predict/` | Predict from feature values |
 | `GET` | `/api/runs/{id}/download_model/` | Download the fitted `.joblib` pipeline |
 | `GET` | `/api/runs/{id}/report/` | Markdown or JSON evaluation report |
+| `GET` | `/api/auth/session/` | Who is signed in and whether the notebook hub is enabled |
+| `POST` | `/api/auth/register/`, `/api/auth/login/`, `/api/auth/logout/` | Accounts |
+| `GET`, `POST` | `/api/progress/` | Saved course progress (signed in) |
+| `POST` | `/api/notebooks/launch/` | Open a lesson notebook on the student's JupyterHub server |
 
-List endpoints return bare JSON arrays.
+List endpoints return bare JSON arrays. Once a visitor is signed in, unsafe
+requests need the `X-CSRFToken` header; [docs/academy.md](docs/academy.md)
+lists the OAuth endpoints JupyterHub uses.
 
 ## Notes
 

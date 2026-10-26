@@ -38,7 +38,7 @@ export function CourseCapstone({ course }: { course: Course }) {
         <div><h3 className="text-h3 mb-3">What to deliver</h3><ul className="list-disc pl-5 space-y-2">{course.capstone.deliverables.map((item) => <li key={item}>{item}</li>)}</ul></div>
         <div><h3 className="text-h3 mb-3">Review criteria</h3><ul className="list-disc pl-5 space-y-2">{course.capstone.rubric.map((item) => <li key={item}>{item}</li>)}</ul></div>
       </div>
-      <p className="text-small text-ink-muted mt-5">Saved lesson progress tracks knowledge checks. Review the lab outputs and these project criteria separately; the browser does not grade your training run.</p>
+      <p className="text-small text-ink-muted mt-5">Saved lesson progress tracks knowledge checks. {course.lab ? "Review the lab outputs and these project criteria separately; the browser does not grade your training run." : "Review your runs against these project criteria yourself; the browser does not grade them."}</p>
     </section>
   );
 }

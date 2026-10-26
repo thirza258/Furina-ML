@@ -1,0 +1,21 @@
+# The Python environment of every student notebook server.
+#
+# Pinned, because a notebook template is tested against exactly these versions
+# (notebooks/tools/check_notebooks.py --execute). The numerical libraries match
+# backend/requirements.txt, so a model trained here behaves like one trained in
+# the workbench. Student servers have no internet access, so anything a course
+# needs has to be listed here.
+
+# Provides `jupyterhub-singleuser`. It has to match the hub's own version.
+jupyterhub==6.1.1
+jupyterlab==4.6.4
+# The single-document notebook view (/notebooks/<path>) lessons open in.
+notebook==7.6.3
+ipykernel==7.4.0
+
+# Tier 1 and 2 libraries, for comparison cells and later courses.
+numpy==2.3.4
+pandas==3.0.5
+scipy==1.18.1
+scikit-learn==1.9.0
+matplotlib==3.11.2

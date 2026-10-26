@@ -22,9 +22,16 @@ from functools import lru_cache
 from typing import Any, Callable, Mapping, Sequence
 
 from sklearn.base import BaseEstimator
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
+from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
     AdaBoostClassifier,
     AdaBoostRegressor,
+    BaggingClassifier,
+    BaggingRegressor,
     ExtraTreesClassifier,
     ExtraTreesRegressor,
     GradientBoostingClassifier,
@@ -35,7 +42,9 @@ from sklearn.ensemble import (
     RandomForestRegressor,
 )
 from sklearn.linear_model import (
+    BayesianRidge,
     ElasticNet,
+    HuberRegressor,
     Lasso,
     LinearRegression,
     LogisticRegression,
@@ -44,10 +53,10 @@ from sklearn.linear_model import (
     SGDClassifier,
     SGDRegressor,
 )
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.naive_bayes import BernoulliNB, GaussianNB
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor, NearestCentroid
 from sklearn.neural_network import MLPClassifier, MLPRegressor
-from sklearn.svm import SVC, SVR
+from sklearn.svm import SVC, SVR, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 # The two non-scikit-learn entries in the catalogue. Both ship a scikit-learn
@@ -121,6 +130,21 @@ def _cast_max_features(value: str) -> tuple[Any, list[str]]:
     if value in ("sqrt", "log2"):
         return value, []
     return float(value), []
+
+
+def _cast_shrinkage(value: str) -> tuple[Any, list[str]]:
+    """Map "none" to the default, keep "auto", and read anything else as 0 to 1."""
+    if value == "none":
+        return _OMIT, []
+    if value == "auto":
+        return "auto", []
+    try:
+        amount = float(value)
+    except ValueError:
+        raise ValueError(f"'{value}' is not a shrinkage amount.") from None
+    if not math.isfinite(amount) or not 0.0 <= amount <= 1.0:
+        raise ValueError("Shrinkage has to be 'auto' or a number between 0 and 1.")
+    return amount, []
 
 
 def _cast_bool_or_auto(value: str) -> tuple[Any, list[str]]:
@@ -471,6 +495,27 @@ def _linear_max_iter_param(default: int | None, *, maximum: int = 10000) -> _Par
     )
 
 
+def _shrinkage_param(default: str, *, allow_none: bool) -> _Param:
+    options = [("none", "No shrinkage")] if allow_none else []
+    options += [
+        ("auto", "Automatic (Ledoit-Wolf)"),
+        ("0.1", "Light (0.1)"),
+        ("0.5", "Medium (0.5)"),
+        ("0.9", "Strong (0.9)"),
+    ]
+    return _select_param(
+        "shrinkage",
+        "Covariance shrinkage",
+        default,
+        options,
+        "Pulls each covariance estimate towards a simpler, spherical one. It keeps the model "
+        "stable when features are correlated or outnumber the rows of a class; 'Automatic' "
+        "picks the amount from the data.",
+        cast=_cast_shrinkage,
+        free_text=True,
+    )
+
+
 # --------------------------------------------------------------------------
 # The catalogue
 # --------------------------------------------------------------------------
@@ -549,6 +594,52 @@ _FOREST_SHARED: tuple[_Param, ...] = (
     _max_depth_param(),
     _min_samples_split_param(),
     _min_samples_leaf_param(),
+)
+
+_BAGGING_SHARED: tuple[_Param, ...] = (
+    _int_param(
+        "n_estimators",
+        "Number of trees",
+        10,
+        1,
+        500,
+        "How many trees are trained on resampled rows and averaged. More trees give a "
+        "steadier average but take longer to train.",
+    ),
+    _float_param(
+        "max_samples",
+        "Share of rows per tree",
+        None,
+        0.05,
+        1.0,
+        "The fraction of training rows each tree draws. Leave blank to draw as many rows as "
+        "the training set has.",
+        step=0.05,
+    ),
+    _float_param(
+        "max_features",
+        "Share of features per tree",
+        1.0,
+        0.05,
+        1.0,
+        "The fraction of feature columns each tree may use. Below 1 makes the trees more "
+        "different from one another.",
+        step=0.05,
+    ),
+    _bool_param(
+        "bootstrap",
+        "Draw rows with replacement",
+        True,
+        "Let a tree see the same row more than once, the classic bagging recipe. Turn off to "
+        "give every tree distinct rows.",
+    ),
+    _bool_param(
+        "bootstrap_features",
+        "Draw features with replacement",
+        False,
+        "Let a tree pick the same feature column more than once.",
+        advanced=True,
+    ),
 )
 
 _GB_SHARED: tuple[_Param, ...] = (
@@ -977,6 +1068,54 @@ _MLP_SHARED: tuple[_Param, ...] = (
 
 _ALGORITHMS: tuple[_Algorithm, ...] = (
     _Algorithm(
+        key="dummy",
+        label="Scikit-learn — Dummy Baseline",
+        family="Baselines",
+        description=(
+            "Ignores the features and always answers from the target alone: the most common "
+            "class, or the average value. Any real model has to beat this score to be worth "
+            "using."
+        ),
+        supports_proba=True,
+        supports_feature_importance=False,
+        variants={
+            CLASSIFICATION: _Variant(
+                cls=DummyClassifier,
+                params=(
+                    _select_param(
+                        "strategy",
+                        "Strategy",
+                        "prior",
+                        [
+                            ("prior", "Most common class, with class shares as probabilities"),
+                            ("most_frequent", "Most common class, fully confident"),
+                            ("stratified", "Random class, drawn in proportion"),
+                            ("uniform", "Random class, every class equally likely"),
+                        ],
+                        "How the baseline answers. Both 'most common class' options predict "
+                        "the same labels; they only differ in the probabilities they report.",
+                    ),
+                ),
+            ),
+            REGRESSION: _Variant(
+                cls=DummyRegressor,
+                params=(
+                    _select_param(
+                        "strategy",
+                        "Strategy",
+                        "mean",
+                        [
+                            ("mean", "Average of the training targets"),
+                            ("median", "Median of the training targets"),
+                        ],
+                        "The single value predicted for every row. The median is less "
+                        "affected by a few extreme targets.",
+                    ),
+                ),
+            ),
+        },
+    ),
+    _Algorithm(
         key="logistic_regression",
         label="Scikit-learn — Logistic Regression",
         family="Linear Models",
@@ -1208,6 +1347,112 @@ _ALGORITHMS: tuple[_Algorithm, ...] = (
         },
     ),
     _Algorithm(
+        key="huber_regression",
+        label="Scikit-learn — Huber Regression",
+        family="Linear Models",
+        description=(
+            "A straight-line fit that treats small errors like linear regression but large "
+            "ones more gently, so a few extreme rows cannot drag the whole line towards them."
+        ),
+        supports_proba=False,
+        supports_feature_importance=True,
+        variants={
+            REGRESSION: _Variant(
+                cls=HuberRegressor,
+                params=(
+                    _float_param(
+                        "epsilon",
+                        "Outlier threshold (epsilon)",
+                        1.35,
+                        1.0,
+                        10.0,
+                        "Errors larger than this many robust spreads are treated as outliers. "
+                        "Lower values ignore outliers more aggressively.",
+                        step=0.05,
+                    ),
+                    _float_param(
+                        "alpha",
+                        "Regularization strength (alpha)",
+                        0.0001,
+                        0.0,
+                        1000.0,
+                        "Higher values shrink the coefficients more, which fights overfitting "
+                        "but can underfit if pushed too far.",
+                        step=0.0001,
+                    ),
+                    _linear_max_iter_param(100),
+                    _tol_param(1e-05),
+                    _fit_intercept_param(),
+                ),
+            )
+        },
+    ),
+    _Algorithm(
+        key="bayesian_ridge",
+        label="Scikit-learn — Bayesian Ridge Regression",
+        family="Linear Models",
+        description=(
+            "Ridge regression that estimates how much regularization it needs from the data "
+            "itself, instead of asking you to pick a strength."
+        ),
+        supports_proba=False,
+        supports_feature_importance=True,
+        variants={
+            REGRESSION: _Variant(
+                cls=BayesianRidge,
+                params=(
+                    _linear_max_iter_param(300),
+                    _tol_param(0.001),
+                    _float_param(
+                        "alpha_1",
+                        "Noise prior shape (alpha 1)",
+                        1e-06,
+                        0.0,
+                        1.0,
+                        "Shape of the prior belief about the noise level. The tiny default "
+                        "lets the data decide.",
+                        step=1e-06,
+                        advanced=True,
+                    ),
+                    _float_param(
+                        "alpha_2",
+                        "Noise prior rate (alpha 2)",
+                        1e-06,
+                        0.0,
+                        1.0,
+                        "Rate of the prior belief about the noise level. The tiny default lets "
+                        "the data decide.",
+                        step=1e-06,
+                        advanced=True,
+                    ),
+                    _float_param(
+                        "lambda_1",
+                        "Weight prior shape (lambda 1)",
+                        1e-06,
+                        0.0,
+                        1.0,
+                        "Shape of the prior belief about how large the coefficients are. The "
+                        "tiny default lets the data decide.",
+                        step=1e-06,
+                        advanced=True,
+                    ),
+                    _float_param(
+                        "lambda_2",
+                        "Weight prior rate (lambda 2)",
+                        1e-06,
+                        0.0,
+                        1.0,
+                        "Rate of the prior belief about how large the coefficients are. The "
+                        "tiny default lets the data decide.",
+                        step=1e-06,
+                        advanced=True,
+                    ),
+                    _fit_intercept_param(),
+                ),
+            )
+        },
+    ),
+    _Algorithm(
         key="svm",
         label="Scikit-learn — Support Vector Machine",
         family="Support Vector Machines",
@@ -1353,6 +1598,56 @@ _ALGORITHMS: tuple[_Algorithm, ...] = (
                     ),
                 ),
             ),
+        },
+    ),
+    _Algorithm(
+        key="linear_svm",
+        label="Scikit-learn — Linear Support Vector Machine",
+        family="Support Vector Machines",
+        description=(
+            "A support vector machine restricted to straight boundaries. It trains in a "
+            "fraction of the time on large datasets, but reports no class probabilities."
+        ),
+        # LinearSVC has no predict_proba, so ROC AUC and log loss stay empty.
+        supports_proba=False,
+        supports_feature_importance=True,
+        variants={
+            CLASSIFICATION: _Variant(
+                cls=LinearSVC,
+                params=(
+                    _float_param(
+                        "C",
+                        "Error penalty (C)",
+                        1.0,
+                        0.001,
+                        1000.0,
+                        "How heavily mistakes on the training rows are punished. Larger values "
+                        "fit the training data harder and risk overfitting.",
+                        step=0.01,
+                    ),
+                    _select_param(
+                        "penalty",
+                        "Penalty",
+                        "l2",
+                        [("l2", "L2 (shrink every weight)"), ("l1", "L1 (drop weak features)")],
+                        "How the weights are kept small. 'L1' sets the weights of unhelpful "
+                        "features to exactly zero.",
+                    ),
+                    _class_weight_param(),
+                    _linear_max_iter_param(1000, maximum=100000),
+                    _select_param(
+                        "loss",
+                        "Loss function",
+                        "squared_hinge",
+                        [("squared_hinge", "Squared hinge"), ("hinge", "Hinge")],
+                        "How margin violations are punished. 'Hinge' is the textbook SVM loss "
+                        "and cannot be combined with the L1 penalty.",
+                        advanced=True,
+                    ),
+                    _tol_param(0.0001),
+                    _fit_intercept_param(),
+                ),
+            )
         },
     ),
     _Algorithm(
@@ -1641,6 +1936,23 @@ _ALGORITHMS: tuple[_Algorithm, ...] = (
         },
     ),
     _Algorithm(
+        key="bagging",
+        label="Scikit-learn — Bagging",
+        family="Ensembles",
+        description=(
+            "Trains many full decision trees, each on a random resample of the rows, and "
+            "averages their answers. Averaging cancels out much of a single tree's overfitting."
+        ),
+        supports_proba=True,
+        # The bag exposes neither feature_importances_ nor coef_; only its
+        # individual trees do.
+        supports_feature_importance=False,
+        variants={
+            CLASSIFICATION: _Variant(cls=BaggingClassifier, params=_BAGGING_SHARED),
+            REGRESSION: _Variant(cls=BaggingRegressor, params=_BAGGING_SHARED),
+        },
+    ),
+    _Algorithm(
         key="gradient_boosting",
         label="Scikit-learn — Gradient Boosting",
         family="Ensembles",
@@ -1828,6 +2140,47 @@ _ALGORITHMS: tuple[_Algorithm, ...] = (
         },
     ),
     _Algorithm(
+        key="nearest_centroid",
+        label="Scikit-learn — Nearest Centroid",
+        family="Nearest Neighbours",
+        description=(
+            "Summarizes every class by its average row and assigns each new row to the "
+            "closest average. Tiny, fast and easy to explain."
+        ),
+        supports_proba=True,
+        supports_feature_importance=False,
+        variants={
+            CLASSIFICATION: _Variant(
+                cls=NearestCentroid,
+                params=(
+                    _select_param(
+                        "metric",
+                        "Distance measure",
+                        "euclidean",
+                        [
+                            ("euclidean", "Euclidean (straight line)"),
+                            ("manhattan", "Manhattan (city block)"),
+                        ],
+                        "How closeness to a class average is measured. Class probabilities are "
+                        "only available with the Euclidean distance.",
+                    ),
+                    _float_param(
+                        "shrink_threshold",
+                        "Centroid shrinkage",
+                        None,
+                        0.0,
+                        10.0,
+                        "Pulls every class average towards the overall average, removing "
+                        "features that barely separate the classes. Leave blank to switch it "
+                        "off.",
+                        step=0.1,
+                        advanced=True,
+                    ),
+                ),
+            )
+        },
+    ),
+    _Algorithm(
         key="naive_bayes",
         label="Scikit-learn — Gaussian Naive Bayes",
         family="Naive Bayes",
@@ -1852,6 +2205,103 @@ _ALGORITHMS: tuple[_Algorithm, ...] = (
                         step=1e-09,
                     ),
                 ),
+            )
+        },
+    ),
+    _Algorithm(
+        key="bernoulli_naive_bayes",
+        label="Scikit-learn — Bernoulli Naive Bayes",
+        family="Naive Bayes",
+        description=(
+            "Naive Bayes for yes/no evidence: every feature is reduced to present or absent "
+            "before counting. Suited to one-hot and flag columns."
+        ),
+        supports_proba=True,
+        supports_feature_importance=False,
+        variants={
+            CLASSIFICATION: _Variant(
+                cls=BernoulliNB,
+                params=(
+                    _float_param(
+                        "alpha",
+                        "Smoothing (alpha)",
+                        1.0,
+                        0.001,
+                        100.0,
+                        "Pretends every feature was seen a few extra times in every class, so "
+                        "an unseen combination never gets zero probability.",
+                        step=0.01,
+                    ),
+                    _float_param(
+                        "binarize",
+                        "Yes/no threshold",
+                        0.0,
+                        -10.0,
+                        10.0,
+                        "Values above this count as 'present'. With feature scaling on, 0 "
+                        "means 'above the column average'.",
+                        step=0.1,
+                    ),
+                    _bool_param(
+                        "fit_prior",
+                        "Learn class shares",
+                        True,
+                        "Start from how common each class is in the training data. Turn off "
+                        "to treat every class as equally likely beforehand.",
+                        advanced=True,
+                    ),
+                ),
+            )
+        },
+    ),
+    _Algorithm(
+        key="linear_discriminant_analysis",
+        label="Scikit-learn — Linear Discriminant Analysis",
+        family="Discriminant Analysis",
+        description=(
+            "Models each class as a bell-shaped cloud with one shared spread, which gives "
+            "straight boundaries between classes. Fast, with nothing much to tune."
+        ),
+        supports_proba=True,
+        supports_feature_importance=True,
+        variants={
+            CLASSIFICATION: _Variant(
+                cls=LinearDiscriminantAnalysis,
+                params=(
+                    _select_param(
+                        "solver",
+                        "Solver",
+                        "svd",
+                        [("svd", "Singular value decomposition"), ("lsqr", "Least squares")],
+                        "How the model is computed. Shrinkage needs 'Least squares', which is "
+                        "selected for you.",
+                    ),
+                    _shrinkage_param("none", allow_none=True),
+                    _tol_param(0.0001),
+                ),
+            )
+        },
+    ),
+    _Algorithm(
+        key="quadratic_discriminant_analysis",
+        label="Scikit-learn — Quadratic Discriminant Analysis",
+        family="Discriminant Analysis",
+        description=(
+            "Like linear discriminant analysis, but every class gets its own spread, so the "
+            "boundaries can curve. Furina fits it with the eigen solver and covariance "
+            "shrinkage, which keeps one-hot columns from breaking it."
+        ),
+        supports_proba=True,
+        supports_feature_importance=False,
+        variants={
+            # Unlike scikit-learn's own default (the 'svd' solver, no
+            # shrinkage), this runs with Ledoit-Wolf shrinkage. One-hot columns
+            # always sum to one, so every class covariance is singular and the
+            # default fit refuses any dataset with a categorical feature.
+            CLASSIFICATION: _Variant(
+                cls=QuadraticDiscriminantAnalysis,
+                params=(_shrinkage_param("auto", allow_none=False),),
+                overrides={"solver": "eigen", "shrinkage": "auto"},
             )
         },
     ),
@@ -2100,6 +2550,20 @@ def _apply_compatibility(key: str, clean: dict[str, Any]) -> list[str]:
             warnings.append(
                 f"The '{solver}' solver cannot force positive coefficients, so the solver "
                 "was set back to 'Choose automatically'."
+            )
+    elif key == "linear_svm":
+        if clean.get("penalty") == "l1" and clean.get("loss", "squared_hinge") == "hinge":
+            clean["loss"] = "squared_hinge"
+            warnings.append(
+                "The hinge loss cannot be combined with the L1 penalty, so the loss was "
+                "changed to 'Squared hinge'."
+            )
+    elif key == "linear_discriminant_analysis":
+        if "shrinkage" in clean and clean.get("solver", "svd") == "svd":
+            clean["solver"] = "lsqr"
+            warnings.append(
+                "The 'svd' solver cannot apply shrinkage, so the solver was changed to "
+                "'lsqr'."
             )
     elif key == "knn":
         if clean.get("metric") == "cosine" and clean.get("algorithm") in ("kd_tree", "ball_tree"):
