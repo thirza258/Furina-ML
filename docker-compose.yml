@@ -45,7 +45,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:-insecure-compose-default-change-me}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
-      DATABASE_URL: postgres://${POSTGRES_USER:-furinaml}:${POSTGRES_PASSWORD:-furinaml}@db:5432/${POSTGRES_DB:-furinaml}
+      USE_X_FORWARDED_PROTO: ${USE_X_FORWARDED_PROTO:-True}
+      DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-furinaml}:${POSTGRES_PASSWORD:-furinaml}@db:5432/${POSTGRES_DB:-furinaml}}
       TIME_ZONE: ${TIME_ZONE:-UTC}
       # The upload ceiling, enforced in core/ml/io.py. nginx below is given the
       # same number, so the two cannot drift apart.

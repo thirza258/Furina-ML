@@ -1,14 +1,11 @@
 # Furina ML — https://furina.nevatal.id
 #
-# The front page and the About page are the only content worth indexing. The
-# workbench is a per-visitor working session over data the visitor uploaded:
-# it has nothing stable to rank, and every URL under it is empty until that
-# visitor has a dataset. The API and the admin are not documents at all.
+# All application pages, workbench tools, courses, and documentation are indexable.
+# Internal API endpoints, admin console, and static runtime files are disallowed.
 
 User-agent: *
-Allow: /$
-Allow: /about
-Disallow: /app
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
+Allow: /
 Disallow: /api/
 Disallow: /admin/
 Disallow: /static/

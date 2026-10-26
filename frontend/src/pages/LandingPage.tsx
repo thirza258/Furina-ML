@@ -18,6 +18,7 @@ import {
   DOCUMENTED_FAMILIES,
   groupByFamily,
 } from "../data/algorithmCatalogue";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 /** Must match the strings App.tsx switches on. */
 const TOOL_PREPROCESSING = "Data Preprocessing";
@@ -87,6 +88,13 @@ const STEPS: StepCard[] = [
 
 const LandingPage = () => {
   const { dataset, run, restoring, goToTool } = useWorkspace();
+
+  usePageSeo({
+    title: "Workbench Overview — Machine Learning Pipeline & Algorithms",
+    description:
+      "Interactive workbench overview: data preprocessing, model training, evaluation, and scikit-learn algorithm catalogue.",
+    path: "/app",
+  });
 
   const [algorithms, setAlgorithms] = useState<AlgorithmSpec[] | null>(null);
   const [loadingAlgorithms, setLoadingAlgorithms] = useState<boolean>(true);

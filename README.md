@@ -236,8 +236,10 @@ needs no rebuild:
 SITE_URL=https://furina.nevatal.id
 ```
 
-Only `/` and `/about` are listed for indexing. The workbench and its courses
-under `/app` are excluded from the sitemap.
+All public pages (`/`, `/about`), workbench tools (`/app`, `/app/preprocessing`,
+`/app/training`, `/app/evaluation`, `/app/dashboard`), and all 9 interactive
+courses with 72 lessons (`/app/courses/*`) are listed in `sitemap.xml` and
+allowed in `robots.txt` for indexing.
 
 #### Per-student notebook servers (JupyterHub)
 

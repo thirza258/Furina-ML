@@ -12,6 +12,7 @@ import { API_BASE_URL } from "../services/services";
 import { helpFor } from "../explainer/help";
 import type { HelpEntry } from "../explainer/help";
 import { useWorkspace } from "../context/workspaceContext";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 const TOOL_PREPROCESSING = "Data Preprocessing";
 
@@ -213,6 +214,13 @@ function MetricGlossary({ keys }: { keys: string[] }) {
 
 const AboutPage = () => {
   const { goToTool } = useWorkspace();
+
+  usePageSeo({
+    title: "About — Architecture, Algorithms & API Contract",
+    description:
+      "Read the full reference for Furina ML: scikit-learn pipeline mechanics, automatic task inference, evaluation metric catalogue, and the complete REST API contract.",
+    path: "/about",
+  });
 
   return (
     <div className="bg-paper min-h-full p-8">
