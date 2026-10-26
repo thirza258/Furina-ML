@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { COURSES, lessonKey, lessonPath, studyTime } from "../data/courseCatalogue";
+import { COURSES, lessonKey, lessonPath, studyTime, tierLabel } from "../data/courseCatalogue";
 
 const TRACKS = [...new Set(COURSES.map((course) => course.track))];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
@@ -33,8 +33,8 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
       <header className="border-b border-rule pb-7 mb-8">
         <p className="field-label mb-3">Furina ML · Course library</p>
         <h1 ref={headingRef} tabIndex={-1} className="text-h1 mb-4 focus:outline-none">Learn to train, adapt &amp; evaluate models</h1>
-        <p className="prose-page text-lead mb-5">Start with a first training run, build neural models, then explore language, vision, speech and the systems that bring models into production. Follow complete courses with worked examples, practical labs and project review criteria.</p>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-small mb-4"><span>{COURSES.length} courses</span><span>{totalLessons} lessons</span><span>{COURSES.filter((course) => course.lab).length} downloadable Python labs</span><span>Beginner to advanced</span></div>
+        <p className="prose-page text-lead mb-5">Start with a first training run, prepare data and compare model families, or start from the mathematics and build your own neural networks, cell by cell, in notebooks that run in your browser. Then explore forecasting, language, vision, speech and the systems that bring models into production.</p>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-small mb-4"><span>{COURSES.length} courses</span><span>{totalLessons} lessons</span><span>{COURSES.filter((course) => course.lab).length} downloadable Python labs</span><span>{COURSES.reduce((sum, course) => sum + course.lessons.filter((lesson) => lesson.notebook).length, 0)} Jupyter notebooks</span><span>Beginner to advanced</span></div>
         {persistenceNote}
       </header>
       <section className="mb-8" aria-label="Your learning progress">
@@ -46,7 +46,7 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
         <ol className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4 text-small">
           {COURSES.map((course, index) => <li key={course.id}><Link to={`/app/courses/${course.id}`}>{index + 1}. {course.title}</Link></li>)}
         </ol>
-        <p className="text-small text-ink-muted mt-4">Take the tabular and base-model courses first if you are new to ML. Vision-language and voice are specializations. System design builds on the training and evaluation foundations and can be taken before the neural-model courses. Follow each overview's prerequisites; every lesson remains open for reference.</p>
+        <p className="text-small text-ink-muted mt-4">There are two ways in. The workbench path starts with training and evaluation, then data preparation and choosing a model, all without code. The build-it-yourself path starts with the mathematics, then has you write and train your own neural network in notebooks, one typed cell at a time, before the deep-learning courses on transformers, language, vision and speech. Time-series forecasting, vision-language and voice are specializations; system design builds on the training and evaluation foundations. Follow each overview's prerequisites; every lesson remains open for reference.</p>
       </details>
       <section className="mb-8" aria-label="Find a course">
         <div className="grid sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr] gap-4">
@@ -65,9 +65,10 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
           return (
             <section key={course.id} className="border-t-2 border-primary pt-5 flex flex-col" aria-labelledby={`course-title-${course.id}`}>
               <p className="field-label mb-2">{course.track} · {course.level}</p>
+              <p className="text-caption text-ink-muted mb-2">{tierLabel(course.dependencyTier)}</p>
               <h2 id={`course-title-${course.id}`} className="text-h2 mb-3"><Link to={`/app/courses/${course.id}`} className="text-ink no-underline">{course.title}</Link></h2>
               <p className="mb-4">{course.description}</p>
-              <p className="text-small text-ink-muted mb-4">{course.lessons.length} lessons · {studyTime(course.lessons.reduce((sum, lesson) => sum + lesson.minutes, 0))} study &amp; exercises · {course.lab ? "Python lab + capstone" : "Workbench exercises"}</p>
+              <p className="text-small text-ink-muted mb-4">{course.lessons.length} lessons · {studyTime(course.lessons.reduce((sum, lesson) => sum + lesson.minutes, 0))} study &amp; exercises · {course.practiceMode === "notebook" ? "Jupyter notebooks" : course.lab ? "Python lab + capstone" : "Workbench exercises"}</p>
               <ul className="list-disc pl-5 space-y-1 text-small mb-5">{course.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}</ul>
               <details className="mb-5 border-y border-rule py-2">
                 <summary className="cursor-pointer min-h-11 py-2 text-small">Explore {course.lessons.length} lessons</summary>
@@ -85,7 +86,7 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
           );
         })}
       </div>
-      <p className="text-small text-ink-muted border-t border-rule pt-5 mt-10">Lessons and interactive examples work without a backend. Tabular exercises use Furina's workbench; neural, language, vision, voice and system-design labs run in an external Python environment. Study-time estimates include exercises and exclude large-model training time.</p>
+      <p className="text-small text-ink-muted border-t border-rule pt-5 mt-10">Lessons and interactive examples work without a backend. Notebook courses open in your browser, or on your own notebook server when you are signed in; tabular exercises use Furina's workbench; neural, language, vision, voice and system-design labs run in an external Python environment. Study-time estimates include exercises and exclude large-model training time.</p>
     </div>
   );
 }

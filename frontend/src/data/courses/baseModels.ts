@@ -4,7 +4,7 @@ export const baseModelsCourse: Course = {
   id: "base-models", title: "Base Model Training", level: "Beginner", track: "Deep learning",
   description: "Build and train a neural network from random weights. Follow the complete path from tensors and data splits to a tested, reloadable checkpoint.",
   prerequisites: ["Python functions, loops and lists", "Basic algebra, averages and the idea of a derivative", "The Model Training and Model Evaluation courses, or equivalent knowledge"],
-  prerequisiteCourses: ["training", "evaluation"], practiceMode: "python", nextCourseId: "intermediate-models",
+  prerequisiteCourses: ["training", "evaluation"], practiceMode: "python", dependencyTier: 3, nextCourseId: "intermediate-models",
   outcomes: ["Implement a forward pass and gradient update", "Build separate training, validation and test datasets", "Diagnose a failing training loop", "Save, reload and evaluate your own base model"],
   lab: {
     filename: "base_model.py", title: "Train an MLP from random weights",

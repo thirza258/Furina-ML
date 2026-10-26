@@ -74,6 +74,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "SecretKey")
 DEBUG = env_bool("DEBUG", True)
 
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["*"])
+# Names other containers use to reach this one directly -- JupyterHub calls the
+# OAuth token and user endpoints at http://backend:8000 -- kept apart from the
+# public list above so restricting ALLOWED_HOSTS cannot cut the hub off.
+ALLOWED_HOSTS += env_list("INTERNAL_HOSTS", [])
 
 # Needed once the app is served over https behind a reverse proxy: Django has
 # to be told which Origins to trust for unsafe methods on the admin/session
@@ -86,6 +90,13 @@ DEVELOPMENT_MODE = env_bool("DEVELOPMENT_MODE", True)
 # request arrived over plain http.
 if env_bool("USE_X_FORWARDED_PROTO", False):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Session and CSRF cookies only travel over https once the site is served that
+# way. They default to following USE_X_FORWARDED_PROTO, which is how this
+# deployment learns it sits behind TLS.
+SECURE_COOKIES = env_bool("SECURE_COOKIES", env_bool("USE_X_FORWARDED_PROTO", False))
+SESSION_COOKIE_SECURE = SECURE_COOKIES
+CSRF_COOKIE_SECURE = SECURE_COOKIES
 
 
 # Application definition
@@ -106,7 +117,9 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "corsheaders",
+    "oauth2_provider",
     "core",
+    "academy",
 ]
 
 SPECTACULAR_SETTINGS = {
@@ -171,7 +184,51 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": [],
     "DEFAULT_THROTTLE_RATES": {
         "assistant": os.getenv("ASSISTANT_RATE_LIMIT", "20/hour"),
+        # Sign-in and sign-up, per client address: slows password guessing.
+        "auth": os.getenv("AUTH_RATE_LIMIT", "10/minute"),
     },
+    # The SPA signs in with a Django session. Basic authentication is left out
+    # on purpose: it would accept passwords on every endpoint, unthrottled.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    # Throttles count requests per client address. Behind nginx, REMOTE_ADDR
+    # is nginx itself, so every visitor would share one bucket; with one proxy
+    # in front, the address nginx appended to X-Forwarded-For is the client's.
+    # Raise this when another proxy (a TLS terminator) sits in front of nginx.
+    "NUM_PROXIES": int(os.getenv("NUM_PROXIES", "1")),
+}
+
+# --------------------------------------------------------------------------
+# Accounts, course progress and the notebook server
+# --------------------------------------------------------------------------
+
+# The SPA's sign-in page. Django redirects here -- for example from the OAuth
+# authorize endpoint when JupyterHub sends a signed-out student to log in --
+# with ?next= pointing back where the request came from.
+LOGIN_URL = "/login"
+
+# New accounts can be created from the sign-up page. Turn off to create
+# accounts only through /admin/.
+ACCOUNT_REGISTRATION = env_bool("ACCOUNT_REGISTRATION", True)
+
+# The public address of JupyterHub, e.g. https://notebooks.example.com. Empty
+# means no hub: lessons offer only the in-browser JupyterLite preview.
+JUPYTERHUB_URL = os.getenv("JUPYTERHUB_URL", "").strip().rstrip("/")
+# The OAuth client JupyterHub signs students in with. `ensure_jupyterhub_client`
+# registers it at start-up from these two values.
+JUPYTERHUB_OAUTH_CLIENT_ID = os.getenv("JUPYTERHUB_OAUTH_CLIENT_ID", "").strip()
+JUPYTERHUB_OAUTH_CLIENT_SECRET = os.getenv("JUPYTERHUB_OAUTH_CLIENT_SECRET", "").strip()
+
+# Django is the identity provider for JupyterHub (authorization code + PKCE).
+# Tokens are short-lived: the hub re-checks them, so revoking a student's
+# tokens at sign-out ends their notebook access within the hub's refresh age.
+OAUTH2_PROVIDER = {
+    "SCOPES": {"profile": "Read your Furina username and roles"},
+    "DEFAULT_SCOPES": ["profile"],
+    "PKCE_REQUIRED": True,
+    "AUTHORIZATION_CODE_EXPIRE_SECONDS": 60,
+    "ACCESS_TOKEN_EXPIRE_SECONDS": int(os.getenv("OAUTH_ACCESS_TOKEN_SECONDS", "3600")),
 }
 
 MIDDLEWARE = [

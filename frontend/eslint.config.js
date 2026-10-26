@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // public/notebooks is a generated JupyterLite site (scripts/build-notebooks.sh).
+  globalIgnores(['dist', 'public/notebooks']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

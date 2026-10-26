@@ -1,0 +1,36 @@
+# Furina ML -- JupyterHub's front door. Rendered into
+# /etc/nginx/conf.d/jupyterhub.conf only when JUPYTERHUB_URL is set.
+#
+# The hub lives on its own host name and every student's server on a
+# subdomain of it (u12.notebooks.example.com), so pages from one student's
+# server cannot read another's cookies. That needs a wildcard DNS record and,
+# behind TLS, a wildcard certificate for *.__HUB_HOST__.
+
+server {
+    listen 80;
+    server_name __HUB_HOST__ *.__HUB_HOST__;
+    server_tokens off;
+
+    resolver __RESOLVER__ valid=10s ipv6=off;
+    set $furina_hub "__HUB_ORIGIN__";
+
+    # Students upload notebooks and data files through JupyterLab.
+    client_max_body_size __MAX_UPLOAD_SIZE__;
+
+    location / {
+        proxy_pass http://$furina_hub$request_uri;
+        proxy_http_version 1.1;
+        # The proxy routes on the full host name, student subdomain included.
+        proxy_set_header Host              $http_host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        $connection_upgrade;
+
+        # Kernel WebSockets stay open for as long as a notebook is.
+        proxy_read_timeout 1h;
+        proxy_send_timeout 1h;
+        proxy_buffering off;
+    }
+}

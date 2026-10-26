@@ -8,10 +8,11 @@
  * with the reason and the API base URL, in a bar nobody can miss.
  */
 import React, { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import services, { API_BASE_URL } from "../services/services";
 import type { ApiError, HealthResponse } from "../interface/MlTypes";
+import { useAuth } from "../context/authContext";
 import { useWorkspace } from "../context/workspaceContext";
 
 interface NavBarProps {
@@ -46,6 +47,10 @@ function formatMetric(value: number | null): string {
 
 const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
   const { dataset, run, restoring, restoreError } = useWorkspace();
+  const { session, loading: accountLoading, signOut } = useAuth();
+  const { pathname, search } = useLocation();
+  const [signingOut, setSigningOut] = useState<boolean>(false);
+  const onAccountPage = pathname === "/login" || pathname === "/register";
   const [health, setHealth] = useState<HealthState>({ status: "checking" });
   const [rechecking, setRechecking] = useState<boolean>(false);
   const isCourse = selectedTool === "Courses";
@@ -176,6 +181,35 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
             <span className="flex items-baseline gap-2 text-state-bad font-medium">
               <span aria-hidden="true">▲</span> Disconnected
             </span>
+          )}
+
+          {/* The account. Optional everywhere: it saves course progress and
+              unlocks the personal notebook server. */}
+          {!accountLoading && session?.authenticated && session.user && (
+            <>
+              <span aria-hidden="true" className="h-4 w-px bg-rule" />
+              <span className="flex items-baseline gap-2">
+                <span className="field-label">Account</span>
+                <span className="text-ink">{session.user.username}</span>
+                <button
+                  type="button"
+                  disabled={signingOut}
+                  onClick={() => {
+                    setSigningOut(true);
+                    void signOut().finally(() => setSigningOut(false));
+                  }}
+                  className="text-primary underline cursor-pointer disabled:opacity-60"
+                >
+                  {signingOut ? "Signing out…" : "Sign out"}
+                </button>
+              </span>
+            </>
+          )}
+          {!accountLoading && session !== null && !session.authenticated && !onAccountPage && (
+            <>
+              <span aria-hidden="true" className="h-4 w-px bg-rule" />
+              <Link to={`/login?next=${encodeURIComponent(pathname + search)}`}>Sign in</Link>
+            </>
           )}
         </div>
       </nav>

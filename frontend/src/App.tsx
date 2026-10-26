@@ -15,6 +15,7 @@ import { lazy, Suspense, useCallback } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import AboutPage from './pages/AboutPage';
+import AccountPage from './pages/AccountPage';
 import Dashboard from './pages/Dashboard';
 import HomePage from './pages/HomePage';
 import LandingPage from './pages/LandingPage';
@@ -25,6 +26,7 @@ import EvaluationReport from './pages/traditionalMl/ModelEvaluation';
 import AssistantFab from './components/AssistantFab';
 import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
+import AuthProvider from './context/AuthProvider';
 import WorkspaceProvider from './context/WorkspaceProvider';
 
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
@@ -42,6 +44,8 @@ const TOOL_ROUTES: { tool: string; path: string }[] = [
   { tool: 'Model Evaluation', path: '/app/evaluation' },
   { tool: 'Courses', path: '/app/courses' },
   { tool: 'About Us', path: '/about' },
+  { tool: 'Sign in', path: '/login' },
+  { tool: 'Create account', path: '/register' },
 ];
 
 const PATH_FOR_TOOL = new Map(TOOL_ROUTES.map(({ tool, path }) => [tool, path]));
@@ -89,6 +93,10 @@ function Workbench() {
         return <Dashboard />;
       case 'About Us':
         return <AboutPage />;
+      case 'Sign in':
+        return <AccountPage mode="login" />;
+      case 'Create account':
+        return <AccountPage mode="register" />;
       case 'Landing Page':
       default:
         return <LandingPage />;
@@ -129,21 +137,25 @@ function App() {
   );
 
   return (
-    <WorkspaceProvider onNavigate={goToTool}>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/app" element={<Workbench />} />
-        <Route path="/app/dashboard" element={<Workbench />} />
-        <Route path="/app/preprocessing" element={<Workbench />} />
-        <Route path="/app/training" element={<Workbench />} />
-        <Route path="/app/evaluation" element={<Workbench />} />
-        <Route path="/app/courses" element={<Workbench />} />
-        <Route path="/app/courses/:courseId" element={<Workbench />} />
-        <Route path="/app/courses/:courseId/:lessonId" element={<Workbench />} />
-        <Route path="/about" element={<Workbench />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </WorkspaceProvider>
+    <AuthProvider>
+      <WorkspaceProvider onNavigate={goToTool}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/app" element={<Workbench />} />
+          <Route path="/app/dashboard" element={<Workbench />} />
+          <Route path="/app/preprocessing" element={<Workbench />} />
+          <Route path="/app/training" element={<Workbench />} />
+          <Route path="/app/evaluation" element={<Workbench />} />
+          <Route path="/app/courses" element={<Workbench />} />
+          <Route path="/app/courses/:courseId" element={<Workbench />} />
+          <Route path="/app/courses/:courseId/:lessonId" element={<Workbench />} />
+          <Route path="/about" element={<Workbench />} />
+          <Route path="/login" element={<Workbench />} />
+          <Route path="/register" element={<Workbench />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </WorkspaceProvider>
+    </AuthProvider>
   );
 }
 

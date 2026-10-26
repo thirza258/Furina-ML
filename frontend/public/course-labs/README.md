@@ -1,9 +1,11 @@
 # Furina ML — Python course labs
 
 These are complete, standalone CPU teaching scripts. They generate small local
-datasets, perform real gradient updates, select checkpoints using validation
-data, and evaluate separately generated test examples. They require no API key,
-model download, microphone access or paid service.
+datasets, fit real models, make their selections using validation data, and
+evaluate on test examples kept apart from those decisions. The neural-model
+labs generate their test examples separately; the forecasting lab tests on the
+final, later segment of its series. They require no API key, model download,
+microphone access or paid service.
 
 The system-design lab also replays **simulated request timings and dependency
 incidents**. Its model computation is real; the replay is not a serving benchmark
@@ -51,10 +53,40 @@ Each script defaults to one CPU thread and a small fixed update budget. The
 initial package installation needs internet access; the scripts themselves
 make no network requests. Run `python SCRIPT.py --help` for supported options.
 
+### Time-series lab — NumPy and scikit-learn
+
+Download `time_series_forecasting.py` and `requirements-sklearn.txt` into a
+folder. This lab does not need PyTorch or the shared `requirements.txt`: its
+own requirements file pins NumPy 2.3.4 and scikit-learn 1.9.0, the versions
+used by Furina's backend, and pip installs joblib as a scikit-learn
+dependency. Both pinned packages require Python 3.11 or later. The lab was
+verified with Python 3.14.4 on macOS ARM64.
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+# Windows PowerShell activation: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements-sklearn.txt
+python time_series_forecasting.py --output-dir time_series_results
+```
+
+Unlike the other labs, this one generates a single daily series and divides it
+into consecutive training, validation and test periods, so its test partition
+is the final period of that series rather than a separately generated sample.
+Rolling-origin backtests on the validation period select the model, which is
+refitted once on training and validation days before the test period is
+scored. `--trend-per-day` changes all three periods, while `--seed` changes
+only the gradient-boosting randomness. The script writes `model.joblib`,
+`report.json` and `forecasts.csv`. `model.joblib` is a pickle file, so only
+load copies you trust. Unless you set `OMP_NUM_THREADS` yourself, the script
+uses one OpenMP thread, because extra threads made these small fits much
+slower in testing.
+
 ## Labs
 
 | Script | What it trains | Evaluation and checks |
 |---|---|---|
+| `time_series_forecasting.py` | Ridge and gradient-boosting forecasters on a generated daily series | Rolling-origin backtests, seasonal baselines, test MAE/RMSE/MASE by horizon step, calibrated interval coverage, leakage and reload checks |
 | `base_model.py` | MLP on a nonlinear classification boundary | Validation selection, independent test accuracy, training-only scaling, checkpoint round trip |
 | `intermediate_model.py` | Imbalanced binary classifier | Validation-selected threshold, test precision/recall/F1 and confusion counts |
 | `transformer_model.py` | Small causal transformer on symbol transitions | Future-token invariance, test token loss, perplexity and generation |
@@ -70,6 +102,7 @@ python intermediate_model.py --unweighted --output-dir comparison_unweighted
 python transformer_model.py --steps 150 --output-dir transformer_run
 python llm_finetuning.py --rank 8 --output-dir adapter_rank_8
 python voice_model.py --noise 0.05 --output-dir noisier_audio
+python time_series_forecasting.py --horizon 28 --output-dir horizon_28
 ```
 
 Changing `--noise` changes all three tone-data partitions; a fixed-model noise

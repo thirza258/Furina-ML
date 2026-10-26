@@ -59,5 +59,11 @@ if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:
         || log "superuser already present, leaving it alone"
 fi
 
+# Registers the OAuth client JupyterHub signs students in with. A no-op unless
+# JUPYTERHUB_URL and the client id and secret are all set.
+if [ "${RUN_MIGRATIONS:-True}" = "True" ]; then
+    python manage.py ensure_jupyterhub_client
+fi
+
 log "starting: $*"
 exec "$@"

@@ -26,3 +26,8 @@ dist-ssr
 # local env
 .env
 .env.local
+
+# JupyterLite site built by scripts/build-notebooks.sh for `npm run dev`.
+# The Docker image builds its own copy.
+public/notebooks/
+.jupyterlite-venv/

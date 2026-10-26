@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { Link } from "react-router-dom";
-import { COURSES, lessonKey, lessonPath, studyTime } from "../data/courseCatalogue";
+import { COURSES, lessonKey, lessonPath, studyTime, tierLabel } from "../data/courseCatalogue";
 import type { Course } from "../data/courseCatalogue";
 import { CourseCapstone, CourseLab } from "../components/CourseResources";
 
@@ -17,7 +17,8 @@ export default function CourseOverview({ course, completed, headingRef }: {
         <p className="field-label mb-3">{course.track} · {course.level}</p>
         <h1 ref={headingRef} tabIndex={-1} className="text-h1 mb-4 focus:outline-none">{course.title}</h1>
         <p className="prose-page text-lead mb-4">{course.description}</p>
-        <p className="text-small text-ink-muted mb-5">{course.lessons.length} lessons · About {studyTime(totalMinutes)} of study and exercises{course.lab ? " · Python lab + capstone" : " · Workbench exercises"}</p>
+        <p className="text-small text-ink-muted mb-5">{course.lessons.length} lessons · About {studyTime(totalMinutes)} of study and exercises{course.practiceMode === "notebook" ? " · Jupyter notebooks" : course.lab ? " · Python lab + capstone" : course.capstone ? " · Workbench exercises + capstone" : " · Workbench exercises"}</p>
+        <p className="text-small mb-5"><span className="field-label">Dependencies</span> {tierLabel(course.dependencyTier)}</p>
         <Link to={lessonPath(course, next)} className="btn btn-primary">{count === course.lessons.length ? "Review course" : count ? "Continue course" : "Start first lesson"}</Link>
         <p className="text-small mt-4 mb-2">{count} of {course.lessons.length} knowledge checks complete</p>
         <progress className="course-progress" value={count} max={course.lessons.length} aria-label={`${course.title} progress`} />
@@ -44,6 +45,18 @@ export default function CourseOverview({ course, completed, headingRef }: {
           ))}
         </ol>
       </section>
+      {course.lessons.some((lesson) => lesson.notebook) && (
+        <section className="callout my-8" aria-labelledby="course-notebooks-title">
+          <p className="field-label mb-2">Jupyter notebooks · {tierLabel(course.dependencyTier)}</p>
+          <h2 id="course-notebooks-title" className="text-h3 mb-3">One notebook per lesson</h2>
+          <p className="mb-4 max-w-measure">Each lesson opens its notebook beside the explanation: in your browser with no installation, or, when you are signed in on a site that runs a notebook server, as your own saved copy. Every notebook explains its maths, builds the method step by step with tests, and ends with exercises that check themselves.</p>
+          <ol className="list-decimal pl-5 space-y-2 text-small">
+            {course.lessons.filter((lesson) => lesson.notebook).map((lesson) => (
+              <li key={lesson.id}><Link to={lessonPath(course, lesson)}>{lesson.notebook?.title}</Link> <span className="text-ink-muted">· {lesson.notebook?.path.split("/").pop()}</span></li>
+            ))}
+          </ol>
+        </section>
+      )}
       <CourseLab course={course} />
       <CourseCapstone course={course} />
       <section className="border-t border-rule pt-5 mt-8">
