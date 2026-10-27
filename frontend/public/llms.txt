@@ -1,0 +1,11 @@
+# Furina ML
+
+> Train scikit-learn models on your own CSV files: inspect, clean, tune, train, evaluate and predict, without writing code.
+
+## Endpoints
+- Homepage: https://furina.nevatal.id/
+- API: https://furina.nevatal.id/api/
+- API Catalog: https://furina.nevatal.id/.well-known/api-catalog
+- Agent Card: https://furina.nevatal.id/.well-known/agent-card.json
+- AI Catalog: https://furina.nevatal.id/.well-known/ai-catalog.json
+- Authentication Guide: https://furina.nevatal.id/auth.md

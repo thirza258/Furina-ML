@@ -1,0 +1,28 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Furina ML",
+    "identifier": "did:web:furina.nevatal.id"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:furina.nevatal.id:api:site",
+      "displayName": "Furina ML API",
+      "type": "application/json",
+      "url": "https://furina.nevatal.id/api/",
+      "representativeQueries": [
+        "what does Furina ML do",
+        "get data from Furina ML"
+      ]
+    },
+    {
+      "identifier": "urn:air:furina.nevatal.id:server:mcp",
+      "displayName": "Furina ML MCP Server",
+      "type": "application/mcp-server-card+json",
+      "url": "https://furina.nevatal.id/.well-known/mcp/server-card.json",
+      "representativeQueries": [
+        "query Furina ML"
+      ]
+    }
+  ]
+}

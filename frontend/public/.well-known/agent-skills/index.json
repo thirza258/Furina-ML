@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "train-model",
+      "type": "skill-md",
+      "description": "Train a scikit-learn model from an uploaded CSV dataset.",
+      "url": "https://furina.nevatal.id/.well-known/agent-skills/train-model/SKILL.md"
+    },
+    {
+      "name": "eda-clean-data",
+      "type": "skill-md",
+      "description": "Profile a dataset and apply cleaning steps before training.",
+      "url": "https://furina.nevatal.id/.well-known/agent-skills/eda-clean-data/SKILL.md"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://furina.nevatal.id/api",
+      "service-desc": [
+        {
+          "href": "https://furina.nevatal.id/api/",
+          "type": "application/json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://furina.nevatal.id/auth.md",
+          "type": "text/markdown"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://furina.nevatal.id/api/",
+          "type": "application/json"
+        }
+      ]
+    }
+  ]
+}
