@@ -1,4 +1,4 @@
-/** Accounts, saved course progress and notebook launches (`/api/auth/…`). */
+/** Accounts, saved course progress, notebook launches and grading (`/api/auth/…`). */
 
 export type AccountRole = "student" | "instructor" | "admin";
 
@@ -18,6 +18,8 @@ export interface SessionInfo {
     /** True when this deployment runs JupyterHub. */
     hub_enabled: boolean;
     hub_url: string | null;
+    /** True when a grader worker grades handed-in lesson notebooks. */
+    grading_enabled: boolean;
   };
 }
 
@@ -41,4 +43,38 @@ export interface NotebookLaunch {
   url: string;
   /** The same notebook in the full JupyterLab interface. */
   lab_url: string;
+}
+
+export type SubmissionStatus = "queued" | "running" | "graded" | "error";
+
+/** One check in a graded notebook: a practice()/check() call on an exercise. */
+export interface SubmissionCheck {
+  name: string;
+  /** "not-run": the notebook never reached the check (an earlier error, a time-out). */
+  status: "passed" | "failed" | "not-run";
+  /** What the check printed, or the error that stopped it. */
+  message: string;
+}
+
+/** `GET /api/submissions/{id}/` — a notebook handed in for grading. */
+export interface Submission {
+  id: string;
+  path: string;
+  status: SubmissionStatus;
+  /** Fraction of checks passed, 0 to 1; null until graded. */
+  score: number | null;
+  passed: number | null;
+  total: number | null;
+  result: {
+    items?: SubmissionCheck[];
+    /** Exercise cells the student changed, and those still as shipped. */
+    answered?: number;
+    unanswered?: number;
+    /** False when the notebook stopped before the end; the result is partial. */
+    complete?: boolean;
+  };
+  /** Why grading failed, when status is "error". */
+  error: string;
+  created_at: string;
+  finished_at: string | null;
 }

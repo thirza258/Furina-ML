@@ -13,6 +13,7 @@ import type {
   ProgressResponse,
   Registration,
   SessionInfo,
+  Submission,
 } from "../interface/AccountTypes";
 
 import type {
@@ -308,6 +309,27 @@ const services = {
   /** The URL that opens a lesson notebook in the student's own JupyterHub workspace. */
   launchNotebook(path: string): Promise<NotebookLaunch> {
     return request(() => client.post<NotebookLaunch>("/notebooks/launch/", { path }));
+  },
+
+  /* ---------------- grading (signed in) ---------------- */
+
+  /** Hand in a lesson notebook (the learner's .ipynb) for automated grading. */
+  submitNotebook(path: string, file: File): Promise<Submission> {
+    const form = new FormData();
+    form.append("path", path);
+    form.append("notebook", file);
+    return request(() => client.post<Submission>("/submissions/", form));
+  },
+
+  /** The signed-in learner's latest submissions of one lesson notebook, newest first. */
+  submissions(path: string): Promise<Submission[]> {
+    return request(() =>
+      client.get<{ results: Submission[] }>("/submissions/", { params: { path } })
+    ).then((page) => page.results);
+  },
+
+  submission(id: string): Promise<Submission> {
+    return request(() => client.get<Submission>(`/submissions/${encodeURIComponent(id)}/`));
   },
 };
 

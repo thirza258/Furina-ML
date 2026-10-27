@@ -34,7 +34,7 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
         <p className="field-label mb-3">Furina ML · Course library</p>
         <h1 ref={headingRef} tabIndex={-1} className="text-h1 mb-4 focus:outline-none">Learn to train, adapt &amp; evaluate models</h1>
         <p className="prose-page text-lead mb-5">Start with a first training run, prepare data and compare model families, or start from the mathematics and build your own neural networks, cell by cell, in notebooks that run in your browser. Then explore forecasting, language, vision, speech and the systems that bring models into production.</p>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-small mb-4"><span>{COURSES.length} courses</span><span>{totalLessons} lessons</span><span>{COURSES.filter((course) => course.lab).length} downloadable Python labs</span><span>{COURSES.reduce((sum, course) => sum + course.lessons.filter((lesson) => lesson.notebook).length, 0)} Jupyter notebooks</span><span>Beginner to advanced</span></div>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-small mb-4"><span>{COURSES.length} courses</span><span>{totalLessons} lessons</span><span>{COURSES.filter((course) => course.lab).length} downloadable Python labs</span><span>{new Set(COURSES.flatMap((course) => course.lessons.flatMap((lesson) => lesson.notebook ? [lesson.notebook.path] : []))).size} Jupyter notebooks</span><span>Beginner to advanced</span></div>
         {persistenceNote}
       </header>
       <section className="mb-8" aria-label="Your learning progress">
@@ -86,7 +86,7 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
           );
         })}
       </div>
-      <p className="text-small text-ink-muted border-t border-rule pt-5 mt-10">Lessons and interactive examples work without a backend. Notebook courses open in your browser, or on your own notebook server when you are signed in; tabular exercises use Furina's workbench; neural, language, vision, voice and system-design labs run in an external Python environment. Study-time estimates include exercises and exclude large-model training time.</p>
+      <p className="text-small text-ink-muted border-t border-rule pt-5 mt-10">Lessons and interactive examples work without a backend. Notebook courses, from the mathematics to transformers, language, vision and speech, open in your browser, or on your own notebook server when you are signed in; tabular exercises use Furina's workbench; the forecasting and system-design labs run in an external Python environment. Study-time estimates include exercises and exclude large-model training time.</p>
     </div>
   );
 }

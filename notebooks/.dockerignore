@@ -1,0 +1,6 @@
+# The notebooks folder is a build context for the frontend (JupyterLite) and
+# student images; keep caches and editor state out of both.
+__pycache__/
+.ipynb_checkpoints/
+*.npz
+.dockerignore

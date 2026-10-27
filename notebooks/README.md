@@ -62,6 +62,20 @@ python notebooks/tools/check_notebooks.py --execute
 Without `--execute` it checks structure, metadata, tiers and that every
 notebook a lesson links to exists.
 
+## Grading
+
+Handed-in notebooks are graded against the template (see
+[docs/academy.md](../docs/academy.md#automated-grading)). Only exercise cells
+-- code cells that raise `NotImplementedError` in the template -- come from the
+student. A check is graded when a `practice*(...)` or `check(...)` call in
+another cell passes the learner's function (or a wrapper of it) right after
+the check's name. Keep everything an exercise needs inside its own cell, and
+after changing a notebook, check that grading still works:
+
+```sh
+cd jupyter/grader && python tests/check_course_notebooks.py --only <course-folder>
+```
+
 ## The workbench helper
 
 `workbench/furina.py` reads datasets and runs from the Furina workbench API.

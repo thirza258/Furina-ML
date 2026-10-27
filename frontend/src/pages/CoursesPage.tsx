@@ -145,7 +145,9 @@ export default function CoursesPage() {
             </ol>
             <div className="flex flex-wrap gap-3 mt-5">
               {course.toolPath && <Link to={course.toolPath} className="btn btn-secondary">{course.toolLabel}</Link>}
-              {course.lab && <a href={`/course-labs/${course.lab.filename}`} download className="btn btn-primary">Download Python lab</a>}
+              {course.lab && (course.practiceMode === "notebook"
+                ? <a href={`/course-labs/${course.lab.filename}`} download className="btn btn-secondary">Optional: PyTorch lab</a>
+                : <a href={`/course-labs/${course.lab.filename}`} download className="btn btn-primary">Download Python lab</a>)}
               {course.lab?.guide && <a href={`/course-labs/${course.lab.guide.filename}`} download className="btn btn-secondary">{course.lab.guide.title}</a>}
               <Link to={`/app/courses/${course.id}`} className="btn btn-secondary">Syllabus &amp; resources</Link>
             </div>
@@ -159,7 +161,7 @@ export default function CoursesPage() {
           {courseComplete && (
             <section className="border-l-2 border-state-good pl-5 mb-8" aria-label="Course complete">
               <h2 className="text-h3 mb-2">✓ {course.title} knowledge checks complete</h2>
-              <p className="mb-4">You have passed all {course.lessons.length} knowledge checks. {course.capstone ? (course.lab ? "Complete the lab and review the capstone criteria to finish the practical work." : "Review your work against the capstone criteria to finish the practical project.") : "Apply the lessons to a run and revisit any topic when you need it."}</p>
+              <p className="mb-4">You have passed all {course.lessons.length} knowledge checks. {course.capstone ? (course.practiceMode === "notebook" ? "Finish the capstone notebook and review it against the capstone criteria to complete the practical project." : course.lab ? "Complete the lab and review the capstone criteria to finish the practical work." : "Review your work against the capstone criteria to finish the practical project.") : "Apply the lessons to a run and revisit any topic when you need it."}</p>
               <Link to={nextCourse ? `/app/courses/${nextCourse.id}` : "/app/courses"} className="btn btn-primary">
                 {nextCourse ? `Continue to ${nextCourse.title}` : "Back to all courses"}
               </Link>

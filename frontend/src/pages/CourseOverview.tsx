@@ -48,10 +48,10 @@ export default function CourseOverview({ course, completed, headingRef }: {
       {course.lessons.some((lesson) => lesson.notebook) && (
         <section className="callout my-8" aria-labelledby="course-notebooks-title">
           <p className="field-label mb-2">Jupyter notebooks · {tierLabel(course.dependencyTier)}</p>
-          <h2 id="course-notebooks-title" className="text-h3 mb-3">One notebook per lesson</h2>
-          <p className="mb-4 max-w-measure">Each lesson opens its notebook beside the explanation: in your browser with no installation, or, when you are signed in on a site that runs a notebook server, as your own saved copy. Every notebook explains its maths, builds the method step by step with tests, and ends with exercises that check themselves.</p>
+          <h2 id="course-notebooks-title" className="text-h3 mb-3">Notebooks</h2>
+          <p className="mb-4 max-w-measure">Each notebook opens beside its lessons (some lessons share one): in your browser with no installation, or, when you are signed in on a site that runs a notebook server, as your own saved copy. Every notebook explains its maths, builds the method step by step with tests, and ends with exercises that check themselves.</p>
           <ol className="list-decimal pl-5 space-y-2 text-small">
-            {course.lessons.filter((lesson) => lesson.notebook).map((lesson) => (
+            {course.lessons.filter((lesson, index, all) => lesson.notebook && all.findIndex((other) => other.notebook?.path === lesson.notebook?.path) === index).map((lesson) => (
               <li key={lesson.id}><Link to={lessonPath(course, lesson)}>{lesson.notebook?.title}</Link> <span className="text-ink-muted">· {lesson.notebook?.path.split("/").pop()}</span></li>
             ))}
           </ol>

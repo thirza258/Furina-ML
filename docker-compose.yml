@@ -76,6 +76,10 @@ services:
       INTERNAL_HOSTS: backend
       # Client addresses for rate limits come from nginx's X-Forwarded-For.
       NUM_PROXIES: ${NUM_PROXIES:-1}
+      # Automated grading (profile: grader). The grader worker authenticates
+      # with this shared secret; empty turns grading off.
+      GRADER_TOKEN: ${GRADER_TOKEN:-}
+      SUBMISSION_RATE_LIMIT: ${SUBMISSION_RATE_LIMIT:-30/hour}
 
       # Optional: create an /admin/ login on first boot.
       DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
@@ -156,12 +160,13 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
-  # The hub's only way to Docker: container and image calls, nothing else
-  # (no exec, no builds, no swarm). Not reachable from student containers.
-  # Mounting the socket still makes this -- and the hub -- privileged.
+  # The hub's and the grader's only way to Docker: container and image calls,
+  # nothing else (no exec, no builds, no swarm). Not reachable from student
+  # containers. Mounting the socket still makes this -- and its two clients --
+  # privileged.
   docker-proxy:
     image: tecnativa/docker-socket-proxy:v0.4.2
-    profiles: ["hub"]
+    profiles: ["hub", "grader"]
     environment:
       CONTAINERS: 1
       IMAGES: 1
@@ -173,17 +178,47 @@ services:
     networks: [docker-api]
     restart: unless-stopped
 
-  # Builds the student notebook image; it is started by the hub, never here.
+  # Builds the student notebook image; it is started by the hub (and run by
+  # the grader as a sandbox), never here.
   notebook-image:
     build:
       context: ./jupyter/singleuser
       additional_contexts:
         notebooks: ./notebooks
     image: ${NOTEBOOK_IMAGE:-furina-notebook:latest}
-    profiles: ["hub"]
+    profiles: ["hub", "grader"]
     entrypoint: ["true"]
     network_mode: none
     restart: "no"
+
+  # ------------------------------------------ grading (profile: grader)
+  # Grades submitted lesson notebooks: each one runs in a throwaway container
+  # of the student image with no network. Needs GRADER_TOKEN, shared with the
+  # backend. Works with or without the hub profile.
+  grader:
+    build:
+      context: ./jupyter/grader
+      additional_contexts:
+        notebooks: ./notebooks
+    profiles: ["grader"]
+    environment:
+      GRADER_TOKEN: ${GRADER_TOKEN:-}
+      GRADER_API_URL: http://backend:8000/api
+      GRADER_IMAGE: ${NOTEBOOK_IMAGE:-furina-notebook:latest}
+      GRADER_CELL_TIMEOUT: ${GRADER_CELL_TIMEOUT:-60}
+      GRADER_TIMEOUT: ${GRADER_TIMEOUT:-300}
+      GRADER_MEM_LIMIT: ${GRADER_MEM_LIMIT:-1g}
+      GRADER_CPU_LIMIT: ${GRADER_CPU_LIMIT:-1}
+      DOCKER_HOST: tcp://docker-proxy:2375
+    networks: [default, docker-api]
+    depends_on:
+      backend:
+        condition: service_healthy
+      docker-proxy:
+        condition: service_started
+      notebook-image:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
 networks:
   default: {}

@@ -1,8 +1,8 @@
 # Accounts, notebooks and the per-student Jupyter server
 
-This document describes the first slice of the interactive-learning platform
-(the "core loop"): accounts, saved course progress, lesson notebooks, and an
-isolated JupyterHub server per student. It records the architecture, the
+This document describes the interactive-learning platform: accounts, saved
+course progress, lesson notebooks, an isolated JupyterHub server per student,
+and automated grading of handed-in notebooks. It records the architecture, the
 security model and its assumptions, how to deploy and operate it, and what is
 not built yet.
 
@@ -39,6 +39,11 @@ the notebook servers. The course catalogue itself is still the static data in
    it matches, the rest of the notebook runs on the learner's own code. Until
    then it falls back to the reference, so "Run all" always works. The
    references sit in collapsed cells, to open only when stuck.
+5. Hand a finished notebook in for grading (signed in, when the site runs the
+   grader). The learner downloads their copy from wherever they worked on it
+   (this browser, their server, Colab) and uploads it under the notebook. The
+   page shows every check as passed, not yet, or did not run, with what the
+   check printed. See [Automated grading](#automated-grading).
 
 ## Architecture
 
@@ -51,6 +56,9 @@ browser ──► nginx (frontend container) ──┬─► SPA, JupyterLite si
   │                                                │     └─► Django (OAuth token + user info, internal network)
   └────────────────────────────────────────────────┴─► u<id>: one container per student
                                                           (network "furina-students": hub only)
+
+grader worker ──► Django (/api/grader/, internal network, shared token)
+      └─────────► docker-proxy ──► one throwaway sandbox per submission (no network)
 ```
 
 | Component | Responsibility |
@@ -61,6 +69,7 @@ browser ──► nginx (frontend container) ──┬─► SPA, JupyterLite si
 | `docker-proxy` | The hub's only access to Docker: container and image calls, nothing else |
 | Student image | Python 3.13, the pinned course environment, and the notebook templates |
 | JupyterLite | The no-account preview, built into the frontend image |
+| Grader worker (`jupyter/grader`) | Claims submitted notebooks from Django, runs each in a sandbox container of the student image, posts per-check results back |
 
 ### Sign-in to the hub
 
@@ -146,6 +155,69 @@ Assumptions and limits you should know before exposing this:
   `X-Forwarded-For`. Set `NUM_PROXIES` to the number of proxies in front of
   Django.
 
+## Automated grading
+
+A signed-in student uploads their `.ipynb` for a lesson
+(`POST /api/submissions/`). Django keeps only the code cells' ids and source,
+never outputs, and queues it. The grader worker claims it over Django's
+internal grader API and grades it:
+
+1. **Rebuild from the template.** The grading notebook is the lesson's own
+   template from the grader image. Only the **✍️ Your turn** cells (code cells
+   that raise `NotImplementedError` in the template) are taken from the
+   submission. They are matched by cell id, or by the functions they define
+   when an editor dropped the ids (Colab). Setup, data, hidden references and
+   every `practice(...)`/`check(...)` call come from the template. Deleting or
+   editing a check in the submitted file therefore changes nothing.
+2. **Guard each check.** Before every check cell that tests an exercise, the
+   trusted checkers (`practice*`, `check`) and `*_reference` functions are
+   re-defined from the template and wrapped to record each call's outcome. A
+   student cell that redefines `practice` to always pass is undone before it
+   matters, and calls made from any other cell are not recorded. Before each
+   exercise cell, its names are bound to stand-ins that act like the
+   unfinished exercise. A cell that fails (syntax error, time-out) then costs
+   only its own checks, never a scaffold of the same name defined earlier.
+3. **Run in a sandbox.** The notebook runs top to bottom in a fresh kernel,
+   in a new container of the student image. One failing or timed-out cell
+   does not stop the run.
+4. **Score.** Each named check passes when every call it made passed. The
+   score is passed / total. A check that never ran (an earlier error, a dead
+   kernel) counts as failed and is marked "did not run". When an exercise cell
+   itself failed, its error is shown with the check's feedback.
+
+All 46 course notebooks are graded under seven kinds of submission by
+`jupyter/grader/tests/check_course_notebooks.py`: unfinished, fully answered
+(299/299 checks), answered without cell ids, two kinds of tampering, a syntax
+error and an endless loop. Every run gives the expected result.
+
+**What it does not stop.** The anti-tampering scope is the same as other
+notebook autograders: it resists accidental and casual tampering, not a
+determined cheat. Code in a student's function runs in the same process as
+the checks, so it can monkeypatch libraries (`numpy.allclose`), reach the
+recorder, or forge the report. A student can also call the reference
+solution, which sits in the notebook by design. Instructors review
+submissions in the Django admin (Academy → Submissions), which shows each
+student's code cells and per-check results. They can also queue submissions
+to be graded again.
+
+| Sandbox control | How |
+|---|---|
+| A new container per submission, removed afterwards | Labelled `furina.grader=sandbox`; leftovers are removed when the worker starts |
+| No network at all | `network_mode: none` |
+| Non-root, no privileges | uid 1000, all capabilities dropped, `no-new-privileges` |
+| CPU, memory, processes | `GRADER_CPU_LIMIT`, `GRADER_MEM_LIMIT` (no swap), 256 processes |
+| Time | `GRADER_CELL_TIMEOUT` per cell (the cell is interrupted, the run goes on) and `GRADER_TIMEOUT` for the whole notebook (the container is killed) |
+| Worker's reach | Docker only through `docker-proxy`; Django only through `/api/grader/`, which needs `GRADER_TOKEN` and which nginx answers with 404 from outside |
+| Queue limits | One submission per student and notebook at a time, `SUBMISSION_RATE_LIMIT` per account, `MAX_SUBMISSION_BYTES` per upload |
+
+The container options are checked by the worker tests. The worker's full path
+(bundle → run → read back → score → report to Django) was run against a live
+Django with a stand-in for Docker, including through the browser. **Not yet
+verified on a running Docker stack:** that the socket proxy passes the archive
+calls the worker uses (`PUT`/`GET /containers/{id}/archive`), and the
+sandbox's network and limit settings as `docker inspect` shows them. Do both
+before exposing grading.
+
 ## Deploying
 
 Everything is opt-in through `.env`. The hub needs its own host name, and
@@ -172,6 +244,15 @@ The `hub` profile adds three services: `jupyterhub`, `docker-proxy`, and
 straight away. nginx in the frontend container answers for the hub's host and
 every subdomain under it once `JUPYTERHUB_URL` is set.
 
+Grading is a separate profile, `grader`, and works with or without the hub.
+It adds the `grader` worker (and `docker-proxy` and `notebook-image` if the hub
+profile is off). Set one shared secret for Django and the worker:
+
+```sh
+COMPOSE_PROFILES=hub,grader
+GRADER_TOKEN=$(openssl rand -hex 32)
+```
+
 To try it on one machine, use the `*.localhost` names. Browsers resolve them
 to the local machine, and they are a secure context, so JupyterLite's service
 worker works:
@@ -195,18 +276,29 @@ JUPYTERHUB_URL=http://notebooks.furina.localhost:8080
 | `NOTEBOOK_MEM_LIMIT` / `_CPU_LIMIT` / `_PIDS_LIMIT` | `1G` / `1` / `256` | Per-student limits |
 | `NOTEBOOK_IDLE_SECONDS` | `1800` | Idle server shutdown |
 | `NOTEBOOKS_GITHUB` | empty | `owner/repo/blob/branch/notebooks`: shows "Open in Colab" (public repositories only) |
+| `GRADER_TOKEN` | empty | Shared secret between Django and the grader worker; empty turns grading off. Set it only where the worker runs: without one, submissions stay queued, and a student cannot hand the same notebook in again until it is graded |
+| `SUBMISSION_RATE_LIMIT` | `30/hour` | Notebooks handed in per student account |
+| `MAX_SUBMISSION_BYTES` | 8 MiB | Largest upload (outputs are discarded, so this is generous) |
+| `GRADING_STALE_SECONDS` | `900` | A submission still running after this long is queued again (three attempts) |
+| `GRADER_CELL_TIMEOUT` / `GRADER_TIMEOUT` | `60` / `300` | Seconds per cell / per notebook in the sandbox |
+| `GRADER_MEM_LIMIT` / `GRADER_CPU_LIMIT` | `1g` / `1` | Sandbox limits |
 
 ## API
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET` | `/api/auth/session/` | Who is signed in, whether the hub is enabled; sets the CSRF cookie |
+| `GET` | `/api/auth/session/` | Who is signed in, whether the hub and grading are enabled; sets the CSRF cookie |
 | `POST` | `/api/auth/register/` | Create a student account and sign in (CSRF checked) |
 | `POST` | `/api/auth/login/` | Sign in (CSRF checked, rate limited) |
 | `POST` | `/api/auth/logout/` | Sign out and revoke the hub's tokens |
 | `GET` | `/api/progress/` | Passed knowledge checks (signed in) |
 | `POST` | `/api/progress/` | Mark `course/lesson` keys complete; idempotent |
 | `POST` | `/api/notebooks/launch/` | Authorize and record a notebook launch; returns the hub URL |
+| `GET` | `/api/submissions/?path=` | The signed-in student's latest submissions (of one notebook) |
+| `POST` | `/api/submissions/` | Hand in a notebook: `path` and `notebook` (multipart file or JSON); rate limited |
+| `GET` | `/api/submissions/{id}/` | One of the student's submissions, with per-check results |
+| `POST` | `/api/grader/claim/` | Grader worker only (`Authorization: Bearer <GRADER_TOKEN>`): take the oldest queued submission |
+| `POST` | `/api/grader/submissions/{id}/result/` | Grader worker only: report a result |
 | `GET` | `/api/auth/hub-user/` | OAuth user info for the hub (bearer token, `profile` scope) |
 | `GET` | `/api/oauth/authorize/`, `POST` `/api/oauth/token/` | OAuth endpoints used by the hub |
 
@@ -235,8 +327,22 @@ with `notebook: { path, title }`, and run:
 python notebooks/tools/check_notebooks.py --execute
 ```
 
-Rebuild the student image (`docker compose build notebook-image`) and the
-frontend to publish it.
+Rebuild the student image (`docker compose build notebook-image`), the
+frontend and the grader (`docker compose build grader`) to publish it. The
+grader grades against its own copy of the templates, so it must be rebuilt
+whenever a notebook changes.
+
+For grading, a check counts when a `practice*(...)` or `check(...)` call in a
+non-exercise cell names the exercise: its first string argument is the check's
+name, and the argument after it is the learner's function (or a wrapper whose
+check name is the exercise's name). After changing a notebook or the grader,
+run the grader against every course notebook (slow; it runs each notebook
+seven times):
+
+```sh
+cd jupyter/grader && python tests/check_course_notebooks.py
+python -m unittest discover -s tests    # the grader's own tests
+```
 
 ## Backup and restore
 
@@ -258,6 +364,27 @@ docker run --rm -v furina-nb-u12:/data -v "$PWD":/backup alpine \
     tar xzf /backup/furina-nb-u12.tgz -C /data
 ```
 
+## Course content
+
+Nine courses are notebook courses, with 46 notebooks in `notebooks/` (one
+folder per course): Mathematics for ML from First Principles, Neural Networks
+from Scratch, Build Your Own Autograd, and the six deep-learning courses (Base
+Model, Intermediate, Transformers, LLMs, Vision-Language, Voice), which were
+rewritten so learners build each model in NumPy. Every notebook runs top to
+bottom in a clean kernel, with its exercise stubs unfilled, on the student
+image (Python 3.13) and in CPython 3.14, where `check_notebooks.py --execute`
+runs them; each was also run with every stub filled from its reference.
+The deep-learning courses share one small reverse-mode tensor engine,
+which learners write in Base Model Training and which later courses include
+in a collapsed recap cell.
+
+Two things to know:
+
+- In Google Colab the collapsed reference cells are shown expanded: Colab does
+  not read Jupyter's `source_hidden` metadata.
+- Runtimes were measured in CPython. In the browser preview (Pyodide) the
+  training notebooks take several times longer.
+
 ## Not built yet
 
 This slice delivers the PRD's core loop. Still to come, roughly in the PRD's
@@ -267,13 +394,15 @@ order:
   instructor course builder (courses are still static frontend data).
 - Enrollment and course access rules. Today every account may open every
   notebook.
-- Assignments, submissions and an isolated grading worker. The notebooks'
-  self-checks already test behaviour, not source text, so they can become
-  graders.
+- Assignments on top of grading: due dates, required notebooks per course,
+  and an instructor gradebook in the app (today instructors review
+  submissions in the Django admin, which needs staff access).
+- Handing in straight from the student's hub workspace, without the
+  download-and-upload step.
 - Analytics views over saved progress and launch records, and a student
   dashboard.
-- PyTorch and GPU environments, more of the from-scratch learning path
-  (numerical computing, ML algorithms, neural networks, autodiff), and the
-  marketing-focused courses.
+- The rest of the from-scratch path in the PRD addendum (numerical computing
+  and classical ML algorithms from scratch, with dependency-tier comparisons),
+  PyTorch and GPU environments, and the marketing-focused courses.
 - Moving the JupyterLite preview to its own origin, and per-student disk
   quotas.

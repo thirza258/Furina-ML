@@ -1,4 +1,4 @@
-export type CourseId = "math-foundations" | "neural-networks" | "training" | "evaluation" | "data-preparation" | "choosing-models" | "time-series" | "base-models" | "intermediate-models" | "transformers" | "llms" | "vision-language" | "voice" | "ml-system-design";
+export type CourseId = "math-foundations" | "neural-networks" | "autograd" | "training" | "evaluation" | "data-preparation" | "choosing-models" | "time-series" | "base-models" | "intermediate-models" | "transformers" | "llms" | "vision-language" | "voice" | "ml-system-design";
 export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
 export type CourseTrack = "Mathematics" | "Tabular ML" | "Time series" | "Deep learning" | "Language" | "Multimodal" | "Speech" | "ML systems";
 

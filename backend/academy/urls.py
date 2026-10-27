@@ -1,4 +1,8 @@
-"""URL routes for accounts, progress, notebooks and OAuth, mounted under ``/api/``."""
+"""URL routes for accounts, progress, notebooks, grading and OAuth, mounted under ``/api/``.
+
+The ``grader/`` routes are for the grader worker only. They need its token,
+and nginx does not forward them from outside.
+"""
 
 from django.urls import include, path
 from oauth2_provider import views as oauth_views
@@ -25,5 +29,17 @@ urlpatterns = [
     path("auth/hub-user/", views.HubUserView.as_view(), name="auth-hub-user"),
     path("progress/", views.ProgressView.as_view(), name="progress"),
     path("notebooks/launch/", views.NotebookLaunchView.as_view(), name="notebook-launch"),
+    path("submissions/", views.SubmissionListView.as_view(), name="submissions"),
+    path(
+        "submissions/<uuid:submission_id>/",
+        views.SubmissionDetailView.as_view(),
+        name="submission-detail",
+    ),
+    path("grader/claim/", views.GraderClaimView.as_view(), name="grader-claim"),
+    path(
+        "grader/submissions/<uuid:submission_id>/result/",
+        views.GraderResultView.as_view(),
+        name="grader-result",
+    ),
     path("oauth/", include(oauth_patterns)),
 ]
