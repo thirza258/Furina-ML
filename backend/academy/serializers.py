@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 from django.contrib.auth import get_user_model, password_validation
@@ -10,10 +11,13 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from academy.hub import is_notebook_path
+from academy.models import Submission
 
 #: Course and lesson ids are kebab-case slugs; they are also URL segments.
 _SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 MAX_PROGRESS_KEYS = 500
+#: Largest per-check result the grader may store for one submission.
+MAX_RESULT_CHARS = 500_000
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -76,3 +80,48 @@ class NotebookLaunchSerializer(serializers.Serializer):
                 "Use a lesson notebook path such as 'math-foundations/01_intro.ipynb'."
             )
         return value
+
+
+class SubmissionCreateSerializer(serializers.Serializer):
+    """The lesson template a submitted notebook is a copy of.
+
+    The notebook itself (an uploaded file or a JSON value) is read by the view,
+    which keeps only its code cells.
+    """
+
+    path = serializers.CharField(max_length=255)
+
+    def validate_path(self, value: str) -> str:
+        return NotebookLaunchSerializer().validate_path(value)
+
+
+class SubmissionSerializer(serializers.ModelSerializer):
+    """A submission as its owner sees it. The notebook itself is not echoed back."""
+
+    class Meta:
+        model = Submission
+        fields = [
+            "id", "path", "status", "score", "passed", "total", "result", "error",
+            "created_at", "finished_at",
+        ]
+        read_only_fields = fields
+
+
+class GradeResultSerializer(serializers.Serializer):
+    """What the grader worker posts back for a submission it claimed."""
+
+    status = serializers.ChoiceField(
+        choices=[Submission.Status.GRADED, Submission.Status.ERROR]
+    )
+    score = serializers.FloatField(min_value=0, max_value=1, required=False, allow_null=True)
+    passed = serializers.IntegerField(min_value=0, required=False, allow_null=True)
+    total = serializers.IntegerField(min_value=0, required=False, allow_null=True)
+    result = serializers.DictField(required=False)
+    error = serializers.CharField(max_length=2000, required=False, allow_blank=True)
+
+    def validate(self, attrs: dict) -> dict:
+        if attrs["status"] == Submission.Status.GRADED and attrs.get("total") is None:
+            raise serializers.ValidationError({"total": "A graded result needs a total."})
+        if len(json.dumps(attrs.get("result", {}))) > MAX_RESULT_CHARS:
+            raise serializers.ValidationError({"result": "The result is too large."})
+        return attrs

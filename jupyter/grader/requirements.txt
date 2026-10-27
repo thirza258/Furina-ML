@@ -1,0 +1,4 @@
+# The grader worker. It only builds notebooks (standard library), talks to
+# Docker and to Django's internal API; the notebooks themselves run in the
+# student image, with that image's pinned libraries.
+docker==7.1.0

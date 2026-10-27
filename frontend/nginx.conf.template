@@ -51,6 +51,12 @@ server {
                application/json application/xml image/svg+xml;
 
     # --- the API ---------------------------------------------------------
+    # The grader worker's internal API. The worker calls the backend
+    # directly; from outside it does not exist.
+    location /api/grader/ {
+        return 404;
+    }
+
     # Host is forwarded with its port ($http_host, not $host). Django compares
     # a POST's Origin header with it, so on any port but 80/443 -- the default
     # :8080 included -- $host would fail every signed-in form and API call

@@ -1,6 +1,7 @@
 import type { Course, CourseLesson, DependencyTier } from "./courses/types";
 import { mathFoundationsCourse } from "./courses/mathFoundations";
 import { neuralNetworksCourse } from "./courses/neuralNetworks";
+import { autogradCourse } from "./courses/autograd";
 import { tabularCourses } from "./courses/tabular";
 import { dataPreparationCourse } from "./courses/dataPreparation";
 import { choosingModelsCourse } from "./courses/choosingModels";
@@ -18,7 +19,7 @@ export type { Course, CourseId, CourseLevel, CourseTrack, CourseLesson, Dependen
 export const COURSES: Course[] = [
   mathFoundationsCourse,
   ...tabularCourses, dataPreparationCourse, choosingModelsCourse, timeSeriesCourse,
-  neuralNetworksCourse, baseModelsCourse, intermediateCourse,
+  neuralNetworksCourse, autogradCourse, baseModelsCourse, intermediateCourse,
   transformersCourse, llmsCourse, visionLanguageCourse, voiceCourse,
   mlSystemDesignCourse,
 ];

@@ -31,3 +31,6 @@ dist-ssr
 # The Docker image builds its own copy.
 public/notebooks/
 .jupyterlite-venv/
+
+# jupyter lite build bookkeeping
+.jupyterlite.doit.db

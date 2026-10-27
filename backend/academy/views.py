@@ -1,4 +1,4 @@
-"""HTTP API for accounts, saved course progress and notebook launches.
+"""HTTP API for accounts, saved course progress, notebook launches and grading.
 
 Mounted under ``/api/`` next to the workbench endpoints, which stay open to
 anonymous visitors. The SPA signs in with a Django session: it reads the CSRF
@@ -9,10 +9,13 @@ so another site cannot sign a visitor in or out behind their back.
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from drf_spectacular.utils import extend_schema
@@ -25,14 +28,27 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from academy.grading import HasGraderToken, InvalidNotebook, code_cells, grading_enabled
 from academy.hub import hub_enabled, hub_username, lab_url, launch_url
-from academy.models import INSTRUCTOR_GROUP, STUDENT_GROUP, LessonProgress, NotebookLaunch
+from academy.models import (
+    INSTRUCTOR_GROUP,
+    STUDENT_GROUP,
+    LessonProgress,
+    NotebookLaunch,
+    Submission,
+)
 from academy.serializers import (
+    GradeResultSerializer,
     LoginSerializer,
     NotebookLaunchSerializer,
     ProgressSerializer,
     RegisterSerializer,
+    SubmissionCreateSerializer,
+    SubmissionSerializer,
 )
+
+#: How many times a submission is tried before it is reported as an error.
+MAX_GRADING_ATTEMPTS = 3
 
 
 def roles(user) -> list[str]:
@@ -61,6 +77,7 @@ def _session_payload(request) -> dict:
         "notebooks": {
             "hub_enabled": hub_enabled(),
             "hub_url": settings.JUPYTERHUB_URL or None,
+            "grading_enabled": grading_enabled(),
         },
     }
 
@@ -226,3 +243,142 @@ class NotebookLaunchView(APIView):
         path = serializer.validated_data["path"]
         NotebookLaunch.objects.create(user=request.user, path=path)
         return Response({"path": path, "url": launch_url(path), "lab_url": lab_url(path)})
+
+
+class SubmissionListView(APIView):
+    """The signed-in student's submissions; POST hands a notebook in for grading."""
+
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "submissions"
+
+    def get_throttles(self):
+        # Only handing in is rate limited; listing is what the page polls.
+        return [ScopedRateThrottle()] if self.request.method == "POST" else []
+
+    @extend_schema(responses=SubmissionSerializer(many=True))
+    def get(self, request):
+        submissions = Submission.objects.filter(user=request.user)
+        path = request.query_params.get("path")
+        if path:
+            submissions = submissions.filter(path=path)
+        return Response({"results": SubmissionSerializer(submissions[:20], many=True).data})
+
+    @extend_schema(request=SubmissionCreateSerializer, responses=SubmissionSerializer)
+    def post(self, request):
+        if not grading_enabled():
+            return Response(
+                {"detail": "Automatic grading is not enabled on this site."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        if int(request.META.get("CONTENT_LENGTH") or 0) > settings.MAX_SUBMISSION_BYTES:
+            return Response(
+                {"detail": "That notebook is too large to grade. Clear its outputs and try again."},
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            )
+        serializer = SubmissionCreateSerializer(data={"path": request.data.get("path")})
+        serializer.is_valid(raise_exception=True)
+        path = serializer.validated_data["path"]
+
+        upload = request.FILES.get("notebook")
+        try:
+            notebook = code_cells(upload.read() if upload is not None else request.data.get("notebook"))
+        except InvalidNotebook as error:
+            return Response({"notebook": [str(error)]}, status=status.HTTP_400_BAD_REQUEST)
+
+        pending = Submission.objects.filter(
+            user=request.user,
+            path=path,
+            status__in=[Submission.Status.QUEUED, Submission.Status.RUNNING],
+        )
+        if pending.exists():
+            return Response(
+                {"detail": "Your last submission of this notebook is still being graded."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        submission = Submission.objects.create(user=request.user, path=path, notebook=notebook)
+        return Response(SubmissionSerializer(submission).data, status=status.HTTP_201_CREATED)
+
+
+class SubmissionDetailView(APIView):
+    """One of the signed-in student's submissions, with its per-check results."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=SubmissionSerializer)
+    def get(self, request, submission_id):
+        submission = Submission.objects.filter(id=submission_id, user=request.user).first()
+        if submission is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(SubmissionSerializer(submission).data)
+
+
+class GraderClaimView(APIView):
+    """Internal: the grader worker takes the oldest queued submission.
+
+    Answers 204 when there is nothing to grade. A submission left running
+    longer than ``GRADING_STALE_SECONDS`` (its worker died) goes back in the
+    queue, up to three attempts.
+    """
+
+    authentication_classes = []
+    permission_classes = [HasGraderToken]
+
+    @extend_schema(exclude=True)
+    def post(self, request):
+        now = timezone.now()
+        stale = Submission.objects.filter(
+            status=Submission.Status.RUNNING,
+            started_at__lt=now - timedelta(seconds=settings.GRADING_STALE_SECONDS),
+        )
+        stale.filter(attempts__gte=MAX_GRADING_ATTEMPTS).update(
+            status=Submission.Status.ERROR,
+            error="Grading did not finish. Try submitting again.",
+            finished_at=now,
+        )
+        stale.update(status=Submission.Status.QUEUED)
+
+        with transaction.atomic():
+            submission = (
+                Submission.objects.select_for_update(skip_locked=True)
+                .filter(status=Submission.Status.QUEUED)
+                .order_by("created_at")
+                .first()
+            )
+            if submission is None:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            submission.status = Submission.Status.RUNNING
+            submission.started_at = now
+            submission.attempts += 1
+            submission.save(update_fields=["status", "started_at", "attempts"])
+        return Response(
+            {"id": str(submission.id), "path": submission.path, "notebook": submission.notebook}
+        )
+
+
+class GraderResultView(APIView):
+    """Internal: the grader worker reports the outcome of a submission it claimed."""
+
+    authentication_classes = []
+    permission_classes = [HasGraderToken]
+
+    @extend_schema(exclude=True)
+    def post(self, request, submission_id):
+        serializer = GradeResultSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        updated = Submission.objects.filter(
+            id=submission_id, status=Submission.Status.RUNNING
+        ).update(
+            status=data["status"],
+            score=data.get("score"),
+            passed=data.get("passed"),
+            total=data.get("total"),
+            result=data.get("result", {}),
+            error=data.get("error", ""),
+            finished_at=timezone.now(),
+        )
+        if not updated:
+            return Response(
+                {"detail": "That submission is not being graded."}, status=status.HTTP_409_CONFLICT
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -70,7 +70,11 @@ page comes from a model that was fitted on the data you uploaded.
   the same scale, so the chart says so instead of drawing them together
 
 ### 5. Courses
-- Fourteen courses with **107 lessons**, from beginner to advanced:
+- Fifteen courses with **114 lessons**, from beginner to advanced. Nine are
+  **notebook courses** (46 Jupyter notebooks): learners build each model
+  themselves, typing every building block into a "✍️ Your turn" cell that is
+  checked against a reference, after which the rest of the notebook runs on
+  their own code:
 
   | Course | Lessons | Practical work |
   |--------|---------|----------------|
@@ -79,24 +83,28 @@ page comes from a model that was fitted on the data you uploaded.
   | Model Evaluation | 4 | Metrics, overfitting and run comparisons |
   | Data Preparation | 5 | Reading the column profile, safe cleaning, and preprocessing without leaking the test split |
   | Choosing a Model | 8 | Baselines, every estimator family in the workbench, and a fair, documented model comparison |
-  | Time-Series Forecasting | 8 | Chronological backtesting, lag features, multi-step forecasts and calibrated prediction intervals |
-  | Neural Networks from Scratch | 9 | Type-along NumPy notebooks: build, backpropagate, train, save and reload your own network |
-  | Base Model Training | 8 | A PyTorch MLP trained from random weights |
-  | Intermediate Model Training | 8 | Imbalance handling and validation-selected thresholds |
-  | Transformer Models | 8 | A causal transformer, mask checks and token prediction |
-  | Large Language Model Training | 8 | Response-only supervision and a small LoRA adaptation lab |
-  | Vision-Language Models (VLMs) | 8 | Image/text alignment and multi-positive contrastive learning |
-  | Voice & Speech Models | 8 | Audio features, CTC alignment and tone-sequence recognition |
+  | Time-Series Forecasting | 8 | Chronological backtesting, lag features, multi-step forecasts and calibrated prediction intervals (Python lab) |
+  | Neural Networks from Scratch | 12 | NumPy notebooks: neurons, layers, losses, backpropagation, training, real data, regularisation, a framework comparison and a final project |
+  | Build Your Own Autograd | 4 | Pure-Python notebooks: computational graphs, a scalar autodiff engine, reverse mode, and a network trained with it |
+  | Base Model Training | 8 | NumPy notebooks: a tensor autograd engine, data pipelines, Adam, diagnostics, exact-resume checkpoints and evaluation |
+  | Intermediate Model Training | 8 | NumPy notebooks: imbalance and thresholds, schedules, clipping and accumulation, transfer, mixed precision, search and data parallelism |
+  | Transformer Models | 8 | NumPy notebooks: tokenizers, attention and masks, transformer blocks, and a tiny transformer trained and sampled |
+  | Large Language Model Training | 8 | NumPy notebooks: deduplication, pretraining, response-only tuning, LoRA, quantisation, DPO, retrieval, evaluation and release |
+  | Vision-Language Models (VLMs) | 8 | NumPy notebooks: patch encoders, contrastive alignment, a connector for visual question answering, and grounding checks |
+  | Voice & Speech Models | 8 | NumPy notebooks: a hand-written DFT and log-mel features, CTC trained from scratch, augmentation, audio tokens and error rates |
   | Designing Machine Learning Systems | 16 | Architecture, data contracts, serving, monitoring, rollout and a complete design workbook |
 
+- Notebooks open beside the lesson: in the browser with JupyterLite (no
+  account or installation), as the learner's own saved copy on a JupyterHub
+  server, in Google Colab (optional), or as a download
 - Search course and lesson topics; filter by level or specialization
 - Course overviews with prerequisites, linked learning paths, syllabuses,
-  primary references, downloadable labs and capstone review criteria
+  notebooks, primary references, downloadable labs and capstone review criteria
 - Eight self-contained Python scripts under `frontend/public/course-labs/`,
-  with setup instructions. The six neural-model labs use pinned PyTorch
-  requirements, the forecasting lab uses pinned NumPy and scikit-learn, and
-  the system-design lab uses only Python's standard library. All generate
-  local teaching data and run real model fitting on CPU
+  with setup instructions. The forecasting lab uses pinned NumPy and
+  scikit-learn, and the system-design lab only Python's standard library. The
+  six PyTorch labs are kept as optional versions of the deep-learning courses'
+  experiments; the courses themselves no longer need them
 - Interactive examples for splits, classification/regression metrics, attention
   masks, training memory and batch budgets, audio timing, CTC decoding,
   system architecture, serving capacity and request-based error budgets
@@ -105,13 +113,13 @@ page comes from a model that was fitted on the data you uploaded.
   simulated; it does not start a prediction server or measure real throughput.
   A downloadable workbook includes a worked design and capstone rubric
 - A knowledge check in every lesson, with explanations and unlimited retries
-- Knowledge-check progress is saved in this browser; courses can be read and
-  completed without a dataset or a running backend
-- Python labs and capstones are reviewed separately from quiz completion.
-  Forecasting, neural, LLM, vision-language, speech and system-design labs run
-  in an external Python environment; the web training tools continue to train
-  tabular scikit-learn models. The workbench shuffles its train/test split, so
-  time-series practice happens in the forecasting lab
+- Knowledge-check progress is saved in this browser, or to the account when
+  signed in; courses can be read and completed without a dataset or a running
+  backend
+- Notebook checks, labs and capstones are reviewed separately from quiz
+  completion. The web training tools continue to train tabular scikit-learn
+  models; the workbench shuffles its train/test split, so time-series practice
+  happens in the forecasting lab
 - Open **Courses** from the sidebar, home page, or either model tool. Individual
   lessons have shareable URLs under `/app/courses/{course}/{lesson}`
 - Every course declares a dependency tier, from tier 0 (the Python standard
@@ -129,7 +137,11 @@ page comes from a model that was fitted on the data you uploaded.
   process limits, idle shutdown, a persistent volume, and no network route to
   the database, the API or the internet. JupyterHub signs students in through
   Furina's own OAuth provider, so there is no second login
-- The hub is opt-in (`COMPOSE_PROFILES=hub`). [docs/academy.md](docs/academy.md)
+- Automated grading: a signed-in student hands in a finished notebook and the
+  grader re-runs the lesson's own checks on their exercise cells, in a
+  throwaway container with no network, then lists each check as passed or not
+  yet, with its feedback
+- The hub and the grader are opt-in (`COMPOSE_PROFILES=hub,grader`). [docs/academy.md](docs/academy.md)
   covers the architecture, the security model, deployment, backups and what
   is not built yet; [notebooks/README.md](notebooks/README.md) covers writing
   notebooks
@@ -237,9 +249,10 @@ SITE_URL=https://furina.nevatal.id
 ```
 
 All public pages (`/`, `/about`), workbench tools (`/app`, `/app/preprocessing`,
-`/app/training`, `/app/evaluation`, `/app/dashboard`), and all 9 interactive
-courses with 72 lessons (`/app/courses/*`) are listed in `sitemap.xml` and
-allowed in `robots.txt` for indexing.
+`/app/training`, `/app/evaluation`, `/app/dashboard`), and every course and
+lesson (`/app/courses/*`) are listed in `sitemap.xml` and allowed in
+`robots.txt` for indexing. The sitemap is generated from the course catalogue;
+run `npm run sitemap` in `frontend/` after adding a course or lesson.
 
 #### Per-student notebook servers (JupyterHub)
 
@@ -260,6 +273,20 @@ JUPYTERHUB_CRYPT_KEY=<openssl rand -hex 32>
 Then open `http://furina.localhost:8080`, create an account and open any
 lesson notebook. The in-browser JupyterLite preview at `/notebooks/` is always
 built into the frontend image and needs none of this.
+
+#### Automated grading
+
+Also off by default, and independent of the hub. Add the `grader` profile and
+one shared secret:
+
+```bash
+COMPOSE_PROFILES=hub,grader          # or just grader
+GRADER_TOKEN=<openssl rand -hex 32>
+```
+
+Each lesson notebook then shows **Hand in for grading** to signed-in
+students. The grader's own tests and a check of every course notebook are in
+`jupyter/grader/tests/`; see [docs/academy.md](docs/academy.md#automated-grading).
 
 #### Behind HTTPS
 

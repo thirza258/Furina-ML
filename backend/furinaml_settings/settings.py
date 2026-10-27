@@ -186,6 +186,10 @@ REST_FRAMEWORK = {
         "assistant": os.getenv("ASSISTANT_RATE_LIMIT", "20/hour"),
         # Sign-in and sign-up, per client address: slows password guessing.
         "auth": os.getenv("AUTH_RATE_LIMIT", "10/minute"),
+        # Notebooks handed in for grading, per account (the endpoint needs a
+        # sign-in). Each one runs a sandbox container, so this caps what one
+        # student can queue.
+        "submissions": os.getenv("SUBMISSION_RATE_LIMIT", "30/hour"),
     },
     # The SPA signs in with a Django session. Basic authentication is left out
     # on purpose: it would accept passwords on every endpoint, unthrottled.
@@ -219,6 +223,16 @@ JUPYTERHUB_URL = os.getenv("JUPYTERHUB_URL", "").strip().rstrip("/")
 # registers it at start-up from these two values.
 JUPYTERHUB_OAUTH_CLIENT_ID = os.getenv("JUPYTERHUB_OAUTH_CLIENT_ID", "").strip()
 JUPYTERHUB_OAUTH_CLIENT_SECRET = os.getenv("JUPYTERHUB_OAUTH_CLIENT_SECRET", "").strip()
+
+# Automated grading. The grader worker (jupyter/grader) authenticates to the
+# internal grader API with this shared secret; empty turns grading off.
+GRADER_TOKEN = os.getenv("GRADER_TOKEN", "").strip()
+# The largest notebook a student can hand in. Outputs (plots) make up most of
+# a notebook's size and are thrown away, so this is generous.
+MAX_SUBMISSION_BYTES = int(os.getenv("MAX_SUBMISSION_BYTES") or 8 * 1024 * 1024)
+# A submission still running after this long is put back in the queue: its
+# worker most likely died. Keep it well above the grader's own time limit.
+GRADING_STALE_SECONDS = int(os.getenv("GRADING_STALE_SECONDS", "900"))
 
 # Django is the identity provider for JupyterHub (authorization code + PKCE).
 # Tokens are short-lived: the hub re-checks them, so revoking a student's

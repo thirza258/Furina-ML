@@ -8,7 +8,7 @@ export function CourseLab({ course }: { course: Course }) {
     : ["# Python 3.10+; uses only the standard library", `python3 ${course.lab.filename}`, `# Windows: python ${course.lab.filename}`].join("\n");
   return (
     <section className="callout my-8" aria-labelledby="course-lab-title">
-      <p className="field-label mb-2">Downloadable Python lab · CPU</p>
+      <p className="field-label mb-2">{course.practiceMode === "notebook" ? "Optional · Downloadable PyTorch lab · CPU" : "Downloadable Python lab · CPU"}</p>
       <h2 id="course-lab-title" className="text-h3 mb-3">{course.lab.title}</h2>
       <p className="mb-4 max-w-measure">{course.lab.description}</p>
       <div className="flex flex-wrap gap-3 mb-5">
@@ -38,7 +38,7 @@ export function CourseCapstone({ course }: { course: Course }) {
         <div><h3 className="text-h3 mb-3">What to deliver</h3><ul className="list-disc pl-5 space-y-2">{course.capstone.deliverables.map((item) => <li key={item}>{item}</li>)}</ul></div>
         <div><h3 className="text-h3 mb-3">Review criteria</h3><ul className="list-disc pl-5 space-y-2">{course.capstone.rubric.map((item) => <li key={item}>{item}</li>)}</ul></div>
       </div>
-      <p className="text-small text-ink-muted mt-5">Saved lesson progress tracks knowledge checks. {course.lab ? "Review the lab outputs and these project criteria separately; the browser does not grade your training run." : "Review your runs against these project criteria yourself; the browser does not grade them."}</p>
+      <p className="text-small text-ink-muted mt-5">Saved lesson progress tracks knowledge checks. {course.practiceMode === "notebook" ? "Review your notebook against these project criteria yourself; its checks test your code, but nothing grades the project." : course.lab ? "Review the lab outputs and these project criteria separately; the browser does not grade your training run." : "Review your runs against these project criteria yourself; the browser does not grade them."}</p>
     </section>
   );
 }

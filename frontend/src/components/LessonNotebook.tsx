@@ -7,7 +7,8 @@
  * - **My server** -- signed in, on a site that runs JupyterHub. The learner's
  *   own copy on their isolated server, saved between visits.
  * The choice is remembered, so every later lesson opens its notebook straight
- * away. "Open in Colab" and a download are always offered beside it.
+ * away. "Open in Colab" and a download are always offered beside it. When the
+ * site runs the grader, the finished notebook can be handed in below it.
  */
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -18,6 +19,7 @@ import type { Course, CourseLesson } from "../data/courseCatalogue";
 import type { NotebookLaunch } from "../interface/AccountTypes";
 import type { ApiError } from "../interface/MlTypes";
 import services, { NOTEBOOKS_GITHUB_PATH } from "../services/services";
+import NotebookSubmission from "./NotebookSubmission";
 
 type Runtime = "browser" | "server";
 const RUNTIME_KEY = "furina-ml.notebook-runtime";
@@ -51,6 +53,8 @@ export default function LessonNotebook({ course, lesson }: { course: Course; les
   const path = notebook?.path ?? "";
 
   const hubEnabled = session?.notebooks.hub_enabled ?? false;
+  // The workbench notebook loads data; it has no exercises to grade.
+  const gradable = (session?.notebooks.grading_enabled ?? false) && !path.startsWith("workbench/");
   const signedIn = session?.authenticated ?? false;
   // A remembered "server" choice only applies while it can be honoured.
   const runtime: Runtime | null = chosen === "server" && !(hubEnabled && signedIn) ? null : chosen;
@@ -167,6 +171,13 @@ export default function LessonNotebook({ course, lesson }: { course: Course; les
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads allow-modals"
             allow="clipboard-read; clipboard-write"
           />
+        </div>
+      )}
+
+      {gradable && (
+        <div className="px-4 py-4 border-t border-rule">
+          <h3 className="font-semibold mb-2">Hand in for grading</h3>
+          <NotebookSubmission path={path} />
         </div>
       )}
 
