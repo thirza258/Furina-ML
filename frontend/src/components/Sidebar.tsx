@@ -9,6 +9,7 @@
  * button, and every page renders its own empty state with a way forward.
  */
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { useWorkspace } from "../context/workspaceContext";
 
@@ -16,6 +17,17 @@ interface SidebarProps {
   selectedTool: string;
   setSelectedTool: (tool: string) => void;
 }
+
+/** Paths for each tool so search crawlers and users have real hyperlinks. */
+const TOOL_PATHS: Record<string, string> = {
+  "Landing Page": "/app",
+  "Dashboard": "/app/dashboard",
+  "Data Preprocessing": "/app/preprocessing",
+  "Data Training": "/app/training",
+  "Model Evaluation": "/app/evaluation",
+  "Courses": "/app/courses",
+  "About Us": "/about",
+};
 
 /** Must match the strings App.tsx switches on — a typo here is a dead link. */
 const APPLICATION_TOOLS = ["Landing Page", "Dashboard", "Courses", "About Us"] as const;
@@ -86,11 +98,11 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
       // A rule in the left margin marks the current tool, the way a change
       // bar marks a revised paragraph. No fill, no pill.
       <li key={tool}>
-        <button
-          type="button"
+        <Link
+          to={TOOL_PATHS[tool] ?? "/app"}
           onClick={() => { setSelectedTool(tool); setMobileOpen(false); }}
           aria-current={isSelected ? "page" : undefined}
-          className={`w-full text-left py-2 pl-3 pr-2 border-l-2 cursor-pointer transition-colors ${
+          className={`block w-full text-left py-2 pl-3 pr-2 border-l-2 cursor-pointer transition-colors no-underline ${
             isSelected
               ? "border-primary bg-paper-raised"
               : "border-transparent hover:border-rule-strong hover:bg-paper-raised"
@@ -133,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedTool, setSelectedTool }) => {
               {restoring ? "Restoring…" : step.hint}
             </span>
           )}
-        </button>
+        </Link>
       </li>
     );
   };

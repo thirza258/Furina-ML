@@ -16,6 +16,7 @@ import ResidualPlot from "../../components/ResidualPlot";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
 import { WARNING_MARK } from "../../explainer/marks";
+import { usePageSeo } from "../../hooks/usePageSeo";
 import type {
   TrainingRunDetail,
   TrainingRunSummary,
@@ -177,6 +178,13 @@ function CrossValidationBlock({ run }: { run: TrainingRunDetail }) {
 export default function EvaluationReport() {
   const { dataset, run, setRun, goToTool, restoring, restoreError } =
     useWorkspace();
+
+  usePageSeo({
+    title: "Model Evaluation — Metrics, Diagnostics & Predictions",
+    description:
+      "Review fitted model evaluations: confusion matrices, per-class classification metrics, regression residuals, feature importance, and real-time predictions.",
+    path: "/app/evaluation",
+  });
 
   const [pastRuns, setPastRuns] = useState<TrainingRunSummary[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string>("");

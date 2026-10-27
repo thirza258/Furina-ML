@@ -29,6 +29,7 @@ import {
 import MetricBars from "../components/MetricBars";
 import { useWorkspace } from "../context/workspaceContext";
 import { WARNING_MARK } from "../explainer/marks";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 const TOOL_EVALUATION = "Model Evaluation";
 const TOOL_TRAINING = "Data Training";
@@ -72,6 +73,13 @@ function runLabel(run: TrainingRunSummary): string {
 
 export default function Dashboard() {
   const { goToTool, setRun } = useWorkspace();
+
+  usePageSeo({
+    title: "Runs Comparison Dashboard",
+    description:
+      "Compare and rank every training run across classification and regression metrics, fit durations, and holdout test scores.",
+    path: "/app/dashboard",
+  });
 
   const [runs, setRuns] = useState<TrainingRunSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -14,9 +14,12 @@ import {
 } from "../../components/ColumnSelector";
 import HyperparameterForm from "../../components/HyperparameterForm";
 import CourseLink from "../../components/CourseLink";
+import NeuralNetworkAnimatedView from "../../components/training/NeuralNetworkAnimatedView";
+import WeightCalculationAnalysisView from "../../components/training/WeightCalculationAnalysisView";
 import { useWorkspace } from "../../context/workspaceContext";
 import services from "../../services/services";
 import { WARNING_MARK } from "../../explainer/marks";
+import { usePageSeo } from "../../hooks/usePageSeo";
 import type {
   AlgorithmSpec,
   ApiError,
@@ -152,6 +155,13 @@ function draftTrainPct(draft: SplitDraft): number | null {
 const DataTraining = () => {
   const { dataset, setRun, goToTool, restoring, restoreError } = useWorkspace();
 
+  usePageSeo({
+    title: "Data Training — Model Fitting & Cross-Validation",
+    description:
+      "Select target and feature columns, tune hyperparameters, configure train/test split and k-fold cross-validation, and train scikit-learn models.",
+    path: "/app/training",
+  });
+
   /* ---------------- algorithm registry ---------------- */
   const [algorithms, setAlgorithms] = useState<AlgorithmSpec[]>([]);
   const [algorithmsLoading, setAlgorithmsLoading] = useState<boolean>(true);
@@ -170,6 +180,11 @@ const DataTraining = () => {
   const [scaleFeatures, setScaleFeatures] = useState<boolean>(true);
   const [cvFolds, setCvFolds] = useState<number | null>(null);
   const [runName, setRunName] = useState<string>("");
+
+  /* ---------------- mode (normal, animated, weight analysis) ---------------- */
+  const [trainingMode, setTrainingMode] = useState<
+    "normal" | "animated" | "weight_analysis"
+  >("normal");
 
   /* ---------------- training ---------------- */
   const [training, setTraining] = useState<boolean>(false);
@@ -429,45 +444,6 @@ const DataTraining = () => {
     );
   }
 
-  if (!dataset) {
-    return (
-      <div className="bg-paper min-h-full p-8 w-full">
-        <div className="panel">
-          <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
-          <CourseLink courseId="training" />
-
-          {restoreError && (
-            <div className="mb-6 rounded-control border-l-4 border-state-bad bg-red-50 p-4">
-              <p className="font-semibold text-state-bad">
-                ✕ Could not restore your last dataset
-              </p>
-              <p className="mt-1 text-sm text-ink">{restoreError}</p>
-            </div>
-          )}
-
-          <div className="py-10 text-center">
-            <h2 className="font-serif text-h3 text-ink mb-4">
-              No dataset loaded yet
-            </h2>
-            <p className="mx-auto mb-6 max-w-xl text-ink-muted">
-              Training needs a real CSV to learn from. Upload one on the Data
-              Preprocessing page — Furina profiles every column there, and this
-              page then builds the target, feature and algorithm choices out of
-              that profile.
-            </p>
-            <button
-              type="button"
-              onClick={() => goToTool("Data Preprocessing")}
-              className="btn btn-primary text-body py-3 mx-auto w-full max-w-sm"
-            >
-              Go to Data Preprocessing
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const formDisabled = training;
 
   return (
@@ -475,17 +451,140 @@ const DataTraining = () => {
       <div className="panel">
         <style>{INDETERMINATE_CSS}</style>
 
-        <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">Data Training</h1>
+        <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
+          Data Training
+        </h1>
         <CourseLink courseId="training" />
 
-        <div className="mb-8 bg-paper-sunken p-4">
-          <p className="text-sm text-ink-muted">Training on</p>
-          <p className="text-lg font-semibold text-ink">{dataset.name}</p>
-          <p className="text-sm text-ink-muted">
-            {dataset.n_rows.toLocaleString()} rows · {dataset.n_cols} columns ·
-            source: {dataset.source}
+        {/* ---------------- mode selector ---------------- */}
+        <div className="mb-10">
+          <h2 className="font-serif text-h3 text-ink mb-4">Training mode</h2>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={formDisabled}
+              onClick={() => setTrainingMode("normal")}
+              className={`rounded-control px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                trainingMode === "normal"
+                  ? "bg-primary text-white"
+                  : "bg-rule text-ink hover:bg-rule-strong"
+              }`}
+            >
+              Normal
+            </button>
+            <button
+              type="button"
+              disabled={formDisabled}
+              onClick={() => setTrainingMode("animated")}
+              className={`rounded-control px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                trainingMode === "animated"
+                  ? "bg-primary text-white"
+                  : "bg-rule text-ink hover:bg-rule-strong"
+              }`}
+            >
+              Animated (Neural Network)
+            </button>
+            <button
+              type="button"
+              disabled={formDisabled}
+              onClick={() => setTrainingMode("weight_analysis")}
+              className={`rounded-control px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                trainingMode === "weight_analysis"
+                  ? "bg-primary text-white"
+                  : "bg-rule text-ink hover:bg-rule-strong"
+              }`}
+            >
+              Weight Calculation Analysis
+            </button>
+          </div>
+          <p className="mt-2 text-sm text-ink-muted">
+            {trainingMode === "normal" &&
+              "Standard scikit-learn training pipeline: split the dataset, tune hyperparameters, run cross-validation and fit the model."}
+            {trainingMode === "animated" &&
+              "Animated Multi-Layer Perceptron: live forward signal propagation, backpropagation gradient flow, loss convergence and synapse inspection."}
+            {trainingMode === "weight_analysis" &&
+              "Step-by-step mathematical breakdown of linear combinations (z = wᵀx + b), non-linear activations, loss sensitivity (∂L/∂z) and weight updates."}
           </p>
         </div>
+
+        <hr className="my-6 border-t border-rule" />
+
+        {/* ---------------- Animated Mode View ---------------- */}
+        {trainingMode === "animated" && (
+          <NeuralNetworkAnimatedView
+            dataset={dataset}
+            selectedTarget={target}
+            selectedFeatures={effectiveFeatures}
+            requestedTask={requestedTask}
+            onSwitchToWeightAnalysis={() => setTrainingMode("weight_analysis")}
+            onSwitchToNormal={() => setTrainingMode("normal")}
+          />
+        )}
+
+        {/* ---------------- Weight Calculation Analysis Mode View ---------------- */}
+        {trainingMode === "weight_analysis" && (
+          <WeightCalculationAnalysisView
+            dataset={dataset}
+            selectedTarget={target}
+            selectedFeatures={effectiveFeatures}
+            requestedTask={requestedTask}
+            onSwitchToAnimated={() => setTrainingMode("animated")}
+            onSwitchToNormal={() => setTrainingMode("normal")}
+          />
+        )}
+
+        {/* ---------------- Normal Mode View ---------------- */}
+        {trainingMode === "normal" && (
+          <>
+            {!dataset ? (
+              <div>
+                {restoreError && (
+                  <div className="mb-6 rounded-control border-l-4 border-state-bad bg-red-50 p-4">
+                    <p className="font-semibold text-state-bad">
+                      ✕ Could not restore your last dataset
+                    </p>
+                    <p className="mt-1 text-sm text-ink">{restoreError}</p>
+                  </div>
+                )}
+
+                <div className="py-10 text-center">
+                  <h2 className="font-serif text-h3 text-ink mb-4">
+                    No dataset loaded yet
+                  </h2>
+                  <p className="mx-auto mb-6 max-w-xl text-ink-muted">
+                    Training needs a real CSV to learn from. Upload one on the Data
+                    Preprocessing page — Furina profiles every column there, and this
+                    page then builds the target, feature and algorithm choices out of
+                    that profile.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-3 max-w-md mx-auto">
+                    <button
+                      type="button"
+                      onClick={() => goToTool("Data Preprocessing")}
+                      className="btn btn-primary text-body py-3 flex-1"
+                    >
+                      Go to Data Preprocessing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTrainingMode("animated")}
+                      className="btn btn-secondary text-body py-3 flex-1"
+                    >
+                      Try Animated Mode →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mb-8 bg-paper-sunken p-4">
+                  <p className="text-sm text-ink-muted">Training on</p>
+                  <p className="text-lg font-semibold text-ink">{dataset.name}</p>
+                  <p className="text-sm text-ink-muted">
+                    {dataset.n_rows.toLocaleString()} rows · {dataset.n_cols} columns ·
+                    source: {dataset.source}
+                  </p>
+                </div>
 
         {/* ---------------- split ---------------- */}
         <div className="mb-10">
@@ -1140,6 +1239,10 @@ const DataTraining = () => {
             </ul>
           )}
         </div>
+          </>
+        )}
+      </>
+    )}
       </div>
     </div>
   );
