@@ -5,6 +5,7 @@ import { usePageSeo } from "../hooks/usePageSeo";
 
 const TRACKS = [...new Set(COURSES.map((course) => course.track))];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
+const LESSON_COUNT = COURSES.reduce((sum, course) => sum + course.lessons.length, 0);
 const SEARCH_INDEX = new Map(COURSES.map((course) => [course.id,
   [course.title, course.description, ...course.outcomes, ...course.lessons.flatMap((lesson) =>
     [lesson.title, lesson.intro, ...lesson.sections.map((section) => section.body)]
@@ -17,7 +18,7 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
   usePageSeo({
     title: "Machine Learning & AI Courses — Hands-on Labs & Capstones",
     description:
-      "Explore 9 self-paced courses and 72 lessons across Tabular ML, Base Models, Transformers, LLMs, Vision-Language, Voice, and ML System Design with downloadable Python labs.",
+      `Explore ${COURSES.length} self-paced courses and ${LESSON_COUNT} lessons, from the maths and neural networks from scratch to tabular ML, transformers, LLMs, vision-language and voice models, with notebooks you complete in the browser.`,
     path: "/app/courses",
     jsonLd: {
       "@context": "https://schema.org",

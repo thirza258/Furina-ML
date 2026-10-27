@@ -249,9 +249,10 @@ SITE_URL=https://furina.nevatal.id
 ```
 
 All public pages (`/`, `/about`), workbench tools (`/app`, `/app/preprocessing`,
-`/app/training`, `/app/evaluation`, `/app/dashboard`), and all 9 interactive
-courses with 72 lessons (`/app/courses/*`) are listed in `sitemap.xml` and
-allowed in `robots.txt` for indexing.
+`/app/training`, `/app/evaluation`, `/app/dashboard`), and every course and
+lesson (`/app/courses/*`) are listed in `sitemap.xml` and allowed in
+`robots.txt` for indexing. The sitemap is generated from the course catalogue;
+run `npm run sitemap` in `frontend/` after adding a course or lesson.
 
 #### Per-student notebook servers (JupyterHub)
 
