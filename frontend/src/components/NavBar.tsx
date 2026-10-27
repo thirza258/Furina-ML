@@ -102,12 +102,17 @@ const NavBar: React.FC<NavBarProps> = ({ selectedTool }) => {
       {/* The masthead is paper, like everything under it. A dark bar would
           read as an application chrome; this reads as the head of a page. */}
       <nav className="w-full bg-paper-raised border-b border-rule px-5 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <div className="flex items-baseline gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <Link
             to="/"
-            className="font-serif text-h3 font-semibold text-ink no-underline hover:text-primary transition-colors"
+            className="font-serif text-h3 font-semibold text-ink no-underline hover:text-primary transition-colors inline-flex items-center gap-2.5"
           >
-            Furina&nbsp;ML
+            <img
+              src="/logo_furina.png"
+              alt="Furina ML Logo"
+              className="w-7 h-7 object-contain flex-shrink-0"
+            />
+            <span>Furina&nbsp;ML</span>
           </Link>
           <span aria-hidden="true" className="text-rule-strong">
             /

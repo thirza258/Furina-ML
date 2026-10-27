@@ -73,7 +73,14 @@ export default function AccountPage({ mode }: { mode: Mode }) {
   return (
     <div className="p-5 sm:p-8">
       <div className="max-w-md">
-        <p className="field-label mb-3">Furina ML · Account</p>
+        <div className="flex items-center gap-2 mb-3">
+          <img
+            src="/logo_furina.png"
+            alt="Furina ML Logo"
+            className="w-5 h-5 object-contain"
+          />
+          <p className="field-label">Furina ML · Account</p>
+        </div>
         <h1 ref={headingRef} tabIndex={-1} className="text-h1 mb-4 focus:outline-none">
           {isLogin ? "Sign in" : "Create an account"}
         </h1>
