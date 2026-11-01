@@ -19,6 +19,7 @@ import AccountPage from './pages/AccountPage';
 import Dashboard from './pages/Dashboard';
 import HomePage from './pages/HomePage';
 import LandingPage from './pages/LandingPage';
+import LegalPage from './pages/LegalPage';
 import DataPreprocessing from './pages/traditionalMl/DataPreprocessing';
 import DataTraining from './pages/traditionalMl/DataTraining';
 import EvaluationReport from './pages/traditionalMl/ModelEvaluation';
@@ -141,6 +142,8 @@ function App() {
       <WorkspaceProvider onNavigate={goToTool}>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/privacy" element={<LegalPage />} />
+          <Route path="/terms" element={<LegalPage />} />
           <Route path="/app" element={<Workbench />} />
           <Route path="/app/dashboard" element={<Workbench />} />
           <Route path="/app/preprocessing" element={<Workbench />} />

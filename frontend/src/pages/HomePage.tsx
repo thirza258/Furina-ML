@@ -388,13 +388,20 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className="mt-10 pt-6 border-t border-rule flex items-center gap-2.5 font-sans text-caption text-ink-muted">
-            <img
-              src="/logo_furina.png"
-              alt="Furina ML Logo"
-              className="w-5 h-5 object-contain"
-            />
-            <span>Furina ML — MIT licensed.</span>
+          <div className="mt-10 pt-6 border-t border-rule flex flex-col sm:flex-row items-center justify-between gap-4 font-sans text-caption text-ink-muted">
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo_furina.png"
+                alt="Furina ML Logo"
+                className="w-5 h-5 object-contain"
+              />
+              <span>Furina ML — MIT licensed. Self-hosted Machine Learning Workbench.</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/privacy" className="hover:text-ink transition-colors underline">Privacy Policy</Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:text-ink transition-colors underline">Terms of Service</Link>
+            </div>
           </div>
         </footer>
       </div>

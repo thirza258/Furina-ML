@@ -15,6 +15,16 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://furina.nevatal.id/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://furina.nevatal.id/app</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
