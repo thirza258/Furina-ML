@@ -200,8 +200,11 @@ export default function LegalPage() {
         )}
 
         {/* Footer */}
-        <footer className="mt-12 pt-6 border-t border-rule text-caption text-ink-muted flex items-center justify-between">
-          <p>Furina ML · Self-Hosted Machine Learning Platform</p>
+        <footer className="mt-12 pt-6 border-t border-rule text-caption text-ink-muted flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div>
+            <p>Furina ML · Self-Hosted Machine Learning Platform</p>
+            <p className="text-[11px] text-ink-faint">This project is under nevatal.id for educational purposes.</p>
+          </div>
           <p>Contact: nevatalapp@gmail.com</p>
         </footer>
       </div>
