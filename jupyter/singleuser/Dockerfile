@@ -19,6 +19,15 @@ RUN useradd --create-home --uid 1000 --shell /bin/bash jovyan \
  && mkdir -p /home/jovyan/work \
  && chown jovyan:jovyan /home/jovyan/work
 
+# A C and a C++ compiler for the course that builds its model in C, C++ and
+# CUDA (notebooks/cuda-base-models). Student servers have no GPU, so its CUDA
+# kernels run on the notebooks' CPU emulator here. Installed in the image
+# because student servers have no internet access; the grader runs
+# submissions in this image too.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gcc g++ libc6-dev \
+ && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt /tmp/requirements.txt
 # Notebooks declare the kernel "python": JupyterLite's name for its Pyodide
 # kernel. On this server jupyter_client treats "python" as an alias of the

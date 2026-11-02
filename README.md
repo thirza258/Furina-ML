@@ -70,8 +70,8 @@ page comes from a model that was fitted on the data you uploaded.
   the same scale, so the chart says so instead of drawing them together
 
 ### 5. Courses
-- Fifteen courses with **114 lessons**, from beginner to advanced. Nine are
-  **notebook courses** (46 Jupyter notebooks): learners build each model
+- Sixteen courses with **122 lessons**, from beginner to advanced. Ten are
+  **notebook courses** (50 Jupyter notebooks): learners build each model
   themselves, typing every building block into a "✍️ Your turn" cell that is
   checked against a reference, after which the rest of the notebook runs on
   their own code:
@@ -87,6 +87,7 @@ page comes from a model that was fitted on the data you uploaded.
   | Neural Networks from Scratch | 12 | NumPy notebooks: neurons, layers, losses, backpropagation, training, real data, regularisation, a framework comparison and a final project |
   | Build Your Own Autograd | 4 | Pure-Python notebooks: computational graphs, a scalar autodiff engine, reverse mode, and a network trained with it |
   | Base Model Training | 8 | NumPy notebooks: a tensor autograd engine, data pipelines, Adam, diagnostics, exact-resume checkpoints and evaluation |
+  | Base Model Training in C, C++ and CUDA | 8 | No NumPy: backpropagation by hand in C, an autograd engine with RAII in C++, CUDA kernels with shared-memory tiles, and a training loop, checkpoints and capstone that stay on the GPU |
   | Intermediate Model Training | 8 | NumPy notebooks: imbalance and thresholds, schedules, clipping and accumulation, transfer, mixed precision, search and data parallelism |
   | Transformer Models | 8 | NumPy notebooks: tokenizers, attention and masks, transformer blocks, and a tiny transformer trained and sampled |
   | Large Language Model Training | 8 | NumPy notebooks: deduplication, pretraining, response-only tuning, LoRA, quantisation, DPO, retrieval, evaluation and release |
@@ -96,7 +97,11 @@ page comes from a model that was fitted on the data you uploaded.
 
 - Notebooks open beside the lesson: in the browser with JupyterLite (no
   account or installation), as the learner's own saved copy on a JupyterHub
-  server, in Google Colab (optional), or as a download
+  server, in Google Colab (optional), or as a download. The C, C++ and CUDA
+  notebooks compile code, which JupyterLite cannot do, so they skip the
+  browser option: their CUDA kernels run on an NVIDIA GPU where one is
+  present, such as a Colab GPU runtime, and on a CPU emulator built into the
+  notebooks everywhere else
 - Search course and lesson topics; filter by level or specialization
 - Course overviews with prerequisites, linked learning paths, syllabuses,
   notebooks, primary references, downloadable labs and capstone review criteria
@@ -123,7 +128,8 @@ page comes from a model that was fitted on the data you uploaded.
 - Open **Courses** from the sidebar, home page, or either model tool. Individual
   lessons have shareable URLs under `/app/courses/{course}/{lesson}`
 - Every course declares a dependency tier, from tier 0 (the Python standard
-  library only) to tier 3 (PyTorch)
+  library only) to tier 3 (PyTorch). A course whose notebooks compile native
+  code also declares its toolchain
 
 ### 6. Accounts and Jupyter notebooks
 - Optional accounts (`/register`, `/login`) with student, instructor and admin
@@ -135,7 +141,9 @@ page comes from a model that was fitted on the data you uploaded.
   or as a download
 - One isolated notebook container per student: non-root, CPU, memory and
   process limits, idle shutdown, a persistent volume, and no network route to
-  the database, the API or the internet. JupyterHub signs students in through
+  the database, the API or the internet. The image includes gcc and g++ for
+  the C, C++ and CUDA course; it has no GPU, so that course's kernels run on
+  its CPU emulator there. JupyterHub signs students in through
   Furina's own OAuth provider, so there is no second login
 - Automated grading: a signed-in student hands in a finished notebook and the
   grader re-runs the lesson's own checks on their exercise cells, in a

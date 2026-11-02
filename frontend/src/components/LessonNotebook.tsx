@@ -6,6 +6,8 @@
  *   own device; no account needed; edits stay in this browser.
  * - **My server** -- signed in, on a site that runs JupyterHub. The learner's
  *   own copy on their isolated server, saved between visits.
+ * A course with a `toolchain` compiles C, C++ or CUDA, which JupyterLite
+ * cannot do, so its notebooks offer the server, Colab and a download only.
  * The choice is remembered, so every later lesson opens its notebook straight
  * away. "Open in Colab" and a download are always offered beside it. When the
  * site runs the grader, the finished notebook can be handed in below it.
@@ -56,8 +58,12 @@ export default function LessonNotebook({ course, lesson }: { course: Course; les
   // The workbench notebook loads data; it has no exercises to grade.
   const gradable = (session?.notebooks.grading_enabled ?? false) && !path.startsWith("workbench/");
   const signedIn = session?.authenticated ?? false;
-  // A remembered "server" choice only applies while it can be honoured.
-  const runtime: Runtime | null = chosen === "server" && !(hubEnabled && signedIn) ? null : chosen;
+  // Notebooks that compile C, C++ or CUDA cannot run in JupyterLite.
+  const browserRunnable = !course.toolchain;
+  const usesCuda = course.toolchain?.includes("CUDA") ?? false;
+  // A remembered choice only applies while it can be honoured.
+  const runtime: Runtime | null =
+    (chosen === "server" && !(hubEnabled && signedIn)) || (chosen === "browser" && !browserRunnable) ? null : chosen;
 
   useEffect(() => {
     if (runtime !== "server" || !path) return;
@@ -113,7 +119,7 @@ export default function LessonNotebook({ course, lesson }: { course: Course; les
     <section className="my-8 border border-rule-strong bg-paper-raised" aria-labelledby="lesson-notebook-title">
       <header className="flex flex-wrap items-baseline justify-between gap-3 px-4 py-3 border-b border-rule">
         <div className="min-w-0">
-          <p className="field-label">Notebook · {tierLabel(course.dependencyTier)}</p>
+          <p className="field-label">Notebook · {tierLabel(course.dependencyTier)}{course.toolchain ? ` · ${course.toolchain}` : ""}</p>
           <h2 id="lesson-notebook-title" className="text-h3 truncate">📓 {notebook.title}</h2>
         </div>
         {actions}
@@ -126,10 +132,23 @@ export default function LessonNotebook({ course, lesson }: { course: Course; les
             Each check tells you when your code matches, and from then on the notebook runs on <em>your</em> version. Where should the code run?
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
-            <button type="button" onClick={() => choose("browser")} className="text-left border border-rule-strong bg-paper p-4 cursor-pointer hover:border-primary">
-              <span className="block font-semibold mb-1">▶ Run in this browser</span>
-              <span className="block text-small text-ink-muted">No account or installation. Python runs on your device; the first open downloads it once. Your edits stay in this browser.</span>
-            </button>
+            {browserRunnable ? (
+              <button type="button" onClick={() => choose("browser")} className="text-left border border-rule-strong bg-paper p-4 cursor-pointer hover:border-primary">
+                <span className="block font-semibold mb-1">▶ Run in this browser</span>
+                <span className="block text-small text-ink-muted">No account or installation. Python runs on your device; the first open downloads it once. Your edits stay in this browser.</span>
+              </button>
+            ) : (
+              <div className="border border-rule bg-paper p-4 text-small">
+                <span className="block font-semibold mb-1">Needs a compiler</span>
+                <span className="block text-ink-muted">
+                  The in-browser preview cannot run a compiler, and this notebook needs one ({course.toolchain}).{" "}
+                  {colabUrl
+                    ? <><a href={colabUrl} target="_blank" rel="noopener">Open it in Colab<span className="sr-only"> (opens in a new tab)</span></a>{usesCuda ? ", with a GPU runtime for real CUDA," : ""} or download it</>
+                    : "Download it"}{" "}
+                  and run it in Jupyter on a computer with gcc or clang.
+                </span>
+              </div>
+            )}
             {hubEnabled && signedIn ? (
               <button type="button" onClick={() => choose("server")} className="text-left border border-rule-strong bg-paper p-4 cursor-pointer hover:border-primary">
                 <span className="block font-semibold mb-1">▶ Open my saved copy</span>

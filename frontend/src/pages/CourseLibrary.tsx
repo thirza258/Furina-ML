@@ -85,7 +85,7 @@ export default function CourseLibrary({ completed, persistenceNote, headingRef }
           return (
             <section key={course.id} className="border-t-2 border-primary pt-5 flex flex-col" aria-labelledby={`course-title-${course.id}`}>
               <p className="field-label mb-2">{course.track} · {course.level}</p>
-              <p className="text-caption text-ink-muted mb-2">{tierLabel(course.dependencyTier)}</p>
+              <p className="text-caption text-ink-muted mb-2">{tierLabel(course.dependencyTier)}{course.toolchain && <> · {course.toolchain}</>}</p>
               <h2 id={`course-title-${course.id}`} className="text-h2 mb-3"><Link to={`/app/courses/${course.id}`} className="text-ink no-underline">{course.title}</Link></h2>
               <p className="mb-4">{course.description}</p>
               <p className="text-small text-ink-muted mb-4">{course.lessons.length} lessons · {studyTime(course.lessons.reduce((sum, lesson) => sum + lesson.minutes, 0))} study &amp; exercises · {course.practiceMode === "notebook" ? "Jupyter notebooks" : course.lab ? "Python lab + capstone" : "Workbench exercises"}</p>

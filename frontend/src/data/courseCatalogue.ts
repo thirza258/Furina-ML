@@ -7,6 +7,7 @@ import { dataPreparationCourse } from "./courses/dataPreparation";
 import { choosingModelsCourse } from "./courses/choosingModels";
 import { timeSeriesCourse } from "./courses/timeSeries";
 import { baseModelsCourse } from "./courses/baseModels";
+import { cudaBaseModelsCourse } from "./courses/cudaBaseModels";
 import { intermediateCourse } from "./courses/intermediate";
 import { transformersCourse } from "./courses/transformers";
 import { llmsCourse } from "./courses/llms";
@@ -19,7 +20,7 @@ export type { Course, CourseId, CourseLevel, CourseTrack, CourseLesson, Dependen
 export const COURSES: Course[] = [
   mathFoundationsCourse,
   ...tabularCourses, dataPreparationCourse, choosingModelsCourse, timeSeriesCourse,
-  neuralNetworksCourse, autogradCourse, baseModelsCourse, intermediateCourse,
+  neuralNetworksCourse, autogradCourse, baseModelsCourse, cudaBaseModelsCourse, intermediateCourse,
   transformersCourse, llmsCourse, visionLanguageCourse, voiceCourse,
   mlSystemDesignCourse,
 ];

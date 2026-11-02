@@ -380,6 +380,51 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/tensors-in-memory</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/c-forward-backward</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/cpp-autograd-engine</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/cpp-adam-checkpoints</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/cuda-execution-model</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/cuda-shared-memory</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/gpu-training-loop</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://furina.nevatal.id/app/courses/cuda-base-models/gpu-capstone</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://furina.nevatal.id/app/courses/intermediate-models</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
