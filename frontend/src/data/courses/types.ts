@@ -1,4 +1,4 @@
-export type CourseId = "math-foundations" | "neural-networks" | "autograd" | "training" | "evaluation" | "data-preparation" | "choosing-models" | "time-series" | "base-models" | "intermediate-models" | "transformers" | "llms" | "vision-language" | "voice" | "ml-system-design";
+export type CourseId = "math-foundations" | "neural-networks" | "autograd" | "training" | "evaluation" | "data-preparation" | "choosing-models" | "time-series" | "base-models" | "cuda-base-models" | "intermediate-models" | "transformers" | "llms" | "vision-language" | "voice" | "ml-system-design";
 export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
 export type CourseTrack = "Mathematics" | "Tabular ML" | "Time series" | "Deep learning" | "Language" | "Multimodal" | "Speech" | "ML systems";
 
@@ -56,6 +56,15 @@ export interface Course {
   outcomes: string[];
   practiceMode: "workbench" | "python" | "notebook";
   dependencyTier: DependencyTier;
+  /**
+   * Native code the course's notebooks compile, beyond the Python tier, e.g.
+   * "C/C++ compiler; NVIDIA GPU optional for CUDA". Such
+   * notebooks run a compiler, which the in-browser JupyterLite preview cannot
+   * do, so they open on the notebook server, in Colab or locally instead.
+   * notebooks/tools/check_notebooks.py checks the matching `toolchain` in
+   * each notebook's metadata.
+   */
+  toolchain?: string;
   toolPath?: string;
   toolLabel?: string;
   nextCourseId?: CourseId;

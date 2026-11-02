@@ -26,7 +26,9 @@ the notebook servers. The course catalogue itself is still the static data in
    runs once; the choice is remembered, so every later lesson opens straight
    away:
    - **This browser**: JupyterLite, with no account. Python (Pyodide) runs on
-     the learner's own device and edits stay in that browser.
+     the learner's own device and edits stay in that browser. Not offered for
+     notebooks that compile C, C++ or CUDA (courses with a `toolchain`),
+     because JupyterLite cannot run a compiler.
    - **My saved copy**: when the site runs the hub and the learner is signed
      in. The notebook comes from the learner's own server and workspace, and
      stays there between visits.
@@ -309,11 +311,15 @@ header. The SPA's API client sends it.
 
 | Where | Python | Libraries |
 |---|---|---|
-| Student server | 3.13 | `jupyter/singleuser/requirements.txt`: JupyterLab 4.6.4, NumPy 2.3.4, pandas 3.0.5, SciPy 1.18.1, scikit-learn 1.9.0, Matplotlib 3.11.2 |
+| Student server | 3.13 | `jupyter/singleuser/requirements.txt`: JupyterLab 4.6.4, NumPy 2.3.4, pandas 3.0.5, SciPy 1.18.1, scikit-learn 1.9.0, Matplotlib 3.11.2; plus Debian's gcc and g++ for the C, C++ and CUDA course (no GPU, so its kernels run on the notebooks' CPU emulator) |
 | JupyterLite preview | 3.14 (Pyodide 314.0.6) | Pyodide's own builds, loaded on import; at the time of writing NumPy 2.4, pandas 3.0, scikit-learn 1.8, Matplotlib 3.10 |
 
 Notebooks declare a dependency tier (0 = standard library only, up to 3 =
-PyTorch). The checker enforces each notebook's tier on its imports. Because
+PyTorch). The checker enforces each notebook's tier on its imports. Notebooks
+that compile native code also declare a toolchain (`c`, `c++` or `cuda`); see
+`notebooks/README.md`. CUDA notebooks use `nvcc` and an NVIDIA GPU when both
+are present, as in a Colab GPU runtime, and otherwise a CPU emulator embedded
+in the notebook. Because
 the preview's library versions differ from the server's, notebooks compare
 results within tolerances and never against exact library output.
 
@@ -366,14 +372,20 @@ docker run --rm -v furina-nb-u12:/data -v "$PWD":/backup alpine \
 
 ## Course content
 
-Nine courses are notebook courses, with 46 notebooks in `notebooks/` (one
+Ten courses are notebook courses, with 50 notebooks in `notebooks/` (one
 folder per course): Mathematics for ML from First Principles, Neural Networks
-from Scratch, Build Your Own Autograd, and the six deep-learning courses (Base
+from Scratch, Build Your Own Autograd, the six deep-learning courses (Base
 Model, Intermediate, Transformers, LLMs, Vision-Language, Voice), which were
-rewritten so learners build each model in NumPy. Every notebook runs top to
-bottom in a clean kernel, with its exercise stubs unfilled, on the student
-image (Python 3.13) and in CPython 3.14, where `check_notebooks.py --execute`
-runs them; each was also run with every stub filled from its reference.
+rewritten so learners build each model in NumPy, and Base Model Training in C,
+C++ and CUDA, which keeps Python at tier 0 and has learners write the same
+kind of model in C, then C++, then CUDA kernels trained on the GPU. Every
+notebook runs top to bottom in a clean kernel, with its exercise stubs
+unfilled, on the student image (Python 3.13) and in CPython 3.14, where
+`check_notebooks.py --execute` runs them; each was also run with every stub
+filled from its reference. The C, C++ and CUDA notebooks were verified that
+way, and through every grader variant, in CPython 3.14 on macOS with clang
+and the CPU emulator; when they were added they had not yet been run on the
+student image (gcc) or on an NVIDIA GPU.
 The deep-learning courses share one small reverse-mode tensor engine,
 which learners write in Base Model Training and which later courses include
 in a collapsed recap cell.

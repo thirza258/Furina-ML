@@ -40,9 +40,20 @@ A lesson points at its notebook with `notebook: { path, title }` in
    a dataset. Nothing may depend on a `comparison` or `visualization` cell.
    The check is static and keeps the content honest; it is not a security
    boundary.
+
+   A notebook that compiles native code also declares its toolchain, `"c"`,
+   `"c++"` or `"cuda"`, and its course declares a `toolchain` string in its
+   `frontend/src/data/courses` file. The checker requires both or neither,
+   because the site never opens such a notebook in JupyterLite, which cannot
+   run a compiler:
+
+   ```json
+   "furina": {"course": "cuda-base-models", "tier": 0, "toolchain": "cuda"}
+   ```
 4. **Runs top to bottom in a clean kernel** in well under a minute, with no
    network access, no `%pip` and no shell escapes (student servers have no
-   internet access).
+   internet access). Native-code notebooks run the compiler and their check
+   programs through `subprocess`, never through `!`.
 5. **Teaches in a fixed order:** learning objectives, dependencies, the
    maths, step-by-step implementation with tests and expected behaviour,
    exercises, common errors, summary. Exercises are stubs that raise
@@ -60,7 +71,39 @@ python notebooks/tools/check_notebooks.py --execute
 ```
 
 Without `--execute` it checks structure, metadata, tiers and that every
-notebook a lesson links to exists.
+notebook a lesson links to exists. Notebooks with a toolchain also need a C
+and a C++ compiler (gcc and g++, or clang) to run.
+
+## Native code: C, C++ and CUDA
+
+The notebooks in `cuda-base-models/` keep Python at tier 0 and put the model
+in C, C++ and CUDA. Each notebook is self-contained, so it works when it is
+downloaded or opened in Colab on its own:
+
+- An exercise is a Python function that returns source code. Its stub starts
+  with `raise NotImplementedError`, which the learner deletes, so the grader
+  treats it like any other exercise cell. Keep the text `_reference` out of
+  exercise cells.
+- `practice_native(name, yours, reference, program, language=...)` wraps each
+  source in a complete check program (`program(source)` adds a `main` that
+  prints labelled numbers), compiles it, runs it in its own process and
+  compares the printouts within a tolerance. A crash or an endless loop in
+  the learner's code fails the check instead of the kernel. Code that has
+  passed its check is loaded with `ctypes` for the training runs.
+- `mark(source, label)` adds a `#line` directive, so compiler messages name
+  the learner's function instead of a line of the generated program.
+- Pass every buffer to C from a variable: `address(array(...))` on a
+  temporary hands C memory that Python may already have freed.
+- CUDA notebooks pick a backend in their second cell: `nvcc` and an NVIDIA
+  GPU when both are present (Colab's GPU runtime, a local GPU), otherwise a
+  CPU emulator, `furina_cuda_cpu.h`, embedded in the cell. The notebook
+  rewrites `kernel<<<grid, block>>>(args)` for the emulator, which runs each
+  block's threads one after another, or as one operating-system thread per
+  CUDA thread when the kernel calls `__syncthreads()`. Keep such blocks small
+  (8 x 8): student servers and the grader limit a container to 256 processes
+  and threads. Set `FURINA_CUDA_BACKEND=emulator` or `gpu` to force a backend.
+- The emulator checks results, not speed, and cannot reveal every race.
+  Cells that time kernels label emulator numbers as CPU timings.
 
 ## Grading
 

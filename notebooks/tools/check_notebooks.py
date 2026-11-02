@@ -20,6 +20,13 @@ library above the notebook's tier: to check a from-scratch result against a
 reference implementation, to draw a plot, or to load a dataset, in a clearly
 separated cell.
 
+A notebook that compiles native code also declares its toolchain, "c", "c++"
+or "cuda", in ``metadata.furina.toolchain``. Its course must declare a
+``toolchain`` in ``frontend/src/data/courses`` as well, because the site
+offers such notebooks no in-browser (JupyterLite) runtime. A "cuda" notebook
+needs only a C++ compiler: it uses nvcc and an NVIDIA GPU when both are
+present and a CPU emulator otherwise.
+
 The import check is static and best-effort. It keeps course content honest; it
 is not a security boundary, and it does not stop code that is determined to
 load a module some other way.
@@ -27,7 +34,8 @@ load a module some other way.
 ``--execute`` runs every notebook top to bottom in a fresh kernel, from the
 notebook's own folder, without saving the outputs. It needs nbclient, nbformat
 and ipykernel; jupyter_client starts its standard ``python3`` kernel for the
-``python`` name.
+``python`` name. Notebooks with a toolchain also need a C and a C++ compiler
+(gcc and g++, or clang) on the PATH.
 """
 
 from __future__ import annotations
@@ -36,6 +44,7 @@ import argparse
 import ast
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -60,6 +69,8 @@ KNOWN_THIRD_PARTY = frozenset(
 )
 EXEMPT_TAGS = frozenset({"comparison", "visualization", "data"})
 KERNEL_NAME = "python"
+#: Native toolchains a notebook may declare in metadata.furina.toolchain.
+TOOLCHAINS = frozenset({"c", "c++", "cuda"})
 
 
 def _source(cell: dict) -> str:
@@ -140,6 +151,14 @@ def check_notebook(path: Path, problems: list[str]) -> dict | None:
         tier = None
     if furina.get("course") != path.parent.name:
         problems.append(f"{where}: metadata.furina.course must be '{path.parent.name}'")
+    toolchain = furina.get("toolchain")
+    if toolchain is not None and toolchain not in TOOLCHAINS:
+        problems.append(f"{where}: metadata.furina.toolchain must be one of {sorted(TOOLCHAINS)}")
+    elif (toolchain is not None) != (path.parent.name in courses_with_toolchain()):
+        problems.append(
+            f"{where}: metadata.furina.toolchain and the course's `toolchain` in "
+            f"frontend/src/data/courses must be declared together"
+        )
 
     # A helper module beside the notebook is importable, so it is held to the
     # notebook's tier as well; otherwise it would be a way around the check.
@@ -203,6 +222,14 @@ def execute(path: Path, timeout: int, problems: list[str]) -> None:
     from nbclient.exceptions import CellExecutionError
 
     notebook = nbformat.read(path, as_version=4)
+    toolchain = notebook.metadata.get("furina", {}).get("toolchain")
+    compilers = (("cc", "gcc", "clang"), ("c++", "g++", "clang++"))
+    if toolchain and not all(any(shutil.which(name) for name in group) for group in compilers):
+        problems.append(
+            f"{path.relative_to(REPO)}: compiles '{toolchain}' code; install a C and a C++ compiler "
+            "(gcc and g++, or clang) to run it"
+        )
+        return
     client = NotebookClient(
         notebook,
         timeout=timeout,
@@ -214,6 +241,28 @@ def execute(path: Path, timeout: int, problems: list[str]) -> None:
     except CellExecutionError as exc:
         summary = str(exc).strip().splitlines()
         problems.append(f"{path.relative_to(REPO)}: failed when run ({summary[-1] if summary else exc})")
+
+
+_TOOLCHAIN_COURSES: set[str] | None = None
+
+
+def courses_with_toolchain() -> set[str]:
+    """Ids of the courses whose definition declares a `toolchain`.
+
+    Static and simple: a course file that mentions `toolchain:` is taken to
+    define one course, whose id is the first `id: "..."` in the file.
+    """
+    global _TOOLCHAIN_COURSES
+    if _TOOLCHAIN_COURSES is None:
+        found = set()
+        for data in COURSE_DATA.glob("*.ts"):
+            text = data.read_text(encoding="utf-8")
+            if re.search(r"^\s*toolchain:", text, re.M):
+                match = re.search(r'\bid:\s*"([^"]+)"', text)
+                if match:
+                    found.add(match.group(1))
+        _TOOLCHAIN_COURSES = found
+    return _TOOLCHAIN_COURSES
 
 
 def check_course_links(problems: list[str]) -> int:
