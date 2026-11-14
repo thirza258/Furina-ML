@@ -8,6 +8,10 @@ app_name = "core"
 
 urlpatterns = [
     path("health/", views.HealthView.as_view(), name="health"),
+    # Liveness and readiness for an orchestrator: live never touches a
+    # dependency, ready validates the ones that matter (PRD §38).
+    path("health/live/", views.HealthLiveView.as_view(), name="health-live"),
+    path("health/ready/", views.HealthReadyView.as_view(), name="health-ready"),
     path("assistant/", views.AssistantView.as_view(), name="assistant"),
     path("datasets/upload/", views.DatasetUploadView.as_view(), name="dataset-upload"),
     path("datasets/", views.DatasetListView.as_view(), name="dataset-list"),

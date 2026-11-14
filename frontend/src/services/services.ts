@@ -35,6 +35,32 @@ import type {
   TrainingRunSummary,
 } from "../interface/MlTypes";
 
+import type {
+  AutoMlJobRequest,
+  ClientSnippets,
+  CreateExperimentRequest,
+  DatasetVersion,
+  DatasetVersionLineage,
+  Deployment,
+  DeploymentPrediction,
+  DriftReport,
+  Experiment,
+  ExperimentDetail,
+  HpoJobRequest,
+  Job,
+  LeakageSummary,
+  ModelDetail,
+  ModelState,
+  ModelSummary,
+  ModelVersion,
+  MonitoringSummary,
+  ResourceEstimate,
+  RunComparison,
+  RunDetail,
+  RunSummary,
+  TrainJobRequest,
+} from "../interface/LifecycleTypes";
+
 declare global {
   interface Window {
     /** Set by the container's generated `/config.js`; absent in `npm run dev`. */
@@ -330,6 +356,264 @@ const services = {
 
   submission(id: string): Promise<Submission> {
     return request(() => client.get<Submission>(`/submissions/${encodeURIComponent(id)}/`));
+  },
+
+  /* ---------------- lifecycle: dataset versions ---------------- */
+
+  listVersions(datasetId: string): Promise<DatasetVersion[]> {
+    return request(() =>
+      client.get<DatasetVersion[]>(`/lifecycle/datasets/${datasetId}/versions/`)
+    );
+  },
+
+  createVersion(
+    datasetId: string,
+    body: {
+      name?: string;
+      description?: string;
+      source_type?: string;
+      parent_version_id?: string | null;
+      recipe?: unknown;
+    } = {}
+  ): Promise<DatasetVersion> {
+    return request(() =>
+      client.post<DatasetVersion>(`/lifecycle/datasets/${datasetId}/versions/`, body)
+    );
+  },
+
+  versionLineage(versionId: string): Promise<DatasetVersionLineage> {
+    return request(() =>
+      client.get<DatasetVersionLineage>(`/lifecycle/versions/${versionId}/lineage/`)
+    );
+  },
+
+  versionDownloadUrl(versionId: string): string {
+    return `${API_BASE_URL}/lifecycle/versions/${versionId}/download/`;
+  },
+
+  checkLeakage(
+    versionId: string,
+    targetColumn: string,
+    featureColumns?: string[] | null
+  ): Promise<LeakageSummary> {
+    return request(() =>
+      client.post<LeakageSummary>(`/lifecycle/versions/${versionId}/leakage/`, {
+        target_column: targetColumn,
+        feature_columns: featureColumns ?? null,
+      })
+    );
+  },
+
+  estimateResources(
+    versionId: string,
+    algorithm: string,
+    nTrials = 1
+  ): Promise<ResourceEstimate> {
+    return request(() =>
+      client.post<ResourceEstimate>(`/lifecycle/versions/${versionId}/resources/`, {
+        algorithm,
+        n_trials: nTrials,
+      })
+    );
+  },
+
+  /* ---------------- lifecycle: experiments ---------------- */
+
+  listExperiments(datasetId?: string): Promise<Experiment[]> {
+    return request(() =>
+      client.get<Experiment[]>("/lifecycle/experiments/", {
+        params: datasetId ? { dataset_id: datasetId } : undefined,
+      })
+    );
+  },
+
+  createExperiment(body: CreateExperimentRequest): Promise<ExperimentDetail> {
+    return request(() =>
+      client.post<ExperimentDetail>("/lifecycle/experiments/", body)
+    );
+  },
+
+  getExperiment(id: string): Promise<ExperimentDetail> {
+    return request(() => client.get<ExperimentDetail>(`/lifecycle/experiments/${id}/`));
+  },
+
+  deleteExperiment(id: string): Promise<void> {
+    return request(() => client.delete<void>(`/lifecycle/experiments/${id}/`));
+  },
+
+  experimentRuns(id: string): Promise<RunSummary[]> {
+    return request(() =>
+      client.get<RunSummary[]>(`/lifecycle/experiments/${id}/runs/`)
+    );
+  },
+
+  trainExperiment(id: string, body: TrainJobRequest): Promise<Job> {
+    return request(() =>
+      client.post<Job>(`/lifecycle/experiments/${id}/train/`, body)
+    );
+  },
+
+  searchHyperparameters(id: string, body: HpoJobRequest): Promise<Job> {
+    return request(() =>
+      client.post<Job>(`/lifecycle/experiments/${id}/search/`, body)
+    );
+  },
+
+  runAutoMl(id: string, body: AutoMlJobRequest): Promise<Job> {
+    return request(() =>
+      client.post<Job>(`/lifecycle/experiments/${id}/automl/`, body)
+    );
+  },
+
+  /* ---------------- lifecycle: runs ---------------- */
+
+  getLifecycleRun(id: string): Promise<RunDetail> {
+    return request(() => client.get<RunDetail>(`/lifecycle/runs/${id}/`));
+  },
+
+  compareRuns(runIds: string[]): Promise<RunComparison> {
+    return request(() =>
+      client.post<RunComparison>("/lifecycle/runs/compare/", { run_ids: runIds })
+    );
+  },
+
+  lifecycleModelDownloadUrl(runId: string): string {
+    return `${API_BASE_URL}/lifecycle/runs/${runId}/download_model/`;
+  },
+
+  lifecycleNotebookUrl(runId: string): string {
+    return `${API_BASE_URL}/lifecycle/runs/${runId}/notebook/`;
+  },
+
+  registerModel(runId: string, modelName?: string): Promise<ModelVersion> {
+    return request(() =>
+      client.post<ModelVersion>(`/lifecycle/runs/${runId}/register/`, {
+        model_name: modelName ?? "",
+      })
+    );
+  },
+
+  reproduceRun(runId: string, runNow = false): Promise<Job> {
+    return request(() =>
+      client.post<Job>(`/lifecycle/runs/${runId}/reproduce/`, { run_now: runNow })
+    );
+  },
+
+  /* ---------------- lifecycle: jobs ---------------- */
+
+  getJob(id: string): Promise<Job> {
+    return request(() => client.get<Job>(`/lifecycle/jobs/${id}/`));
+  },
+
+  cancelJob(id: string): Promise<Job> {
+    return request(() => client.post<Job>(`/lifecycle/jobs/${id}/cancel/`, {}));
+  },
+
+  /* ---------------- lifecycle: registry ---------------- */
+
+  listModels(): Promise<ModelSummary[]> {
+    return request(() => client.get<ModelSummary[]>("/lifecycle/models/"));
+  },
+
+  getModel(id: string): Promise<ModelDetail> {
+    return request(() => client.get<ModelDetail>(`/lifecycle/models/${id}/`));
+  },
+
+  getModelVersion(modelId: string, version: number): Promise<ModelVersion> {
+    return request(() =>
+      client.get<ModelVersion>(`/lifecycle/models/${modelId}/versions/${version}/`)
+    );
+  },
+
+  promoteModelVersion(
+    modelId: string,
+    version: number,
+    target: ModelState,
+    confirmed = false
+  ): Promise<ModelVersion> {
+    return request(() =>
+      client.post<ModelVersion>(
+        `/lifecycle/models/${modelId}/versions/${version}/promote/`,
+        { target, confirmed }
+      )
+    );
+  },
+
+  deployModelVersion(
+    modelId: string,
+    version: number,
+    slug?: string
+  ): Promise<Deployment> {
+    return request(() =>
+      client.post<Deployment>(
+        `/lifecycle/models/${modelId}/versions/${version}/deploy/`,
+        { slug: slug ?? "" }
+      )
+    );
+  },
+
+  /* ---------------- lifecycle: deployments ---------------- */
+
+  listDeployments(): Promise<Deployment[]> {
+    return request(() => client.get<Deployment[]>("/lifecycle/deployments/"));
+  },
+
+  getDeployment(slug: string): Promise<Deployment> {
+    return request(() => client.get<Deployment>(`/lifecycle/deployments/${slug}/`));
+  },
+
+  archiveDeployment(slug: string): Promise<void> {
+    return request(() => client.delete<void>(`/lifecycle/deployments/${slug}/`));
+  },
+
+  predictDeployment(
+    slug: string,
+    data: Record<string, unknown>
+  ): Promise<DeploymentPrediction> {
+    return request(() =>
+      client.post<DeploymentPrediction>(`/lifecycle/deployments/${slug}/predict/`, { data })
+    );
+  },
+
+  batchPredictDeployment(slug: string, file: File): Promise<Blob> {
+    const form = new FormData();
+    form.append("file", file);
+    return request(() =>
+      client.post<Blob>(`/lifecycle/deployments/${slug}/batch-predict/`, form, {
+        responseType: "blob",
+      })
+    );
+  },
+
+  deploymentSnippets(slug: string): Promise<ClientSnippets> {
+    return request(() =>
+      client.get<ClientSnippets>(`/lifecycle/deployments/${slug}/snippets/`)
+    );
+  },
+
+  deploymentOpenApiUrl(slug: string): string {
+    return `${API_BASE_URL}/lifecycle/deployments/${slug}/openapi/`;
+  },
+
+  /* ---------------- lifecycle: monitoring ---------------- */
+
+  monitoringOverview(): Promise<MonitoringSummary[]> {
+    return request(() => client.get<MonitoringSummary[]>("/lifecycle/monitoring/"));
+  },
+
+  deploymentMonitoring(slug: string): Promise<{
+    summary: MonitoringSummary;
+    records: { kind: string; payload: Record<string, unknown>; created_at: string }[];
+  }> {
+    return request(() =>
+      client.get(`/lifecycle/deployments/${slug}/monitoring/`)
+    );
+  },
+
+  checkDrift(slug: string, rows: Record<string, unknown>[]): Promise<DriftReport> {
+    return request(() =>
+      client.post<DriftReport>(`/lifecycle/deployments/${slug}/drift-check/`, { rows })
+    );
   },
 };
 

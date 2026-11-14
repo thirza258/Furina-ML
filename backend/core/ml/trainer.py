@@ -53,6 +53,13 @@ except ImportError:  # pragma: no cover - older scikit-learn
 MAX_FEATURE_IMPORTANCE = 40
 MAX_RESIDUAL_SAMPLE = 300
 MAX_OPTION_VALUES = 200
+
+#: Permutation importance caps: it is O(features x repetitions) prediction
+#: passes, so it is switched off above these so one run cannot stall the
+#: whole request.
+MAX_PERMUTATION_FEATURES = 25
+MAX_PERMUTATION_ROWS = 20_000
+PERMUTATION_REPETITIONS = 5
 MIN_TEST_SIZE = 0.05
 MAX_TEST_SIZE = 0.95
 MIN_CV_FOLDS = 2
@@ -496,6 +503,64 @@ def _feature_importance(
     return ranked[:MAX_FEATURE_IMPORTANCE]
 
 
+def _score(pipe: Any, X: Any, y: Any, task_type: str) -> float | None:
+    """The run's headline score for a frame: accuracy or R2, None on failure."""
+    try:
+        predictions = pipe.predict(X)
+    except Exception:  # noqa: BLE001 - a shuffle that cannot be scored is skipped
+        return None
+    if task_type == "classification":
+        return _finite(accuracy_score(y, predictions))
+    try:
+        return _finite(r2_score(y, predictions))
+    except (ValueError, TypeError):
+        return None
+
+
+def _permutation_importance(
+    pipe: Any,
+    X_test: Any,
+    y_test: Any,
+    task_type: str,
+    feature_columns: Sequence[str],
+    random_state: int | None,
+) -> list[dict] | None:
+    """Model-agnostic feature importance: how much shuffling a column hurts.
+
+    For each original feature, the held-out split's column is permuted a few
+    times and the run's headline score is re-measured; the mean drop is that
+    feature's importance. It is deliberately capped -- permuting 50 features
+    on a 50,000-row split is minutes of work nobody asked for -- and returns
+    None rather than a partial table when the caps are exceeded.
+    """
+    if not feature_columns or len(X_test) == 0:
+        return None
+    if len(feature_columns) > MAX_PERMUTATION_FEATURES or len(X_test) > MAX_PERMUTATION_ROWS:
+        return None
+
+    baseline = _score(pipe, X_test, y_test, task_type)
+    if baseline is None:
+        return None
+
+    rng = np.random.default_rng(random_state)
+    ranked: list[dict] = []
+    for column in feature_columns:
+        if column not in X_test.columns:
+            continue
+        original = X_test[column].to_numpy()
+        drops: list[float] = []
+        for _ in range(PERMUTATION_REPETITIONS):
+            shuffled = X_test.copy()
+            shuffled[column] = rng.permutation(original)
+            score = _score(pipe, shuffled, y_test, task_type)
+            if score is not None:
+                drops.append(baseline - score)
+        if drops:
+            ranked.append({"feature": str(column), "importance": _number(float(np.mean(drops)))})
+    ranked.sort(key=lambda item: item["importance"], reverse=True)
+    return ranked[:MAX_FEATURE_IMPORTANCE] or None
+
+
 def _residual_sample(y_true: Any, y_pred: Any) -> list[dict]:
     """Up to 300 actual/predicted pairs from the test split."""
     sample: list[dict] = []
@@ -842,6 +907,24 @@ def train(
     importance = _feature_importance(pipe, numeric_columns, categorical_columns, X_train)
     input_schema = build_input_schema(frame, features)
 
+    # Permutation importance is the model-agnostic ranking the PRD asks for.
+    # It re-scores the held-out split with each feature shuffled, so it costs
+    # one fit-free prediction pass per feature -- only run it when it will not
+    # explode, and record the same top-N the form already stores.
+    permutation = _permutation_importance(
+        pipe, X_test, y_test, resolved_task, features, random_state
+    )
+
+    # Raw held-out arrays the diagnostic layer (ROC / PR / calibration /
+    # threshold curves) needs. Popped before the result is stored; never
+    # reaches the HTTP contract.
+    diagnostic_arrays: dict[str, Any] = {
+        "y_test_arr": np.asarray(y_test),
+        "y_pred_arr": np.asarray(test_predictions),
+    }
+    if resolved_task == "classification":
+        diagnostic_arrays["y_proba_arr"] = test_proba
+
     artifact = ModelArtifact(
         pipeline=pipe,
         task_type=resolved_task,
@@ -870,9 +953,11 @@ def train(
         "confusion_matrix": json_safe(confusion),
         "per_class": json_safe(per_class),
         "feature_importance": json_safe(importance),
+        "permutation_importance": json_safe(permutation),
         "residual_sample": json_safe(residual_sample),
         "input_schema": json_safe(input_schema),
         "warnings": [str(message) for message in warnings],
     }
     result["artifact"] = artifact
+    result.update(diagnostic_arrays)
     return result

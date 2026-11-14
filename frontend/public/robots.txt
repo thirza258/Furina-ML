@@ -5,6 +5,8 @@
 
 User-agent: *
 Content-Signal: ai-train=yes, search=yes, ai-input=yes
+Host: https://furina.nevatal.id
+Agentmap: https://furina.nevatal.id/.well-known/ai-catalog.json
 Allow: /
 Disallow: /api/
 Disallow: /admin/

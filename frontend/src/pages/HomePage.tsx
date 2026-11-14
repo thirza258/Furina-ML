@@ -143,10 +143,19 @@ const HomePage = () => {
         {/* Masthead                                                    */}
         {/* ---------------------------------------------------------- */}
         <header className="pt-14 pb-10 border-b border-rule">
-          <p className="field-label">Machine learning workbench</p>
-          <h1 className="mt-3 font-serif text-h1 sm:text-display font-semibold">
-            Furina ML
-          </h1>
+          <div className="flex items-center gap-4 mb-3">
+            <img
+              src="/logo_furina.png"
+              alt="Furina ML Logo"
+              className="w-14 h-14 sm:w-16 sm:h-16 object-contain flex-shrink-0"
+            />
+            <div>
+              <p className="field-label">Machine learning workbench</p>
+              <h1 className="mt-1 font-serif text-h1 sm:text-display font-semibold">
+                Furina ML
+              </h1>
+            </div>
+          </div>
           <p className="mt-4 prose-page text-lead">
             Supervised learning on tabular data, from a CSV file to a fitted
             model, without writing any Python.
@@ -379,9 +388,24 @@ const HomePage = () => {
             </div>
           </div>
 
-          <p className="mt-10 pt-6 border-t border-rule font-sans text-caption text-ink-muted">
-            Furina ML — MIT licensed.
-          </p>
+          <div className="mt-10 pt-6 border-t border-rule flex flex-col sm:flex-row items-center justify-between gap-4 font-sans text-caption text-ink-muted">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/logo_furina.png"
+                  alt="Furina ML Logo"
+                  className="w-5 h-5 object-contain"
+                />
+                <span>Furina ML — MIT licensed. Self-hosted Machine Learning Workbench.</span>
+              </div>
+              <p className="text-[11px] text-ink-faint">This project is under nevatal.id for educational purposes.</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/privacy" className="hover:text-ink transition-colors underline">Privacy Policy</Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:text-ink transition-colors underline">Terms of Service</Link>
+            </div>
+          </div>
         </footer>
       </div>
     </div>

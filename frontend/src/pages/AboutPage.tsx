@@ -224,9 +224,16 @@ const AboutPage = () => {
 
   return (
     <div className="bg-paper min-h-full p-8">
-      <h1 className="font-serif text-h1 font-semibold text-ink border-b border-rule pb-3 mb-6">
-        About Furina ML
-      </h1>
+      <div className="flex items-center gap-3.5 border-b border-rule pb-3 mb-6">
+        <img
+          src="/logo_furina.png"
+          alt="Furina ML Logo"
+          className="w-10 h-10 object-contain flex-shrink-0"
+        />
+        <h1 className="font-serif text-h1 font-semibold text-ink">
+          About Furina ML
+        </h1>
+      </div>
 
       {/* ---------------------------------------------------------------- */}
       <div className="panel">

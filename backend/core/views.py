@@ -10,6 +10,7 @@ escape as a traceback.
 from __future__ import annotations
 
 import io
+import os
 import re
 import uuid
 from typing import Any
@@ -254,6 +255,60 @@ class HealthView(APIView):
                 "pandas": pandas.__version__,
                 "numpy": numpy.__version__,
             }
+        )
+
+
+class HealthLiveView(APIView):
+    """GET /api/health/live/ -- liveness. Always 200 while the process serves.
+
+    Deliberately dependency-free: an orchestrator that restarts a container
+    because the database blinked would turn a brief blip into an outage. This
+    answers only "is this process alive?", which is the question liveness is
+    for; readiness is where dependencies are checked.
+    """
+
+    @extend_schema(responses=dict)
+    def get(self, request) -> Response:
+        return Response({"status": "ok"})
+
+
+class HealthReadyView(APIView):
+    """GET /api/health/ready/ -- readiness. Checks the dependencies that matter.
+
+    Validates the database (the metadata every request needs) and the media
+    root (uploaded CSVs and model artefacts). Returns 503 with a per-check
+    breakdown when something critical is unavailable, so a load balancer takes
+    the instance out of rotation instead of sending traffic into 500s.
+    """
+
+    @extend_schema(responses=dict)
+    def get(self, request) -> Response:
+        checks: dict[str, str] = {}
+        ready = True
+
+        try:
+            from django.db import connection
+
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+            checks["database"] = "ok"
+        except Exception as exc:  # noqa: BLE001 - any DB failure is "not ready"
+            checks["database"] = f"error: {exc.__class__.__name__}"
+            ready = False
+
+        try:
+            media_root = settings.MEDIA_ROOT
+            checks["media_root"] = "ok" if os.path.isdir(media_root) else "missing"
+            if not os.path.isdir(media_root):
+                ready = False
+        except Exception as exc:  # noqa: BLE001
+            checks["media_root"] = f"error: {exc.__class__.__name__}"
+            ready = False
+
+        return Response(
+            {"status": "ok" if ready else "not ready", **checks},
+            status=200 if ready else 503,
         )
 
 

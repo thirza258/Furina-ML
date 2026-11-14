@@ -19,9 +19,13 @@ import AccountPage from './pages/AccountPage';
 import Dashboard from './pages/Dashboard';
 import HomePage from './pages/HomePage';
 import LandingPage from './pages/LandingPage';
+import LegalPage from './pages/LegalPage';
 import DataPreprocessing from './pages/traditionalMl/DataPreprocessing';
 import DataTraining from './pages/traditionalMl/DataTraining';
 import EvaluationReport from './pages/traditionalMl/ModelEvaluation';
+import Experiments from './pages/Experiments';
+import Models from './pages/Models';
+import Deployments from './pages/Deployments';
 
 import AssistantFab from './components/AssistantFab';
 import NavBar from './components/NavBar';
@@ -42,6 +46,9 @@ const TOOL_ROUTES: { tool: string; path: string }[] = [
   { tool: 'Data Preprocessing', path: '/app/preprocessing' },
   { tool: 'Data Training', path: '/app/training' },
   { tool: 'Model Evaluation', path: '/app/evaluation' },
+  { tool: 'Experiments', path: '/app/experiments' },
+  { tool: 'Model Registry', path: '/app/models' },
+  { tool: 'Deployments', path: '/app/deployments' },
   { tool: 'Courses', path: '/app/courses' },
   { tool: 'About Us', path: '/about' },
   { tool: 'Sign in', path: '/login' },
@@ -87,6 +94,12 @@ function Workbench() {
         return <DataTraining />;
       case 'Model Evaluation':
         return <EvaluationReport />;
+      case 'Experiments':
+        return <Experiments />;
+      case 'Model Registry':
+        return <Models />;
+      case 'Deployments':
+        return <Deployments />;
       case 'Courses':
         return <Suspense fallback={<p className="p-8" role="status">Loading courses…</p>}><CoursesPage /></Suspense>;
       case 'Dashboard':
@@ -141,11 +154,16 @@ function App() {
       <WorkspaceProvider onNavigate={goToTool}>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/privacy" element={<LegalPage />} />
+          <Route path="/terms" element={<LegalPage />} />
           <Route path="/app" element={<Workbench />} />
           <Route path="/app/dashboard" element={<Workbench />} />
           <Route path="/app/preprocessing" element={<Workbench />} />
           <Route path="/app/training" element={<Workbench />} />
           <Route path="/app/evaluation" element={<Workbench />} />
+          <Route path="/app/experiments" element={<Workbench />} />
+          <Route path="/app/models" element={<Workbench />} />
+          <Route path="/app/deployments" element={<Workbench />} />
           <Route path="/app/courses" element={<Workbench />} />
           <Route path="/app/courses/:courseId" element={<Workbench />} />
           <Route path="/app/courses/:courseId/:lessonId" element={<Workbench />} />

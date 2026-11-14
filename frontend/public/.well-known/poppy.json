@@ -1,0 +1,46 @@
+{
+  "protocol_version": "0.1",
+  "organization": {
+    "name": "Nevatal",
+    "domain": "furina.nevatal.id"
+  },
+  "auth": {
+    "issuer": "https://furina.nevatal.id",
+    "direct": {
+      "scopes": [
+        "poppy:read",
+        "poppy:write"
+      ]
+    },
+    "device": {
+      "scopes": [
+        "poppy:read",
+        "poppy:write"
+      ]
+    }
+  },
+  "agent": {
+    "protocols": [
+      {
+        "type": "poppy",
+        "endpoint": "https://furina.nevatal.id/api/"
+      }
+    ]
+  },
+  "apis": [
+    {
+      "type": "openapi",
+      "url": "https://furina.nevatal.id/api/",
+      "description": "Furina ML API"
+    },
+    {
+      "type": "mcp",
+      "url": "https://furina.nevatal.id/mcp",
+      "description": "Furina ML MCP server"
+    }
+  ],
+  "web": {
+    "browser_session_endpoint": "https://furina.nevatal.id/"
+  },
+  "extensions": {}
+}

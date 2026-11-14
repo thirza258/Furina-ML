@@ -1,0 +1,45 @@
+{
+  "name": "Furina ML Agent",
+  "description": "Train scikit-learn models on your own CSV files: inspect, clean, tune, train, evaluate and predict, without writing code.",
+  "url": "https://furina.nevatal.id",
+  "provider": {
+    "name": "Nevatal",
+    "url": "https://furina.nevatal.id"
+  },
+  "version": "1.0.0",
+  "protocolVersion": "0.3.0",
+  "preferredTransport": "JSONRPC",
+  "supportedInterfaces": [
+    {
+      "url": "https://furina.nevatal.id/api",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "0.3.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "text/plain"
+  ],
+  "defaultOutputModes": [
+    "text/plain"
+  ],
+  "skills": [
+    {
+      "id": "train-model",
+      "name": "Train a Model",
+      "description": "Train a scikit-learn model from an uploaded CSV dataset."
+    },
+    {
+      "id": "eda-clean-data",
+      "name": "Explore and Clean Data",
+      "description": "Profile a dataset and apply cleaning steps before training."
+    }
+  ],
+  "authentication": {
+    "type": "oauth2",
+    "discovery_url": "https://furina.nevatal.id/.well-known/oauth-authorization-server"
+  }
+}

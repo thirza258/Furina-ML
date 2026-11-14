@@ -63,8 +63,10 @@ export function usePageSeo({ title, description, path, jsonLd }: PageSeoProps) {
     setMeta("property", "og:title", fullTitle);
     setMeta("property", "og:description", description);
     setMeta("property", "og:url", fullUrl);
+    setMeta("property", "og:image", `${origin}/logo_furina.png`);
     setMeta("name", "twitter:title", fullTitle);
     setMeta("name", "twitter:description", description);
+    setMeta("name", "twitter:image", `${origin}/logo_furina.png`);
     setCanonical(fullUrl);
     setJsonLd(jsonLd);
   }, [title, description, path, jsonLd]);

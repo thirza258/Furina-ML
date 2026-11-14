@@ -25,12 +25,23 @@ const TOOL_PATHS: Record<string, string> = {
   "Data Preprocessing": "/app/preprocessing",
   "Data Training": "/app/training",
   "Model Evaluation": "/app/evaluation",
+  "Experiments": "/app/experiments",
+  "Model Registry": "/app/models",
+  "Deployments": "/app/deployments",
   "Courses": "/app/courses",
   "About Us": "/about",
 };
 
 /** Must match the strings App.tsx switches on — a typo here is a dead link. */
-const APPLICATION_TOOLS = ["Landing Page", "Dashboard", "Courses", "About Us"] as const;
+const APPLICATION_TOOLS = [
+  "Landing Page",
+  "Dashboard",
+  "Experiments",
+  "Model Registry",
+  "Deployments",
+  "Courses",
+  "About Us",
+] as const;
 
 /**
  * What the sidebar prints, where that differs from the routing key.

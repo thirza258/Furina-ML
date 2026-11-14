@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/logo_furina.png" alt="Furina ML Logo" width="140" />
+</p>
+
 # Furina ML
 
 A web application for training real scikit-learn models on your own CSV files.
