@@ -120,6 +120,7 @@ INSTALLED_APPS = [
     "oauth2_provider",
     "core",
     "academy",
+    "lifecycle",
 ]
 
 SPECTACULAR_SETTINGS = {
@@ -424,3 +425,23 @@ SITE_URL = os.getenv("SITE_URL", "https://furina.nevatal.id").rstrip("/")
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES") or 50 * 1024 * 1024)
 DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
 FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_BYTES
+
+# --------------------------------------------------------------------------
+# Resource governance for the ML job worker (lifecycle app)
+#
+# These are the ceilings a single training / search job may use before it is
+# refused up front, so one request cannot destabilise the worker or pin the
+# box. Read from the environment so a deployment tunes them without a rebuild.
+# --------------------------------------------------------------------------
+
+#: The largest dataset (rows) a job may train on at once.
+FURINA_MAX_TRAIN_ROWS = int(os.getenv("FURINA_MAX_TRAIN_ROWS") or 250_000)
+#: The most columns a dataset may carry into a training job.
+FURINA_MAX_TRAIN_COLUMNS = int(os.getenv("FURINA_MAX_TRAIN_COLUMNS") or 300)
+#: The most trials one hyperparameter / AutoML search may run.
+FURINA_MAX_HPO_TRIALS = int(os.getenv("FURINA_MAX_HPO_TRIALS") or 500)
+#: AutoML subsamples datasets larger than this so a search stays tractable.
+FURINA_AUTOML_MAX_ROWS = int(os.getenv("FURINA_AUTOML_MAX_ROWS") or 40_000)
+#: How many job runners the in-process worker starts. A real deployment that
+#: moves to Redis/Celery ignores this and scales the worker pool instead.
+FURINA_JOB_WORKERS = int(os.getenv("FURINA_JOB_WORKERS") or 2)

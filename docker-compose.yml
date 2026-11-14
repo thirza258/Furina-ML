@@ -58,6 +58,17 @@ services:
       GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-300}
 
+      # ML lifecycle ceilings (lifecycle app). A single training or search job
+      # is refused up front when it would exceed these, so one request cannot
+      # destabilise the worker. See docs/lifecycle.md.
+      FURINA_MAX_TRAIN_ROWS: ${FURINA_MAX_TRAIN_ROWS:-250000}
+      FURINA_MAX_TRAIN_COLUMNS: ${FURINA_MAX_TRAIN_COLUMNS:-300}
+      FURINA_MAX_HPO_TRIALS: ${FURINA_MAX_HPO_TRIALS:-500}
+      FURINA_AUTOML_MAX_ROWS: ${FURINA_AUTOML_MAX_ROWS:-40000}
+      # Set to 1 when an external worker owns the queue instead of the
+      # in-process poller (for example a dedicated runner container).
+      FURINA_DISABLE_JOB_POLLER: ${FURINA_DISABLE_JOB_POLLER:-}
+
       # The in-app helper. With no key the feature reports itself as off and
       # the button says so; nothing else changes.
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
