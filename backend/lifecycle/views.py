@@ -393,7 +393,11 @@ class RunDetailView(APIView):
     @extend_schema(responses=None)
     def delete(self, request, pk) -> Response:
         run = get_object_or_404(ExperimentRun, pk=pk)
+        experiment = run.experiment
+        was_best = (experiment.best_run_id == run.id)
         run.delete()
+        if was_best:
+            experiment.refresh_best_run()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1399,6 +1403,8 @@ def _numeric_psi(stats: dict, values: "pd.Series") -> float:
     std = stats.get("std") or 0.0
     if mean is None:
         return 0.0
+    if std <= 0.0:
+        return 0.0 if (values == mean).all() else 1.0
     # Bucket the training distribution at mean +/- 1 and 2 std, then compare
     # the share of live rows in the same buckets. This is the standard PSI
     # formulation for a continuous feature.
@@ -1414,11 +1420,11 @@ def _numeric_psi(stats: dict, values: "pd.Series") -> float:
     return _psi_from_shares(baseline_shares, [c / total for c in counts])
 
 
-def _categorical_psi(baseline_counts: dict, actual_counts: "pd.Series", total: int) -> float:
+def _categorical_psi(baseline_counts: dict, actual_counts: "pd.Series", total: int = 1) -> float:
     categories = set(baseline_counts) | {str(key) for key in actual_counts.index}
     expected = [float(baseline_counts.get(str(cat), 0.0)) for cat in categories]
     actual = [
-        float(actual_counts.get(str(cat), 0.0)) / max(total, 1) for cat in categories
+        float(actual_counts.get(str(cat), 0.0)) for cat in categories
     ]
     return _psi_from_shares(expected, actual)
 

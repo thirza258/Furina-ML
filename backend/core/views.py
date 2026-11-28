@@ -20,6 +20,7 @@ import pandas
 import sklearn
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db.models import ProtectedError
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -453,7 +454,13 @@ class DatasetDetailView(APIView):
     @extend_schema(responses=None)
     def delete(self, request, pk) -> Response:
         dataset = get_object_or_404(Dataset, pk=pk)
-        dataset.delete()
+        try:
+            dataset.delete()
+        except ProtectedError:
+            return bad_request(
+                "This dataset is referenced by existing experiment runs and cannot be deleted. "
+                "Delete those experiment runs first."
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

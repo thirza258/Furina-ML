@@ -80,7 +80,6 @@ def classification_diagnostics(
     }
     positive = _positive_class(y_true, classes)
 
-    roc_curve_ = None
     if len(classes) == 2:
         fpr, tpr, _ = roc_curve(y_true, y_proba[:, positive])
         try:
@@ -92,54 +91,56 @@ def classification_diagnostics(
             "tpr": _downsample(tpr),
             "auc": auc,
         }
-        roc_curve_ = (fpr, tpr)
 
-    precision, recall, _ = precision_recall_curve(y_true, y_proba[:, positive])
-    result["precision_recall"] = {
-        "recall": _downsample(recall),
-        "precision": _downsample(precision),
-    }
-
-    try:
-        proba_true, proba_pred = calibration_curve(
-            y_true, y_proba[:, positive], strategy="quantile", n_bins=10
-        )
-        if len(proba_true):
-            result["calibration"] = {
-                "prob_true_mean": _downsample(proba_true),
-                "prob_pred_mean": _downsample(proba_pred),
-                "brier": _finite(float(np.mean((y_proba[:, positive] - y_true) ** 2))),
+        try:
+            precision, recall, _ = precision_recall_curve(y_true, y_proba[:, positive])
+            result["precision_recall"] = {
+                "recall": _downsample(recall),
+                "precision": _downsample(precision),
             }
-    except (ValueError, IndexError, TypeError):
-        pass
+        except (ValueError, IndexError):
+            pass
 
-    # Threshold analysis: how accuracy/precision/recall/f1 trade off as the
-    # decision threshold moves away from 0.5.
-    binary = y_true.astype(int)
-    rows: list[dict[str, Any]] = []
-    for threshold in THRESHOLDS:
-        predicted = (y_proba[:, positive] >= threshold).astype(int)
-        tp = int(np.sum((predicted == 1) & (binary == 1)))
-        fp = int(np.sum((predicted == 1) & (binary == 0)))
-        fn = int(np.sum((predicted == 0) & (binary == 1)))
-        tn = int(np.sum((predicted == 0) & (binary == 0)))
-        total = tp + fp + fn + tn
-        precision_v = tp / (tp + fp) if (tp + fp) else None
-        recall_v = tp / (tp + fn) if (tp + fn) else None
-        denom = (2 * tp + fp + fn) or 0
-        f1_v = (2 * tp / denom) if denom else None
-        accuracy_v = (tp + tn) / total if total else None
-        rows.append(
-            {
-                "threshold": threshold,
-                "accuracy": _finite(accuracy_v),
-                "precision": _finite(precision_v),
-                "recall": _finite(recall_v),
-                "f1": _finite(f1_v),
-                "predicted_positive_rate": _finite((tp + fp) / total if total else None),
-            }
-        )
-    result["threshold_analysis"] = rows
+        try:
+            proba_true, proba_pred = calibration_curve(
+                y_true, y_proba[:, positive], strategy="quantile", n_bins=10
+            )
+            if len(proba_true):
+                result["calibration"] = {
+                    "prob_true_mean": _downsample(proba_true),
+                    "prob_pred_mean": _downsample(proba_pred),
+                    "brier": _finite(float(np.mean((y_proba[:, positive] - y_true) ** 2))),
+                }
+        except (ValueError, IndexError, TypeError):
+            pass
+
+        # Threshold analysis: how accuracy/precision/recall/f1 trade off as the
+        # decision threshold moves away from 0.5.
+        binary = y_true.astype(int)
+        rows: list[dict[str, Any]] = []
+        for threshold in THRESHOLDS:
+            predicted = (y_proba[:, positive] >= threshold).astype(int)
+            tp = int(np.sum((predicted == 1) & (binary == 1)))
+            fp = int(np.sum((predicted == 1) & (binary == 0)))
+            fn = int(np.sum((predicted == 0) & (binary == 1)))
+            tn = int(np.sum((predicted == 0) & (binary == 0)))
+            total = tp + fp + fn + tn
+            precision_v = tp / (tp + fp) if (tp + fp) else None
+            recall_v = tp / (tp + fn) if (tp + fn) else None
+            denom = (2 * tp + fp + fn) or 0
+            f1_v = (2 * tp / denom) if denom else None
+            accuracy_v = (tp + tn) / total if total else None
+            rows.append(
+                {
+                    "threshold": threshold,
+                    "accuracy": _finite(accuracy_v),
+                    "precision": _finite(precision_v),
+                    "recall": _finite(recall_v),
+                    "f1": _finite(f1_v),
+                    "predicted_positive_rate": _finite((tp + fp) / total if total else None),
+                }
+            )
+        result["threshold_analysis"] = rows
     return result
 
 

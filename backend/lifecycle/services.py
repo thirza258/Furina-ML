@@ -552,6 +552,11 @@ def execute_job(job: Job) -> None:
         else:  # pragma: no cover - unknown kinds fail loudly
             raise LifecycleError(f"Unknown job kind '{kind}'.")
     except (LifecycleError, TrainingError, ValueError) as exc:
+        if job.is_cancel_requested():
+            job.status = "cancelled"
+            job.finished_at = timezone.now()
+            job.save(update_fields=["status", "finished_at"])
+            return
         job.status = "failed"
         job.error = str(exc)
         job.suggested_action = _suggested_action_for(exc, job.payload)
@@ -730,7 +735,7 @@ def _execute_hpo(job: Job, payload: dict) -> None:
     if best is not None:
         job.best_run = best
     if cancel():
-        raise LifecycleError("The search was cancelled before every trial ran.")
+        return
     if best is None:
         raise LifecycleError("No trial completed successfully, so the search has no best configuration.")
     _save_search_report(job, space, plans, best, completed)
@@ -1152,6 +1157,9 @@ def promote_model_version(version: ModelVersion, target: str, *, confirmed: bool
         version.save(update_fields=["status"])
         if target == "production":
             version.model.production_version = version
+            version.model.save(update_fields=["production_version"])
+        elif target == "archived" and version.model.production_version_id == version.id:
+            version.model.production_version = None
             version.model.save(update_fields=["production_version"])
     return version
 

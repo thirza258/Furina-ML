@@ -185,18 +185,25 @@ def suggested_search_space(spec: dict[str, Any]) -> dict[str, Any]:
         lo, hi = param.get("min"), param.get("max")
         lo = lo if lo is not None else (candidate[0] if candidate else 0.0)
         hi = hi if hi is not None else (candidate[-1] if candidate else 1.0)
-        return [max(lo, v) if v < hi else v for v in candidate]
+        clamped = [min(hi, max(lo, v)) for v in candidate]
+        seen = set()
+        res = []
+        for x in clamped:
+            if x not in seen:
+                seen.add(x)
+                res.append(x)
+        return res
 
     params: dict[str, Any] = {}
     key = spec.get("key", "")
     family = spec.get("family", "")
 
     if "tree" in key.lower() or "forest" in key.lower() or "boost" in key.lower() or "xgb" in key.lower() or "lgbm" in key.lower():
-        params["max_depth"] = {"values": [3, 5, 7, 10]}
+        params["max_depth"] = {"values": [int(v) for v in range_of("max_depth", [3, 5, 7, 10])]}
         if key in ("xgboost", "lightgbm", "gradient_boosting", "hist_gradient_boosting"):
             params["learning_rate"] = {"log": [0.005, 0.3, 5]}
         if "n_estimators" in {p.get("name") for p in spec.get("hyperparameters", [])}:
-            params["n_estimators"] = {"values": [100, 200, 400]}
+            params["n_estimators"] = {"values": [int(v) for v in range_of("n_estimators", [100, 200, 400])]}
     if "regression" in family.lower() or "linear" in key.lower():
         if key in ("ridge_regression", "lasso_regression", "elastic_net", "bayesian_ridge", "logistic_regression"):
             param_names = {p.get("name") for p in spec.get("hyperparameters", [])}
@@ -205,9 +212,9 @@ def suggested_search_space(spec: dict[str, Any]) -> dict[str, Any]:
             if "alpha" in param_names:
                 params["alpha"] = {"log": [1e-4, 10.0, 5]}
     if "n_estimators" not in params and "n_estimators" in {p.get("name") for p in spec.get("hyperparameters", [])}:
-        params["n_estimators"] = {"values": [100, 300]}
+        params["n_estimators"] = {"values": [int(v) for v in range_of("n_estimators", [100, 300])]}
     if "n_neighbors" in {p.get("name") for p in spec.get("hyperparameters", [])}:
-        params["n_neighbors"] = {"values": [3, 5, 9, 15]}
+        params["n_neighbors"] = {"values": [int(v) for v in range_of("n_neighbors", [3, 5, 9, 15])]}
     if not params:
         # Even with nothing to vary, return one stable trial's worth.
         params = {}

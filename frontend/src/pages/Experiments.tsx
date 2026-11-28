@@ -122,7 +122,7 @@ export default function Experiments() {
   useEffect(() => {
     if (!selected) return;
     const status = polling.job?.status;
-    if (status === "completed" || status === "failed") {
+    if (status === "completed" || status === "failed" || status === "cancelled") {
       void loadRuns(selected.id);
       void services
         .getExperiment(selected.id)

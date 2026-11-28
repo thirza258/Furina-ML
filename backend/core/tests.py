@@ -884,3 +884,51 @@ class EndToEndTests(ApiTestCase):
         self.assertIn(
             response.json()["predictions"][0]["prediction"], run["classes"]
         )
+
+
+class CoreBugRegressionTests(ApiTestCase):
+    """Regression tests for core app fixes."""
+
+    def test_dataset_deletion_protected_error_handled(self):
+        """Deleting a dataset referenced by an experiment run returns 400 instead of 500."""
+        dataset = self.upload(classification_csv(), name="protected-ds")
+        core_ds = Dataset.objects.get(pk=dataset["id"])
+        from lifecycle.models import DatasetVersion, Experiment, ExperimentRun
+        version = DatasetVersion.objects.create(
+            dataset=core_ds,
+            version=1,
+            row_count=100,
+            column_count=5,
+            content_hash="hash123",
+            schema_hash="schema123",
+        )
+        exp = Experiment.objects.create(
+            dataset_version=version,
+            name="Protected Exp",
+        )
+        ExperimentRun.objects.create(
+            experiment=exp,
+            dataset_version=version,
+            algorithm="logistic_regression",
+            task_type="classification",
+            status="success",
+        )
+        response = self.client.delete(f"/api/datasets/{core_ds.id}/")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("referenced by existing experiment runs", response.json()["detail"])
+
+    def test_describe_http_error_preserves_error_detail(self):
+        """_describe_http_error correctly uses provided body even if stream was consumed."""
+        from core.assistant import _describe_http_error
+        import urllib.error
+
+        body = json.dumps({"error": {"message": "Invalid model parameter provided."}})
+        exc = urllib.error.HTTPError(
+            url="http://openrouter.ai",
+            code=400,
+            msg="Bad Request",
+            hdrs={},
+            fp=io.BytesIO(b""),
+        )
+        msg = _describe_http_error(exc, body=body)
+        self.assertIn("Invalid model parameter provided", msg)

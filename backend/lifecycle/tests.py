@@ -120,6 +120,23 @@ class LifecycleApiTestCase(TestCase):
         self.assertEqual(response.status_code, 201, response.content)
         return response.json()
 
+    def _deployed(self) -> dict:
+        dataset = self.upload(classification_csv(), name="churn")
+        experiment = self.create_experiment(dataset)
+        job = self.train_run(experiment)
+        version = self.client.post(
+            f"/api/lifecycle/runs/{job['best_run_id']}/register/",
+            {"model_name": "Churn model"},
+            format="json",
+        ).json()
+        deployment = self.client.post(
+            f"/api/lifecycle/models/{version['model_id']}/versions/{version['version']}/deploy/",
+            {},
+            format="json",
+        )
+        self.assertEqual(deployment.status_code, 201, deployment.content)
+        return deployment.json()
+
 
 class DatasetVersionApiTests(LifecycleApiTestCase):
     """PRD §9: versioning, hashing, lineage, immutability."""
@@ -742,3 +759,145 @@ class HealthProbeTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["status"], "not ready")
         self.assertEqual(payload["media_root"], "missing")
+
+
+class LifecycleBugRegressionTests(LifecycleApiTestCase):
+    """Regression tests for bug fixes across lifecycle & ML engine."""
+
+    def test_multiclass_classification_diagnostics_does_not_crash(self):
+        """3-class dataset does not crash precision_recall_curve in evaluation."""
+        import numpy as np
+        from core.tests import multiclass_csv
+        dataset = self.upload(multiclass_csv(), name="multiclass")
+        experiment = self.create_experiment(
+            dataset, name="multiclass experiment", task_type="classification"
+        )
+        job = self.train_run(
+            experiment,
+            target_column="grade",
+            algorithm="logistic_regression",
+            task_type="classification",
+            feature_columns=["f1", "f2", "f3"],
+        )
+        run = ExperimentRun.objects.get(pk=job["best_run_id"])
+        self.assertEqual(run.status, "success")
+        self.assertEqual(len(run.classes), 3)
+        self.assertIn("accuracy", run.metrics)
+
+        from lifecycle.evaluation import classification_diagnostics
+        y_true = np.array([0, 1, 2, 0, 1, 2])
+        y_pred = np.array([0, 1, 2, 0, 1, 2])
+        y_proba = np.array([
+            [0.7, 0.2, 0.1],
+            [0.1, 0.8, 0.1],
+            [0.2, 0.1, 0.7],
+            [0.6, 0.3, 0.1],
+            [0.1, 0.7, 0.2],
+            [0.2, 0.2, 0.6],
+        ])
+        diag = classification_diagnostics(y_true, y_pred, y_proba, ["0", "1", "2"])
+        self.assertIsNone(diag["roc"])
+        self.assertIsNone(diag["precision_recall"])
+
+    def test_drift_check_categorical_identical_distribution_is_stable(self):
+        """Identical categorical distribution produces PSI ~ 0.0, not false severe drift."""
+        deployment = self._deployed()
+
+        cities = ["  Boston ", "Austin", "Chicago", "New York"]
+        rows = [
+            {"age": 20 + (i % 40), "salary": 30000 + (i % 2) * 40000, "city": cities[i % len(cities)]}
+            for i in range(120)
+        ]
+        response = self.client.post(
+            f"/api/lifecycle/deployments/{deployment['slug']}/drift-check/",
+            {"rows": rows},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        payload = response.json()
+        city_feat = next(f for f in payload["features"] if f["feature"] == "city")
+        self.assertEqual(city_feat["status"], "stable")
+        self.assertLess(city_feat["psi"], 0.1)
+
+    def test_job_cancellation_marks_cancelled_status(self):
+        """Cancelled jobs transition to 'cancelled' status instead of 'failed'."""
+        from lifecycle import services
+        job = Job.objects.create(
+            kind="hpo",
+            status="queued",
+            payload={"param_space": {"algorithm": "logistic_regression", "params": {}}},
+        )
+        job.request_cancel()
+        services.execute_job(job)
+        job.refresh_from_db()
+        self.assertEqual(job.status, "cancelled")
+
+    def test_model_version_archive_clears_production_pointer(self):
+        """Archiving the active production model version clears model.production_version."""
+        from lifecycle import services
+        raw = self.upload(classification_csv(), name="archive-test")
+        experiment = self.create_experiment(raw)
+        job = self.train_run(experiment)
+        run = ExperimentRun.objects.get(pk=job["best_run_id"])
+        v1 = services.register_model(run, model_name="archive-model")
+        services.promote_model_version(v1, "staging")
+        services.promote_model_version(v1, "production", confirmed=True)
+        v1.model.refresh_from_db()
+        self.assertEqual(v1.model.production_version_id, v1.id)
+
+        # Archive v1
+        services.promote_model_version(v1, "archived")
+        v1.model.refresh_from_db()
+        self.assertIsNone(v1.model.production_version)
+
+    def test_leakage_correlation_index_alignment_with_missing_values(self):
+        """_safe_correlation properly aligns series by index even when missing values exist."""
+        import pandas as pd
+        from lifecycle.leakage import _safe_correlation
+        s_feat = pd.Series([None, 1.0, 2.0, 3.0, 4.0])
+        s_target = pd.Series([99.0, 1.0, 2.0, 3.0, 4.0])
+        corr = _safe_correlation(s_feat, s_target)
+        self.assertIsNotNone(corr)
+        self.assertAlmostEqual(corr, 1.0, places=4)
+
+    def test_experiment_run_deletion_refreshes_best_run(self):
+        """Deleting an experiment's best run recalculates best_run from remaining runs."""
+        raw = self.upload(classification_csv(), name="exp-delete")
+        experiment_dict = self.create_experiment(raw, objective_metric="accuracy", objective_direction="maximize")
+        exp = Experiment.objects.get(pk=experiment_dict["id"])
+
+        job1 = self.train_run(experiment_dict)
+        job2 = self.train_run(experiment_dict)
+        r1 = ExperimentRun.objects.get(pk=job1["best_run_id"])
+        r2 = ExperimentRun.objects.get(pk=job2["best_run_id"])
+
+        r1.metrics = {"accuracy": 0.95}
+        r1.status = "success"
+        r1.save()
+        r2.metrics = {"accuracy": 0.80}
+        r2.status = "success"
+        r2.save()
+
+        exp.refresh_best_run()
+        self.assertEqual(exp.best_run_id, r1.id)
+        self.assertAlmostEqual(exp.best_metric_value, 0.95)
+
+        # Delete best run r1
+        resp = self.client.delete(f"/api/lifecycle/runs/{r1.id}/")
+        self.assertEqual(resp.status_code, 204)
+
+        exp.refresh_from_db()
+        self.assertEqual(exp.best_run_id, r2.id)
+        self.assertAlmostEqual(exp.best_metric_value, 0.80)
+
+    def test_search_space_clamping(self):
+        """Hyperparameter range clamps candidate values to min/max."""
+        from lifecycle.search import suggested_search_space
+        spec = {
+            "key": "decision_tree",
+            "family": "tree",
+            "hyperparameters": [{"name": "max_depth", "min": 2, "max": 6}],
+        }
+        space = suggested_search_space(spec)
+        depth_vals = space["params"]["max_depth"]["values"]
+        self.assertTrue(all(v <= 6 for v in depth_vals))

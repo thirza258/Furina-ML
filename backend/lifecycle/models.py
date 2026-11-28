@@ -259,6 +259,27 @@ class Experiment(models.Model):
             return True
         return False
 
+    def refresh_best_run(self) -> None:
+        """Recalculate best_run and best_metric_value from remaining successful runs."""
+        runs = self.runs.filter(status="success")
+        best_run = None
+        best_value = None
+        for run in runs:
+            val = self.objective_value(run)
+            if val is None:
+                continue
+            if best_value is None:
+                best_run = run
+                best_value = val
+            else:
+                better = val > best_value if self.objective_direction == "maximize" else val < best_value
+                if better:
+                    best_run = run
+                    best_value = val
+        self.best_run = best_run
+        self.best_metric_value = best_value
+        self.save(update_fields=["best_run", "best_metric_value"])
+
 
 class ExperimentRun(models.Model):
     """One fit-and-evaluate cycle, fully described so it can be reproduced."""

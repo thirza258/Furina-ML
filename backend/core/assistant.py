@@ -291,7 +291,7 @@ def ask(system_prompt: str, history: list[dict[str, str]]) -> str:
                     logger.warning("Free model %s failed: %s", free_model, fb_exc)
                     continue
 
-        detail = _describe_http_error(exc)
+        detail = _describe_http_error(exc, body=err_body)
         raise AssistantError(detail) from None
     except urllib.error.URLError as exc:
         raise AssistantError(
@@ -310,10 +310,11 @@ def ask(system_prompt: str, history: list[dict[str, str]]) -> str:
         raise AssistantError("OpenRouter returned no answer.") from None
 
 
-def _describe_http_error(exc: urllib.error.HTTPError) -> str:
+def _describe_http_error(exc: urllib.error.HTTPError, body: str | None = None) -> str:
     """Turn OpenRouter's error body into one sentence, without leaking the key."""
     try:
-        payload = json.loads(exc.read().decode("utf-8"))
+        raw = body if body is not None else exc.read().decode("utf-8")
+        payload = json.loads(raw) if isinstance(raw, str) else json.loads(raw.decode("utf-8"))
         message = payload.get("error", {}).get("message") or payload.get("message")
     except Exception:  # noqa: BLE001 - the body is whatever it is
         message = None

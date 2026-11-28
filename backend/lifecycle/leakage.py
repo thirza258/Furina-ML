@@ -125,10 +125,7 @@ def target_leakage(frame: pd.DataFrame, target_column: str, feature_columns: lis
                 )
         # A numeric column that is a near-perfect proxy for the target.
         elif pd.api.types.is_numeric_dtype(series):
-            non_null = series.dropna()
-            if len(non_null) < 2:
-                continue
-            corr = _safe_correlation(non_null, target)
+            corr = _safe_correlation(series, target)
             if corr is not None and abs(corr) >= 0.99:
                 findings.append(
                     LeakageFinding(
@@ -146,7 +143,7 @@ def target_leakage(frame: pd.DataFrame, target_column: str, feature_columns: lis
 
 def _safe_correlation(a: pd.Series, b: pd.Series) -> float | None:
     """Correlation between two possibly-mixed series, NaN-safe, or None."""
-    aligned = pd.concat([pd.Series(a).reset_index(drop=True), pd.Series(b).reset_index(drop=True)], axis=1).dropna()
+    aligned = pd.concat([pd.Series(a), pd.Series(b)], axis=1).dropna()
     if len(aligned) < 3:
         return None
     x, y = aligned.iloc[:, 0], aligned.iloc[:, 1]
@@ -155,11 +152,12 @@ def _safe_correlation(a: pd.Series, b: pd.Series) -> float | None:
         x = pd.Series(pd.factorize(x)[0])
         y = pd.Series(pd.factorize(y)[0])
     try:
-        return float(
+        val = float(
             np.corrcoef(
                 np.asarray(x, dtype=float), np.asarray(y, dtype=float)
             )[0, 1]
         )
+        return None if np.isnan(val) else val
     except (ValueError, TypeError):
         return None
 
